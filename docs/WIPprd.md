@@ -22,24 +22,117 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
 * **Real-time Updates**: Live updates to global ratings when users submit public ratings
 * **Advanced Filtering**: Filter music by ratings, genres, tags, and custom criteria
 * **Favorites Management**: Like and favorite tracks for easy access
+* **Playlist Creation** No Spotify OAuth required for browsing music, tagging, rating, discovery, and building custom playlists within the app.
 
 ## 3\. Tech Stack
 
-**Front-End:** React, CSS, HTML
-**Back-End OPTION 1:** Supabase (authentication, database, storage, real-time capabilities, very much like json)
-**Back-End OPTION 2:** SQLite (showcase back-end capabilities, is this needed for the course)
-**AI Integration:** OpenAI GPT-4o for enhanced music recommendation descriptions and tag suggestions (Extra features: only if we have extra time / effort)
-**APIs & Integrations:**
+# ** Phase 1 — MVP (No Spotify OAuth Required)**
 
-* Spotify Web API (search, track data, previews, album information)
-* Spotify Web Playback / Preview (for enhanced preview functionality)
+## **Front-End**
+- **Framework:** React (TypeScript), HTML, CSS  
+- **Dev Tool / Bundler:** Vite (`react-ts` template)  
+- **Language:** TypeScript  
+- **Styling:** Tailwind CSS
+- **Hosting:** Vercel / Cloudflare Pages / Netlify  
 
-**Additional Technical Requirements:**
+---
 
-* Document structure using Supabase's PostgreSQL with JSON fields (If we use supabase)
-* Real-time subscriptions for global rating updates
-* Graph-based recommendation algorithm implementation
-* OAuth integration preparation for future Spotify playlist creation (Extra Features)
+## **Back-End (No OAuth)**
+### **Supabase**
+- PostgreSQL database  
+- Authentication (email/password)  
+- Row Level Security (RLS)  
+- Storage (optional)  
+- Real-time subscriptions (for global rating updates)  
+- Optional Edge Functions (for secure Spotify Client Credentials token generation)  
+
+**Description:**  
+Supabase handles all core backend features. No traditional backend server is required for the MVP.
+
+---
+
+## **APIs & Integrations (Phase 1)**
+### **Spotify Web API**
+Used for:
+- Searching tracks, albums, and artists  
+- Track metadata and album details  
+- Audio previews (30s)  
+- Global music data  
+
+**Authentication:**  
+- **Client Credentials Flow only**  
+- No Spotify login required  
+- All responses public and safe  
+
+### **Spotify Web Playback / Preview**
+- Used for enhanced 30-second previews  
+- No OAuth required  
+
+---
+
+## **Additional Technical Requirements (Phase 1)**
+- Supabase PostgreSQL with structured + JSON fields  
+- Real-time updates (e.g., global ratings)  
+- Graph-based recommendation logic (client or Supabase function)  
+
+---
+
+# **📌 Phase 2 — Optional Feature: Spotify OAuth for Playlist Export**
+
+## **Back-End (With OAuth)**
+### **Supabase + Optional FastAPI Backend**
+- **FastAPI** is ONLY required if implementing Spotify playlist export.  
+- Hosted on Railway / Render (Preferred) / Fly.io (Supabase cannot host Python).
+
+### **FastAPI responsibilities:**
+- Handle Spotify Authorization Code Flow  
+- `/auth/spotify/login` → send user to Spotify login  
+- `/auth/spotify/callback` → exchange code for tokens  
+- Store `refresh_token` in Supabase  
+- Create and export a playlist to a user’s Spotify account  
+- Add tracks to the exported playlist  
+
+**Note:**  
+FastAPI is *not* needed for any other features of the app.
+
+---
+
+## **APIs & Integrations (Phase 2)**
+### **Spotify OAuth — Authorization Code Flow**
+Used **only** for the optional export playlist feature:
+- User authorizes app  
+- App gains ability to create **one Spotify playlist**  
+- Stored refresh token allows playlist creation later  
+
+All other Spotify features still use the **Client Credentials Flow** from Phase 1.
+
+---
+
+# **🧠 AI Integration (Optional / Bonus)**
+### **OpenAI GPT-4o**
+- Generate music lyrics
+- Suggest tags  
+- Suggest playlist names  
+- Enhance recommendation explanations  
+
+This is optional and done only if extra time is available.
+
+---
+
+# ✅ Summary
+
+### **Phase 1 (MVP)**
+- React + Vite + TypeScript + Tailwind  
+- Supabase as full backend  
+- Spotify Client Credentials API only  
+- Playlist/tag/rating system  
+- Real-time DB + recommendation logic  
+- NO OAuth needed
+
+### **Phase 2 (Optional Enhancement)**
+- Add FastAPI backend for Spotify OAuth  
+- Only for exporting custom playlists to Spotify  
+- Not required for core app functionality
 
 ## 4\. Design Preferences
 
@@ -55,7 +148,7 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
 **Design preferences in json**
 ```json
 {
-  "project_name": "Spotify_Album_Explorer",
+  "project_name": "Spotify_Music_Explorer",
   "design_mode": "Dark_Theme_Primary",
   "layout_structure": {
     "header": {
@@ -133,6 +226,28 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
 }
 ```
 
+## Development Phases
+
+### Phase 1 (Core MVP)
+No OAuth required. Users can:
+* Search Spotify’s public catalog
+* View albums, tracks, genres
+* Create and manage custom playlists inside the app
+* Create and manage folders (playlists + albums)
+* Rate and tag music
+* Use recommendation features
+* Manage their own user profiles via Supabase
+* View Community Playlist, Community Music
+
+### Phase 2 (Optional Extra Feature)
+Spotify OAuth is introduced only for exporting playlists:
+* User clicks “Export to Spotify”
+* User is redirected to Spotify OAuth page
+* After approval, FastAPI backend receives token
+* Playlist is created in the user’s Spotify account
+* Access/refresh tokens stored securely in Supabase
+
+
 ## 5\. All Screens/Pages
 
 ### Home Page (`/`)
@@ -141,7 +256,7 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
 * **UI Elements:**
     * Navigation header with logo and main menu
     * Hero section with search bar
-    * Trending albums section (global ratings)
+    * Community play section (global ratings)
     * Personalized recommendations carousel
     * Recently added tracks section
     * Footer with links and information
@@ -190,10 +305,10 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
     * Playlist header with title and description
     * Edit playlist information modal
     * Track list with drag-and-drop reordering
-    * Remove track buttons
-    * Add tracks interface
-    * Export to Spotify button (future feature)
+    * Remove track/albums buttons
+    * Add tracks/albums interface
     * Share playlist options
+    * Export to Spotify button (optional feature)
 * **Navigation:** From playlists page, returns to playlists
 
 ### User Profile (`/profile`)
@@ -204,21 +319,21 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
     * Rating statistics (public/private counts)
     * Privacy settings toggle
     * Account preferences
-    * Recently rated albums
-    * Personal music taste graph
-    * Export data options
+    * Recently rated albums/tracks
 * **Navigation:** From main menu, navigates to settings or back to home
 
-### Trending (`/trending`)
+### Trending (`/community`)
 
-* **Route:** `/trending`
+* **Route:** `/community`
 * **UI Elements:**
-    * Top-rated albums grid
-    * Time period filters (week, month, year)
+    * Top-rated community playlist grid
+    * Top-rated community tracks grid
+    * Time period filters (week, month, year, all time)
+    * Tag/Custom tags filters (vibes, study)
+    * Genre filters (rock, heavy metal)
     * Genre-specific trending sections
-    * Community rating insights
-    * Rising albums section
-* **Navigation:** From main menu or home trending section
+    * Community rating insights / Community comments
+* **Navigation:** From main menu or home community section
 
 ### Login (`/login`)
 
@@ -255,7 +370,9 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
     * Logo/Home link
     * Search bar (always visible)
     * My Playlists
-    * Trending
+    * Community
+        * Community rated playlists
+        * Community rated songs
     * Profile dropdown
         * Profile Settings
         * Privacy Settings
@@ -293,15 +410,18 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
     * Previews tracks using Spotify API integration
     * Clicks on album for detailed view (`/album/:id`)
 4. **Rating and Organization:**
-    * User rates album (personal rating 1-5)
+    * User rates album (personal rating 1-10)
     * Chooses to make rating public or private
     * Adds custom tags or selects from pre-made categories
-    * Adds album/tracks to custom playlists
+    * Adds tracks to custom playlists
+    * Add albums/playlists into folders
 5. **Playlist Management:**
     * User navigates to "My Playlists" (`/playlists`)
     * Creates new playlist or manages existing ones
-    * Organizes tracks using drag-and-drop interface (`/playlist/:id`)
+    * Organizes tracks/albums using drag-and-drop interface (`/playlist/:id`)
     * Applies filters and tags for advanced organization
+    * Phase 1: Export to Spotify button (placeholder in MVP, functional in Phase 2 if time allows)
+    * Optional (phase 2): Export Playlist to Spotify button, which triggers Spotify OAuth if not already connected (This feature will be implemented only if time allows. In Phase 1, the Export button is present but not functional.)
 6. **Personalized Recommendations:**
     * System processes user ratings and preferences
     * Generates recommendations using graph-based algorithm
@@ -310,7 +430,7 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
 7. **Community Interaction:**
     * User views global ratings and community insights
     * Participates in community ratings (if privacy settings allow)
-    * Explores trending music based on community preferences
+    * Explores music based on community preferences
 8. **Profile Management:**
     * User accesses profile settings (`/profile`)
     * Adjusts privacy settings for rating visibility
