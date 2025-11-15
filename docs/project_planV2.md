@@ -5,7 +5,8 @@
 Spotify Music Explorer is a web application that enhances Spotify users' music discovery, organization, and interaction through advanced playlist management, rating systems, and community-driven recommendations.
 
 **Timeline:** 6 Weeks  
-**Team Structure:** Modular development with grouped functions
+**Team Structure:** 2 Teams (2 people each) + 1 Team Leader  
+**Total Team Size:** 5 people
 
 ---
 
@@ -31,47 +32,47 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - Privacy toggle (make ratings public/private)
 - Real-time rating updates via Supabase subscriptions
 - Rating history tracking
+- **Can rate: tracks, albums, AND playlists**
 
 **4. Tagging System**
 - Pre-made tags/categories (genres, moods, vibes)
 - Custom user-created tags
-- Tag assignment to tracks and albums
-- Tag filtering and search
+- Tag assignment to tracks, albums, and playlists
+- Tag filtering and search (for user's own content and community content)
 
 **5. Playlist Management**
 - Create custom playlists within app
 - Add/remove tracks and albums
+- Add/remove tags to playlists
 - Drag-and-drop reordering
 - Playlist metadata (title, description, color)
 - Search within playlists
-- Filter and sort playlists
+- Filter and sort playlists by tags, ratings, date
 
-**6. Folder System**
-- Create folders to organize playlists and albums
-- Add/remove playlists and albums to folders
-- Folder hierarchy management
-
-**7. Favorites/Likes**
+**6. Favorites/Likes**
 - Like/unlike tracks
 - Favorites collection page
 - Quick access to liked tracks
+- Filter favorites by tags, ratings
 
-**8. Discovery & Recommendations**
+**7. Discovery & Recommendations**
 - **Trending Section**: Top-rated tracks/albums/playlists by time period (7 days, 30 days, all-time)
 - **Community Dashboard**: Recently rated content, filterable by tags/genres/ratings
 - **For You Page**: Personalized recommendations using hybrid graph-based engine
   - Uses: user ratings, tags, related artist, related albums, related genres, same artist, same album, same genres
 
-**9. Search & Filtering**
-- Global search with filters (genre, rating, tags)
+**8. Search & Filtering**
+- **Spotify Search**: Global search for tracks/albums/artists from Spotify (basic filters like genre from Spotify API)
+- **User Content Filtering**: Filter and search within user's own playlists, favorites, and rated content by tags, ratings, date
+- **Community Content Filtering**: Filter community-rated playlists/tracks/albums by tags, ratings, time period
 
-**10. Community Features**
+**9. Community Features**
 - View global ratings and statistics
 - Community comments on tracks/albums/playlists
 - Community-rated playlists/tracks/albums sections
 - Filterable by various criteria (genre, rating, tags, time)
 
-**11. Real-time Updates**
+**10. Real-time Updates**
 - Live global rating updates
 - Real-time playlist changes
 - Supabase real-time subscriptions
@@ -112,8 +113,8 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `checkAuthStatus()`
 
 #### **B. Spotify API Module**
-- `searchTracks(query, filters)`
-- `searchAlbums(query, filters)`
+- `searchTracks(query, spotifyFilters)` // spotifyFilters = genre, year from Spotify API
+- `searchAlbums(query, spotifyFilters)`
 - `searchArtists(query)`
 - `getAlbumDetails(albumId)`
 - `getTrackDetails(trackId)`
@@ -123,21 +124,21 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `getClientCredentialsToken()`
 
 #### **C. Rating Module**
-- `submitPersonalRating(itemId, rating, isPublic)`
+- `submitPersonalRating(itemId, itemType, rating, isPublic)` // itemType: track, album, playlist
 - `updateRating(ratingId, newRating)`
 - `deleteRating(ratingId)`
-- `getPersonalRating(itemId)`
-- `getGlobalRating(itemId)`
+- `getPersonalRating(itemId, itemType)`
+- `getGlobalRating(itemId, itemType)`
 - `toggleRatingPrivacy(ratingId)`
 - `getRatingHistory(userId)`
-- `calculateAverageRating(itemId)`
-- `subscribeToRatingUpdates(itemId)`
+- `calculateAverageRating(itemId, itemType)`
+- `subscribeToRatingUpdates(itemId, itemType)`
 
 #### **D. Tagging Module**
-- `createTag(tagName, type)`
-- `assignTagToItem(itemId, tagId)`
-- `removeTagFromItem(itemId, tagId)`
-- `getItemTags(itemId)`
+- `createTag(tagName, type)` // type: pre-made or custom
+- `assignTagToItem(itemId, itemType, tagId)` // itemType: track, album, playlist
+- `removeTagFromItem(itemId, itemType, tagId)`
+- `getItemTags(itemId, itemType)`
 - `searchTags(query)`
 - `getPreMadeTags()`
 - `getUserCustomTags(userId)`
@@ -147,82 +148,75 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `createPlaylist(title, description, color)`
 - `deletePlaylist(playlistId)`
 - `updatePlaylist(playlistId, updates)`
-- `addItemToPlaylist(playlistId, itemId, itemType)`
+- `addItemToPlaylist(playlistId, itemId, itemType)` // itemType: track or album
 - `removeItemFromPlaylist(playlistId, itemId)`
 - `reorderPlaylistItems(playlistId, newOrder)`
 - `getUserPlaylists(userId)`
 - `getPlaylistDetails(playlistId)`
 - `searchWithinPlaylist(playlistId, query)`
-- `filterPlaylist(playlistId, filters)`
+- `filterUserPlaylists(userId, filters)` // filters: tags, ratings, date
 - `sortPlaylist(playlistId, sortBy)`
 - `duplicatePlaylist(playlistId)`
 
-#### **F. Folder Module**
-- `createFolder(folderName)`
-- `deleteFolder(folderId)`
-- `updateFolder(folderId, updates)`
-- `addItemToFolder(folderId, itemId, itemType)`
-- `removeItemFromFolder(folderId, itemId)`
-- `getUserFolders(userId)`
-- `getFolderContents(folderId)`
-
-#### **G. Favorites Module**
+#### **F. Favorites Module**
 - `likeTrack(trackId)`
 - `unlikeTrack(trackId)`
 - `getFavorites(userId)`
 - `checkIfLiked(trackId)`
 - `getFavoritesCount(userId)`
+- `filterFavorites(userId, filters)` // filters: tags, ratings
 
-#### **H. Recommendation Module**
+#### **G. Recommendation Module**
 - `generatePersonalizedRecommendations(userId)`
 - `getSimilarAlbums(albumId)`
 - `getTrendingTracks(timeRange, filters)`
 - `getTrendingAlbums(timeRange, filters)`
 - `getTrendingPlaylists(timeRange, filters)`
-- `calculateRecommendationScore(userId, itemId)`
+- `calculateRecommendationScore(userId, itemId, itemType)`
 - `buildUserPreferenceGraph(userId)`
 - `getContentSimilarity(itemId1, itemId2)`
 
-#### **I. Community Module**
-- `getCommunityRatedPlaylists(filters, sort)`
+#### **H. Community Module**
+- `getCommunityRatedPlaylists(filters, sort)` // filters: tags, ratings, time
 - `getCommunityRatedTracks(filters, sort)`
 - `getCommunityRatedAlbums(filters, sort)`
 - `getRecentCommunityActivity(limit)`
-- `getCommunityComments(itemId)`
-- `addComment(itemId, comment)`
+- `getCommunityComments(itemId, itemType)` // itemType: track, album, playlist
+- `addComment(itemId, itemType, comment)`
 - `deleteComment(commentId)`
 - `getGlobalStatistics()`
 
-#### **J. Search & Filter Module**
-- `globalSearch(query, type, filters)`
-- `applyFilters(items, filters)`
+#### **I. Search & Filter Module**
+- `spotifySearch(query, type, spotifyFilters)` // Search Spotify catalog
+- `filterUserContent(content, filters)` // Filter user's playlists/favorites by tags/ratings
+- `filterCommunityContent(content, filters)` // Filter community content by tags/ratings/time
 - `sortResults(items, sortBy, order)`
 - `getPaginatedResults(items, page, limit)`
 - `buildFilterQuery(filters)`
 
-#### **K. UI State Management Module**
+#### **J. UI State Management Module**
 - `updateUIState(state)`
 - `getUIState()`
 - `cacheResults(key, data)`
 - `getCachedResults(key)`
 - `clearCache()`
 
-#### **L. Real-time Module**
+#### **K. Real-time Module**
 - `subscribeToChannel(channel, callback)`
 - `unsubscribeFromChannel(channel)`
 - `broadcastUpdate(channel, data)`
 - `handleRealTimeEvent(event)`
 
-#### **M. Profile Module**
+#### **L. Profile Module**
 - `getUserProfile(userId)`
 - `updatePrivacySettings(settings)`
-- `getRatingStatistics(userId)`
+- `getRatingStatistics(userId)` // tracks, albums, AND playlists
 - `getRecentlyRated(userId, limit)`
 - `exportUserData(userId)`
 
 ### **Backend Modules (Supabase + Optional FastAPI)**
 
-#### **N. Database Module (Supabase)**
+#### **M. Database Module (Supabase)**
 - `initializeDatabase()`
 - `executeQuery(query)`
 - `executeBatch(queries)`
@@ -230,13 +224,13 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `setupRLS()`
 - `migrateSchema()`
 
-#### **O. Edge Functions Module (Supabase)**
+#### **N. Edge Functions Module (Supabase)**
 - `generateClientCredentials()`
 - `refreshSpotifyToken()`
 - `validateRequest()`
 - `rateLimitCheck()`
 
-#### **P. OAuth Module (Phase 2 - FastAPI)**
+#### **O. OAuth Module (Phase 2 - FastAPI)**
 - `initiateSpotifyAuth()`
 - `handleAuthCallback(code)`
 - `exchangeCodeForTokens(code)`
@@ -244,13 +238,13 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `storeTokens(userId, tokens)`
 - `revokeAccess(userId)`
 
-#### **Q. Playlist Export Module (Phase 2 - FastAPI)**
+#### **P. Playlist Export Module (Phase 2 - FastAPI)**
 - `createSpotifyPlaylist(userId, playlistData)`
 - `addTracksToSpotifyPlaylist(playlistId, trackIds)`
 - `syncPlaylistMetadata(playlistId, metadata)`
 - `validateSpotifyConnection(userId)`
 
-#### **R. AI Integration Module (Bonus)**
+#### **Q. AI Integration Module (Phase 2 - Bonus)**
 - `generateTagSuggestions(trackData)`
 - `generatePlaylistName(tracks, tags)`
 - `enhanceRecommendationExplanation(recommendationData)`
@@ -262,7 +256,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 ### **STAGE 1: Foundation & Core Infrastructure** (Week 1)
 **Milestone: Basic App Shell Running**
 
-**Group 1A: Project Setup & Authentication**
+**Team Leader + Team 1: Project Setup & Authentication**
 - Project initialization (Vite + React + TypeScript)
 - Tailwind CSS configuration
 - Supabase setup and configuration
@@ -271,7 +265,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - Basic routing setup
 - Environment configuration
 
-**Group 1B: Spotify Integration Foundation**
+**Team 2: Spotify Integration Foundation**
 - Spotify API client setup
 - Client Credentials flow implementation
 - Basic search functionality (searchTracks, searchAlbums, searchArtists)
@@ -289,23 +283,27 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 ### **STAGE 2: Core Features - Ratings & Tags** (Week 2)
 **Milestone: Users Can Rate and Tag Music**
 
-**Group 2A: Rating System**
-- Personal rating submission and storage
+**Team 1: Rating System**
+- Personal rating submission and storage (tracks, albums, playlists)
 - Global rating aggregation
 - Rating privacy toggle
 - Rating display components
 - Real-time rating updates (Supabase subscriptions)
 - Rating history tracking
 
-**Group 2B: Tagging System**
+**Team 2: Tagging System**
 - Pre-made tags database seeding
 - Custom tag creation
-- Tag assignment functionality
+- Tag assignment functionality (tracks, albums, playlists)
 - Tag filtering
 - Tag management UI
 
+**Team Leader: Integration & Coordination**
+- Ensure ratings and tags work together
+- Code review and merge coordination
+
 **Deliverables:**
-- Users can rate tracks/albums
+- Users can rate tracks/albums/playlists
 - Public/private ratings work
 - Global ratings update in real-time
 - Tags can be created and assigned
@@ -313,27 +311,25 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 ---
 
 ### **STAGE 3: Organization Features** (Week 3)
-**Milestone: Complete Playlist & Folder Management**
+**Milestone: Complete Playlist Management**
 
-**Group 3A: Playlist Management**
+**Team 1 + Team Leader: Playlist Core Features**
 - Create/delete playlists
 - Add/remove tracks and albums
 - Playlist detail view
+- Playlist metadata editing (title, description, color)
+- Add/remove tags to playlists
+
+**Team 2: Playlist Advanced Features & Favorites**
 - Drag-and-drop reordering
-- Playlist metadata editing
 - Search within playlists
 - Filter and sort functionality
-
-**Group 3B: Folder System & Favorites**
-- Folder creation and management
-- Add playlists/albums to folders
 - Favorites/likes functionality
 - Favorites collection page
-- Quick access features
 
 **Deliverables:**
 - Full playlist CRUD operations
-- Folders organize playlists
+- Playlists can be tagged and rated
 - Favorites system works
 - Intuitive organization UI
 
@@ -342,14 +338,15 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 ### **STAGE 4: Discovery & Recommendations** (Week 4)
 **Milestone: Personalized Recommendations Working**
 
-**Group 4A: Search & Filtering**
-- Advanced search with filters
-- Filter by genre, rating, tags
+**Team 1: Search & Filtering**
+- Spotify search implementation
+- User content filtering (playlists/favorites by tags/ratings)
+- Community content filtering
 - Sort functionality
 - Pagination
 - Search results optimization
 
-**Group 4B: Recommendation Engine**
+**Team 2 + Team Leader: Recommendation Engine**
 - User preference graph building
 - Content similarity algorithm
 - Hybrid recommendation logic
@@ -358,7 +355,8 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - Recommendation score calculation
 
 **Deliverables:**
-- Advanced search fully functional
+- Spotify search fully functional
+- User content filtering works (tags, ratings)
 - Personalized recommendations appear
 - "For You" page populated
 - Similar content suggestions work
@@ -368,19 +366,23 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 ### **STAGE 5: Community Features** (Week 5)
 **Milestone: Community Engagement Active**
 
-**Group 5A: Trending & Discovery**
+**Team 1: Trending & Discovery**
 - Trending tracks/albums/playlists
 - Time-based filtering (7 days, 30 days, all-time)
 - Tag-based trending
 - Genre-specific trending
 - Community statistics dashboard
 
-**Group 5B: Community Interaction**
-- Community comments system
+**Team 2: Community Interaction**
+- Community comments system (tracks, albums, playlists)
 - Community-rated content sections
 - Recent activity feed
 - Global rating insights
 - Community profile features
+
+**Team Leader: Integration**
+- Ensure trending and community features work together
+- Performance optimization
 
 **Deliverables:**
 - Trending sections populated
@@ -393,38 +395,37 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 ### **STAGE 6: Polish, Optimization & Phase 2 (If Time)** (Week 6)
 **Milestone: Production-Ready Application**
 
-**Group 6A: UI/UX Enhancement & Polish**
+**Team 1: UI/UX Enhancement & Polish**
 - Design system refinement
 - Responsive design fixes
 - Loading states and animations
 - Error handling improvements
 - Accessibility compliance
-- Bug fixes
-- User testing and feedback
 
-**Group 6B: Performance Optimization**
+**Team 2: Performance Optimization**
 - Code optimization
 - Database query optimization
 - Caching implementation
 - Real-time performance tuning
 
-**Group 6C: Phase 2 Setup (If Time Allows)**
-- FastAPI backend setup (Railway/Render)
-- Spotify OAuth flow implementation
-- Playlist export functionality
-- Token management
+**Team Leader: QA & Phase 2 Preparation**
+- Bug fixes
+- User testing coordination
+- Code review
+- If time: FastAPI setup for Phase 2
+- If time: OAuth flow implementation
 
-**Group 6D: AI Integration (Bonus - If Time)**
-- OpenAI API integration
-- Tag suggestions
-- Playlist name generation
+**Optional (If Time Allows):**
+- Spotify OAuth integration
+- Playlist export functionality
+- AI features (bonus)
 
 **Deliverables:**
 - Polished, professional UI
 - Fast and responsive
 - Production-ready MVP
-- Optional: Playlist export working
-- Optional: AI features active
+- |⚠️| [Optional: Playlist export working]
+- |⚠️| [Optional: AI features active]
 
 ---
 
@@ -433,9 +434,9 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 | Week | Milestone | Key Deliverables |
 |------|-----------|------------------|
 | Week 1 | Basic App Shell Running | Auth + Spotify Search + Database Setup |
-| Week 2 | Users Can Rate and Tag Music | Rating System + Tagging System |
-| Week 3 | Complete Playlist & Folder Management | Playlists + Folders + Favorites |
-| Week 4 | Personalized Recommendations Working | Advanced Search + Recommendation Engine |
+| Week 2 | Users Can Rate and Tag Music | Rating System (tracks/albums/playlists) + Tagging System |
+| Week 3 | Complete Playlist Management | Playlists + Tags + Favorites |
+| Week 4 | Personalized Recommendations Working | Search/Filter + Recommendation Engine |
 | Week 5 | Community Engagement Active | Trending + Community Features + Comments |
 | Week 6 | Production-Ready Application | Polish + Optimization + (Optional Phase 2) |
 
@@ -460,47 +461,60 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 
 ### Core Tables
 1. **users** - User accounts and profiles
-2. **ratings** - Personal and public ratings
+2. **ratings** - Personal and public ratings (tracks, albums, playlists)
 3. **tags** - Pre-made and custom tags
 4. **playlists** - User-created playlists
 5. **playlist_items** - Tracks/albums in playlists
-6. **folders** - Folder organization
-7. **folder_items** - Items in folders
-8. **favorites** - Liked tracks
-9. **comments** - Community comments
-10. **user_preferences** - For recommendation engine
+6. **item_tags** - Junction table for tagging (tracks, albums, playlists)
+7. **favorites** - Liked tracks
+8. **comments** - Community comments (tracks, albums, playlists)
+9. **user_preferences** - For recommendation engine
 
 ---
 
 ## Team Assignment Strategy
 
-### Suggested Team Structure (Adapt to your team size)
+### Team Structure (5 People Total)
 
-**Team A - Backend & Infrastructure**
-- Database design and setup
-- Supabase configuration
-- Authentication system
-- Real-time subscriptions
-- API integrations
+**Team Leader (You)**
+- Project coordination and architecture
+- Code review and quality assurance
+- Integration work between teams
+- Critical feature implementation
+- Database design and schema management
+- Deployment and DevOps
 
-**Team B - Core Features**
-- Rating system
-- Tagging system
-- Playlist management
-- Folder system
+**Team 1 (2 People)**
+- Week 1: Authentication & Database setup
+- Week 2: Rating system
+- Week 3: Core playlist features
+- Week 4: Search & filtering
+- Week 5: Trending & discovery
+- Week 6: UI/UX polish
 
-**Team C - Discovery & Community**
-- Search and filtering
-- Recommendation engine
-- Trending features
-- Community features
+**Team 2 (2 People)**
+- Week 1: Spotify API integration
+- Week 2: Tagging system
+- Week 3: Advanced playlist features & favorites
+- Week 4: Recommendation engine
+- Week 5: Community interaction
+- Week 6: Performance optimization
 
-**Team D - UI/UX & Polish**
-- Design implementation
-- Component library
-- Responsive design
-- User testing
-- Bug fixes
+---
+
+## Key Changes from Original Plan
+
+### Modified Features
+- Playlist rating capability added (users can now rate playlists)
+- Tagging system expanded to include playlists
+- Clarified search: Spotify search is separate from user/community content filtering
+- User content filtering: Filter user's own playlists/favorites by tags, ratings, date
+- Community content filtering: Filter community content by tags, ratings, time period
+
+### Clarifications
+- **Spotify Search**: Basic search using Spotify API (genre, year filters from Spotify)
+- **User Content Filtering**: Advanced filtering for user's own playlists and favorites (tags, ratings, date)
+- **Community Content Filtering**: Advanced filtering for community-rated content (tags, ratings, time)
 
 ---
 
@@ -511,41 +525,51 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 2. **Real-time Performance** - Test Supabase subscriptions at scale
 3. **Recommendation Algorithm Complexity** - Start simple, iterate
 4. **Time Constraints** - Prioritize Phase 1, Phase 2 is optional
+5. **Small Team Size** - Clear communication and well-defined modules
 
 ### Mitigation Strategies
+- Daily standups (15 min)
 - Weekly code reviews
 - Continuous integration testing
-- Regular team sync meetings
+- Clear module boundaries
 - Buffer time in Week 6 for unexpected issues
+- Team Leader handles integration points
 
 ---
 
 ## Success Criteria
 
 ### Phase 1 MVP Success
-- Users can search, rate, and tag music
-- Playlists and folders work seamlessly
+- Users can search Spotify and preview tracks
+- Users can rate tracks, albums, AND playlists (private/public)
+- Users can tag tracks, albums, AND playlists
+- Playlists work seamlessly with full CRUD operations
+- User content is filterable by tags and ratings
 - Recommendations are relevant and personalized
-- Community features are active
+- Community features are active (comments, trending)
 - Real-time updates work smoothly
 - UI is polished and responsive
 
 ### Phase 2 Success (Optional)
 - Users can export playlists to Spotify
 - OAuth flow is secure and seamless
-- AI features enhance user experience (extra)
+- AI features enhance user experience (extra bonus)
 
 ---
 
 ## Notes
 
-- **No Contradictions Found** between PRD and scopes.md
+- **Folders feature removed** as requested
+- **Playlist rating added** - users can now rate playlists just like tracks and albums
+- **Search clarified**: Spotify search vs. user/community content filtering
+- Rating scale is **1-10** for consistency
 - Phase 2 features are stretch goals - prioritize Phase 1 completion
-- Community features (comments, sentiments) are emphasized in scopes.md
 - All OAuth-dependent features clearly marked as Phase 2/Optional
+- Small team requires excellent communication and clear module boundaries
 
 ---
 
-**Last Updated:** [Date]  
+**Last Updated:** [Current Date]  
 **Project Duration:** 6 Weeks  
-**Target Launch:** End of Week 6
+**Target Launch:** End of Week 6  
+**Team Size:** 5 (1 Leader + 2 Teams of 2)
