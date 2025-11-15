@@ -13,7 +13,7 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
 * **Spotify Integration**: Search for music and albums using Spotify API with track previews
 * **Advanced Playlist Management**: Create custom playlists with sophisticated filtering options
 * **Dual Tagging System**: Pre-made and custom categories/tags for music organization
-* **Dual Rating System**: Private personal ratings (1-5 scale) and public global ratings
+* **Dual Rating System**: Private personal ratings (1-10 scale) and public global ratings
 * **Privacy Controls**: Toggle to publicize or keep ratings private
 * **Hybrid Recommendation Engine**: Graph-based system using user preferences, content similarity, and community insights
 * **Music Discovery**: Trending section based on global ratings and personalized recommendations
@@ -29,7 +29,7 @@ The application targets music enthusiasts, playlist curators, and Spotify users 
 # ** Phase 1 — MVP (No Spotify OAuth Required)**
 
 ## **Front-End**
-- **Framework:** React (TypeScript), HTML, CSS  
+- **Framework:** React (TypeScript), Tailiwind CSS  
 - **Dev Tool / Bundler:** Vite (`react-ts` template)  
 - **Language:** TypeScript  
 - **Styling:** Tailwind CSS
@@ -328,6 +328,7 @@ Spotify OAuth is introduced only for exporting playlists:
 * **UI Elements:**
     * Top-rated community playlist grid
     * Top-rated community tracks grid
+    * Top-rated community albums grid
     * Time period filters (week, month, year, all time)
     * Tag/Custom tags filters (vibes, study)
     * Genre filters (rock, heavy metal)
