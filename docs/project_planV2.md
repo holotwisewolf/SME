@@ -288,18 +288,18 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - Global rating aggregation
 - Rating privacy toggle
 - Rating display components
-- Real-time rating updates (Supabase subscriptions)
+- Real-time rating updates (Supabase realtime)
 - Rating history tracking
 
 **Team 2: Tagging System**
-- Pre-made tags database seeding
+- Pre-made tags database seeding (genres, moods, vibe)
 - Custom tag creation
 - Tag assignment functionality (tracks, albums, playlists)
 - Tag filtering
 - Tag management UI
 
 **Team Leader: Integration & Coordination**
-- Ensure ratings and tags work together
+- Ensure rating & tagging systems connect smoothly
 - Code review and merge coordination
 
 **Deliverables:**
@@ -324,7 +324,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - Drag-and-drop reordering
 - Search within playlists
 - Filter and sort functionality
-- Favorites/likes functionality
+- Favorites functionality
 - Favorites collection page
 
 **Deliverables:**
@@ -339,57 +339,75 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 **Milestone: Personalized Recommendations Working**
 
 **Team 1: Search & Filtering**
-- Spotify search implementation
-- User content filtering (playlists/favorites by tags/ratings)
-- Community content filtering
-- Sort functionality
-- Pagination
+- Spotify search implementation (Client Credentials)
+- User content filtering and sorting
+  - User playlists filtered by tags/ratings/favourites
+  - Sort user content by ratings/date added
+- Pagination & load-more UI
 - Search results optimization
 
 **Team 2 + Team Leader: Recommendation Engine**
-- User preference graph building
-- Content similarity algorithm
-- Hybrid recommendation logic
-- Similar albums feature
-- Personalized "For You" page
-- Recommendation score calculation
+- Build simple preference model based on:
+  - User ratings
+  - User tags
+  - User favorites
+- Generate recommendations for the **For You** page only
+- Display recommended tracks/albums on a dedicated page
+- No per-album similarity or complex graph UI
 
 **Deliverables:**
-- Spotify search fully functional
-- User content filtering works (tags, ratings)
-- Personalized recommendations appear
-- "For You" page populated
-- Similar content suggestions work
+- Spotify search works
+- User filtering & sorting work
+- Personalized **For You** page shows recommendations
 
 ---
 
 ### **STAGE 5: Community Features** (Week 5)
-**Milestone: Community Engagement Active**
+**Milestone: Community Interaction**
 
-**Team 1: Trending & Discovery**
-- Trending tracks/albums/playlists
-- Time-based filtering (7 days, 30 days, all-time)
-- Tag-based trending
-- Genre-specific trending
-- Community statistics dashboard
+**Team 1: Primary Discovery & Trending Metrics (Sort By)**
+(Community-based; data-driven rankings using Supabase, NOT Spotify charts)
 
-**Team 2: Community Interaction**
-- Community comments system (tracks, albums, playlists)
-- Community-rated content sections
-- Recent activity feed
-- Global rating insights
-- Community profile features
+#### **Trending Metrics (Sort Options)**
+The community content list can be sorted by:
+- Top rated (highest average score)
+- Most ratings (highest rating count)
+- Most commented
+- Most recently commented
+- Most newly tagged items
+
+#### **Time Filters (Define “Trending Period”)**
+- Weekly Trending (past 7 days)
+- Monthly Trending (past 30 days)
+- Historical Top Content (all-time)
+
+#### **Content Filters**
+- **Tag-Based Trending:** Show only items containing selected tags
+- **Genre-Based Trending:** Show items matching selected Spotify genres
+- **Rating Threshold Filter:** Only show content above a minimum average rating (e.g., > 4/5)
+- **Activity Age Filter:** Filter items by how recently they received their last activity (rating, comment, tag)
+
+**Team 2: Community User Actions & Interaction**
+- Users can:
+  - Rate community tracks/albums/playlists
+  - Tag community tracks/albums/playlists
+  - Comment on community tracks/albums/playlists
+- Profile pages with user stats:
+  - Total ratings
+  - Total comments
+  - Total taggings
 
 **Team Leader: Integration**
-- Ensure trending and community features work together
-- Performance optimization
+- Ensure trending logic works correctly with live rating/tag/comment data  
+- Connect community actions to trending metrics  
+- Test real-time updates (Supabase Realtime)  
+- Ensure smooth final UI/UX integration across all community pages  
 
 **Deliverables:**
-- Trending sections populated
-- Community features active
-- Comments working
-- Activity feed live
-
+- Fully functional Community & Trending sections
+- Real-time rating and comment updates
+- Tag/genre-based discovery working
+- Public user profiles showing activity stats
 ---
 
 ### **STAGE 6: Polish, Optimization & Phase 2 (If Time)** (Week 6)
@@ -405,7 +423,6 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 **Team 2: Performance Optimization**
 - Code optimization
 - Database query optimization
-- Caching implementation
 - Real-time performance tuning
 
 **Team Leader: QA & Phase 2 Preparation**
