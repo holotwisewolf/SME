@@ -629,7 +629,6 @@ The community content list can be sorted by:
 
 ## Notes
 
-- **Folders feature removed** as requested
 - **Playlist rating added** - users can now rate playlists just like tracks and albums
 - **Search clarified**: Spotify search vs. user/community content filtering
 - Rating scale is **1-10** for consistency
