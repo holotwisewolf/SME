@@ -56,10 +56,29 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - Filter favorites by tags, ratings
 
 **7. Discovery & Recommendations**
-- **Trending Section**: Top-rated tracks/albums/playlists by time period (7 days, 30 days, all-time)
-- **Community Dashboard**: Recently rated content, filterable by tags/genres/ratings
-- **For You Page**: Personalized recommendations using hybrid graph-based engine
-  - Uses: user ratings, tags, related artist, related albums, related genres, same artist, same album, same genres
+- **Trending Section**  
+  Community-driven rankings powered by user activity.  
+  Content can be sorted by:
+    - Top rated (highest average score)
+    - Most ratings (highest rating count)
+    - Most commented
+    - Most recently commented
+    - Most newly tagged
+  Users can apply time filters (7 days, 30 days, all-time) and content filters  
+  (tags, Spotify genres, rating thresholds, activity recency).
+
+- **Community Discovery Dashboard**  
+  A unified page showing:
+    - Recently rated or commented content
+    - Trending tags and genres
+    - Filterable community lists (tags, genres, rating thresholds, time periods)
+    - Sorting options (top rated, most commented, activity-based)
+
+- **For You Page**: Personalized recommendations using graph-based engine
+  - Graph nodes: tracks, albums, artists, genres, tags
+  - Graph edges: related artist, related genres, same genre, same artist, same album, user ratings, user tags, user favorites
+  - Displays recommended tracks/albums on a dedicated page
+  - Algorithm traverses graph to find similar content based on user preferences
 
 **8. Search & Filtering**
 - **Spotify Search**: Global search for tracks/albums/artists from Spotify (basic filters like genre from Spotify API)
@@ -167,30 +186,40 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `filterFavorites(userId, filters)` // filters: tags, ratings
 
 #### **G. Recommendation Module**
-- `generatePersonalizedRecommendations(userId)`
-- `getSimilarAlbums(albumId)`
-- `getTrendingTracks(timeRange, filters)`
-- `getTrendingAlbums(timeRange, filters)`
-- `getTrendingPlaylists(timeRange, filters)`
-- `calculateRecommendationScore(userId, itemId, itemType)`
-- `buildUserPreferenceGraph(userId)`
-- `getContentSimilarity(itemId1, itemId2)`
+- `generatePersonalizedRecommendations(userId)` // For "For You" page using graph traversal
+- `buildUserPreferenceGraph(userId)` // Create graph with nodes (tracks/albums/artists/genres/tags) and edges
+- `addGraphNode(nodeId, nodeType, metadata)` // Add node to graph (track, album, artist, genre, tag)
+- `addGraphEdge(node1, node2, edgeType, weight)` // Add edge (related artist, same genre, user rating, etc.)
+- `traverseGraph(startNodes, depth, filters)` // Traverse graph to find recommendations
+- `calculateRecommendationScore(userId, itemId, itemType)` // Score based on graph distance and edge weights
+- `getRecommendedTracks(userId, limit)`
+- `getRecommendedAlbums(userId, limit)`
+- `getRelatedArtists(artistId)` // From Spotify API or graph
+- `getRelatedGenres(genreId)` // From graph connections
 
 #### **H. Community Module**
-- `getCommunityRatedPlaylists(filters, sort)` // filters: tags, ratings, time
-- `getCommunityRatedTracks(filters, sort)`
-- `getCommunityRatedAlbums(filters, sort)`
+- `getCommunityContent(filters, sort, timeRange)` // Universal fetcher for tracks/albums/playlists
+- `getCommunityRatedPlaylists(filters, sort, timeRange)`
+- `getCommunityRatedTracks(filters, sort, timeRange)`
+- `getCommunityRatedAlbums(filters, sort, timeRange)`
 - `getRecentCommunityActivity(limit)`
-- `getCommunityComments(itemId, itemType)` // itemType: track, album, playlist
+- `getCommunityComments(itemId, itemType)`
 - `addComment(itemId, itemType, comment)`
 - `deleteComment(commentId)`
 - `getGlobalStatistics()`
+- `getTrendingTags(timeRange)`
+- `getTrendingGenres(timeRange)`
+- `getUserActivityStats(userId)` // Total ratings, comments, tags
 
 #### **I. Search & Filter Module**
 - `spotifySearch(query, type, spotifyFilters)` // Search Spotify catalog
-- `filterUserContent(content, filters)` // Filter user's playlists/favorites by tags/ratings
-- `filterCommunityContent(content, filters)` // Filter community content by tags/ratings/time
-- `sortResults(items, sortBy, order)`
+- `filterUserContent(content, filters)` // Filter user's playlists/favorites by tags/ratings/date
+- `sortUserContent(content, sortBy)` // Sort by rating, date added, etc.
+- `filterCommunityContent(content, filters)` // Filter by tags/ratings/time/activity age
+- `sortCommunityContent(content, sortBy)` // Sort by: top rated, most ratings, most commented, recently commented, newly tagged
+- `applyTimeRangeFilter(content, timeRange)` // 7 days, 30 days, all-time
+- `applyRatingThresholdFilter(content, minRating)` // Filter by minimum rating
+- `applyActivityAgeFilter(content, maxAge)` // Filter by last activity timestamp
 - `getPaginatedResults(items, page, limit)`
 - `buildFilterQuery(filters)`
 
@@ -288,18 +317,18 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - Global rating aggregation
 - Rating privacy toggle
 - Rating display components
-- Real-time rating updates (Supabase realtime)
+- Real-time rating updates (Supabase subscriptions)
 - Rating history tracking
 
 **Team 2: Tagging System**
-- Pre-made tags database seeding (genres, moods, vibe)
+- Pre-made tags database seeding
 - Custom tag creation
 - Tag assignment functionality (tracks, albums, playlists)
 - Tag filtering
 - Tag management UI
 
 **Team Leader: Integration & Coordination**
-- Ensure rating & tagging systems connect smoothly
+- Ensure ratings and tags work together
 - Code review and merge coordination
 
 **Deliverables:**
@@ -324,7 +353,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - Drag-and-drop reordering
 - Search within playlists
 - Filter and sort functionality
-- Favorites functionality
+- Favorites/likes functionality
 - Favorites collection page
 
 **Deliverables:**
@@ -339,75 +368,89 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 **Milestone: Personalized Recommendations Working**
 
 **Team 1: Search & Filtering**
-- Spotify search implementation (Client Credentials)
-- User content filtering and sorting
-  - User playlists filtered by tags/ratings/favourites
-  - Sort user content by ratings/date added
-- Pagination & load-more UI
+- Spotify search implementation
+- User content filtering (playlists/favorites by tags/ratings)
+- Community content filtering
+- Sort functionality
+- Pagination
 - Search results optimization
 
 **Team 2 + Team Leader: Recommendation Engine**
-- Build simple preference model based on:
-  - User ratings
-  - User tags
-  - User favorites
-- Generate recommendations for the **For You** page only
-- Display recommended tracks/albums on a dedicated page
-- No per-album similarity or complex graph UI
+- User preference graph building
+- Content similarity algorithm
+- Hybrid recommendation logic
+- Similar albums feature
+- Personalized "For You" page
+- Recommendation score calculation
 
 **Deliverables:**
-- Spotify search works
-- User filtering & sorting work
-- Personalized **For You** page shows recommendations
+- Spotify search fully functional
+- User content filtering works (tags, ratings)
+- Personalized recommendations appear
+- "For You" page populated
+- Similar content suggestions work
 
 ---
 
 ### **STAGE 5: Community Features** (Week 5)
-**Milestone: Community Interaction**
+**Milestone: Community Engagement Active**
 
-**Team 1: Primary Discovery & Trending Metrics (Sort By)**
+**Team 1: Trending & Discovery Metrics**
 (Community-based; data-driven rankings using Supabase, NOT Spotify charts)
 
 #### **Trending Metrics (Sort Options)**
 The community content list can be sorted by:
-- Top rated (highest average score)
-- Most ratings (highest rating count)
-- Most commented
-- Most recently commented
-- Most newly tagged items
+- **Top rated** (highest average rating score)
+- **Most ratings** (highest rating count)
+- **Most commented** (highest comment count)
+- **Most recently commented** (latest comment timestamp)
+- **Most newly tagged** (most recent tag additions)
 
-#### **Time Filters (Define “Trending Period”)**
+#### **Time Filters (Define "Trending Period")**
 - Weekly Trending (past 7 days)
 - Monthly Trending (past 30 days)
 - Historical Top Content (all-time)
 
 #### **Content Filters**
-- **Tag-Based Trending:** Show only items containing selected tags
-- **Genre-Based Trending:** Show items matching selected Spotify genres
-- **Rating Threshold Filter:** Only show content above a minimum average rating (e.g., > 4/5)
+- **Tag-Based Filter:** Show only items containing selected tags
+- **Genre-Based Filter:** Show items matching selected Spotify genres
+- **Rating Threshold Filter:** Only show content above a minimum average rating (e.g., ≥ 7/10)
 - **Activity Age Filter:** Filter items by how recently they received their last activity (rating, comment, tag)
+
+**Implementation Tasks:**
+- Build trending query logic in Supabase
+- Create time-range filters (7d, 30d, all-time)
+- Implement sorting algorithms (top rated, most ratings, etc.)
+- Build filter UI components
+- Display trending tracks/albums/playlists
 
 **Team 2: Community User Actions & Interaction**
 - Users can:
   - Rate community tracks/albums/playlists
-  - Tag community tracks/albums/playlists
+  - Tag community tracks/albums/playlists (add custom or pre-made tags)
   - Comment on community tracks/albums/playlists
-- Profile pages with user stats:
-  - Total ratings
-  - Total comments
-  - Total taggings
+- Public user profile pages with activity statistics:
+  - Total ratings given
+  - Total comments posted
+  - Total tags added
+  - Recently rated items
+  - Recently commented items
 
-**Team Leader: Integration**
-- Ensure trending logic works correctly with live rating/tag/comment data  
-- Connect community actions to trending metrics  
-- Test real-time updates (Supabase Realtime)  
-- Ensure smooth final UI/UX integration across all community pages  
+**Team Leader: Integration & Real-time Updates**
+- Ensure trending logic works correctly with live rating/tag/comment data
+- Connect community actions to trending metrics
+- Test real-time updates (Supabase Realtime subscriptions)
+- Ensure smooth final UI/UX integration across all community pages
+- Optimize database queries for performance
 
 **Deliverables:**
 - Fully functional Community & Trending sections
 - Real-time rating and comment updates
 - Tag/genre-based discovery working
+- Multiple sort options (top rated, most commented, etc.)
+- Time-range filters (7d, 30d, all-time)
 - Public user profiles showing activity stats
+
 ---
 
 ### **STAGE 6: Polish, Optimization & Phase 2 (If Time)** (Week 6)
@@ -423,6 +466,7 @@ The community content list can be sorted by:
 **Team 2: Performance Optimization**
 - Code optimization
 - Database query optimization
+- Caching implementation
 - Real-time performance tuning
 
 **Team Leader: QA & Phase 2 Preparation**
@@ -441,8 +485,8 @@ The community content list can be sorted by:
 - Polished, professional UI
 - Fast and responsive
 - Production-ready MVP
-- |⚠️| [Optional: Playlist export working]
-- |⚠️| [Optional: AI features active]
+- ⚠️ Optional: Playlist export working
+- ⚠️ Optional: AI features active
 
 ---
 
@@ -478,14 +522,15 @@ The community content list can be sorted by:
 
 ### Core Tables
 1. **users** - User accounts and profiles
-2. **ratings** - Personal and public ratings (tracks, albums, playlists)
+2. **ratings** - Personal and public ratings (tracks, albums, playlists) with timestamps
 3. **tags** - Pre-made and custom tags
 4. **playlists** - User-created playlists
 5. **playlist_items** - Tracks/albums in playlists
-6. **item_tags** - Junction table for tagging (tracks, albums, playlists)
+6. **item_tags** - Junction table for tagging (tracks, albums, playlists) with timestamps
 7. **favorites** - Liked tracks
-8. **comments** - Community comments (tracks, albums, playlists)
-9. **user_preferences** - For recommendation engine
+8. **comments** - Community comments (tracks, albums, playlists) with timestamps
+9. **user_preferences** - For recommendation engine (simplified: ratings, tags, favorites)
+10. **activity_log** - Track user activity for trending calculations (optional optimization)
 
 ---
 
@@ -505,16 +550,16 @@ The community content list can be sorted by:
 - Week 1: Authentication & Database setup
 - Week 2: Rating system
 - Week 3: Core playlist features
-- Week 4: Search & filtering
-- Week 5: Trending & discovery
+- Week 4: Search & user content filtering/sorting
+- Week 5: Trending metrics & discovery (sort/filter logic)
 - Week 6: UI/UX polish
 
 **Team 2 (2 People)**
 - Week 1: Spotify API integration
 - Week 2: Tagging system
 - Week 3: Advanced playlist features & favorites
-- Week 4: Recommendation engine
-- Week 5: Community interaction
+- Week 4: Graph-based recommendation engine (For You page)
+- Week 5: Community interaction (rating/tagging/commenting)
 - Week 6: Performance optimization
 
 ---
@@ -530,8 +575,16 @@ The community content list can be sorted by:
 
 ### Clarifications
 - **Spotify Search**: Basic search using Spotify API (genre, year filters from Spotify)
-- **User Content Filtering**: Advanced filtering for user's own playlists and favorites (tags, ratings, date)
-- **Community Content Filtering**: Advanced filtering for community-rated content (tags, ratings, time)
+- **User Content Filtering**: Advanced filtering for user's own playlists and favorites (tags, ratings, date, favorites)
+- **Community Content Filtering**: Advanced filtering for community-rated content with multiple sort options:
+  - Sort by: top rated, most ratings, most commented, recently commented, newly tagged
+  - Filter by: tags, genres, rating threshold, activity age, time range (7d, 30d, all-time)
+- **Recommendation Engine**: Graph-based algorithm for "For You" page
+  - Graph structure with nodes: tracks, albums, artists, genres, tags
+  - Graph edges: related artist, related genres, same genre, same artist, same album, user ratings, user tags, user favorites
+  - Traversal algorithm finds similar content based on graph connections
+  - Recommendations scored by path distance and edge weights
+  - Uses Spotify API for related artists/genres data
 
 ---
 
@@ -540,7 +593,7 @@ The community content list can be sorted by:
 ### High Priority Risks
 1. **Spotify API Rate Limits** - Implement caching and request optimization
 2. **Real-time Performance** - Test Supabase subscriptions at scale
-3. **Recommendation Algorithm Complexity** - Start simple, iterate
+3. **Recommendation Algorithm Complexity** - Graph-based system requires careful design and optimization
 4. **Time Constraints** - Prioritize Phase 1, Phase 2 is optional
 5. **Small Team Size** - Clear communication and well-defined modules
 
