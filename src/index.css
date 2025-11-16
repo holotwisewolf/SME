@@ -1,3 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import "tailwindcss";
+
+/* Define custom colors using CSS variables */
+@theme {
+  --color-background-primary: #696969;
+  --color-surface-secondary: #292929;
+  --color-text-primary-contrast: #D1D1D1;
+  --color-text-highlight-coral: #FFD1D1;
+  --color-accent-spotify-green: #BAFFB5;
+  --color-accent-electric-blue: #D1F3FF;
+  
+  --font-family-sans: 'Inter', sans-serif;
+}
+
+body {
+  background-color: var(--color-background-primary);
+  color: var(--color-text-primary-contrast);
+  font-family: var(--font-family-sans);
+}
