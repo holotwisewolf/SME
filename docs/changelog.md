@@ -7,7 +7,7 @@
   - Added `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` to `.env` and `supabase/.env.local` to provide necessary credentials for the Supabase Edge Function.
   - Updated `supabase/functions/spotify-token/index.ts` to include `apikey` in `Access-Control-Allow-Headers` to resolve CORS policy blocking issues.
 
-## 2025-11-21  
+## 2025-11-21  (YJ)
 
 ### Fixed
 - **Supabase Cloud Database**
