@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/homepage";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
+import Clock from './components/Clock'; 
 
 function AppLayout() {
   return (
@@ -10,6 +11,7 @@ function AppLayout() {
       <div className="flex-1 flex flex-col">
         <Header />
         <main className="flex-1 overflow-y-auto p-6">
+          <Clock />
           <Routes>
             <Route path="/" element={<HomePage />} />
           </Routes>
