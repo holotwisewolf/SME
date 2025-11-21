@@ -16,13 +16,14 @@
       - Log into supabase CLI and run: "npm run types"
   - Removed duplicative `src/supabaseClient.ts`, kept the main one in `lib/supabseClient.ts`.
   - Added error validatiosn for `lib/supabaseClient.ts`.
+  - Combined `lib/spotifyAPI.ts` and `lib/getSpotifyToken.ts` into `lib/spotifyConnection.ts`
 
 ## 2025-11-22(Junqi)
 
 ### Progress
 - **Spotify Services**
   `src/services/spotify_services.ts`
-  Added:
+  Added helper functions:
   - export async function searchTracks(query, filters) { ... }
   - export async function searchAlbums(query, filters) { ... }
   - export async function searchArtists(query) { ... }
@@ -31,4 +32,11 @@
   - export async function getArtistDetails(artistId) { ... }
   - export async function getTrackPreview(trackId) { ... }
   - export function generateSpotifyLink(resourceId, type) { ... }
-  - export async function getClientCredentialsToken() { ... }
+
+## 2025-11-22(Matthew)
+
+### Progress
+- **Authentication Services**
+  Added necessary authentication services in `src/services/auth_services.ts`
+
+
