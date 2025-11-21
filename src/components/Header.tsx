@@ -28,7 +28,7 @@ const Header: React.FC = () => {
               transition duration-150
             "
             >
-            Logout
+            Login
           </button>
           <button 
             className="
@@ -42,7 +42,7 @@ const Header: React.FC = () => {
               transition duration-150
               "
               >
-            Login
+            Sign Up
           </button>
         </div>
         {/* === END: Transparent Bordered Button === */}

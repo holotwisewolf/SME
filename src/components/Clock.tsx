@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function DigitalClock() {
+function Clock() {
   // Helper: Format date as HH:MM:SS (24-hour format)
   const formatTime = (date: Date) => {
     const hours = String(date.getHours()).padStart(2, '0');
@@ -29,4 +29,4 @@ function DigitalClock() {
   );
 }
 
-export default DigitalClock;
+export default Clock;
