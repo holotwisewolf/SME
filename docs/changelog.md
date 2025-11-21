@@ -15,4 +15,4 @@
   - Added scripts in `package.json` to update database easily:
       - Log into supabase CLI and run: "npm run types"
   - Removed duplicative `src/supabaseClient.ts`, kept the main one in `lib/supabseClient.ts`.
-  - Added error validatiosn for `lib/supabseClient.ts`.
+  - Added error validatiosn for `lib/supabaseClient.ts`.
