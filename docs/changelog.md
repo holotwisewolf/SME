@@ -52,7 +52,6 @@
 
 ### Progress
 - **Spotify Services**
-  Added necessary authentication services in
-  `src/services/spotify_auth.ts`
-  - export async function linkSpotifyAccount() { ... }
-  - export async function unlinkSpotifyAccount() { ... }
+  Added extra spotify services
+  - export async function createSpotifyPlaylist(userId, name, desc, isPublic) { ... }
+  - export async function addTracksToSpotifyPlaylist(playlistId, trackUris) { ... }
