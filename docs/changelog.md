@@ -47,3 +47,12 @@
   `src/services/spotify_auth.ts`
   - export async function linkSpotifyAccount() { ... }
   - export async function unlinkSpotifyAccount() { ... }
+
+### 2025-11-23(Eric)
+
+### Progress
+- **Spotify Services**
+  Added necessary authentication services in
+  `src/services/spotify_auth.ts`
+  - export async function linkSpotifyAccount() { ... }
+  - export async function unlinkSpotifyAccount() { ... }
