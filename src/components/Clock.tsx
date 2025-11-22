@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
 function Clock() {
-  // Helper: Format date as HH:MM:SS (24-hour format)
   const formatTime = (date: Date) => {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -19,12 +18,11 @@ function Clock() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center p-5 bg-[var(--color-background-primary)] w-fit rounded-md">
-      <div 
-        className="font-mono text-6xl font-bold tracking-widest text-[var(--color-text-highlight-coral)] slashed-zero"
-      >
-        {time}
-      </div>
+    // Reduced to text-4xl to match the Playlist title size
+    <div 
+      className="font-mono text-4xl font-bold text-[#FFD1D1]"
+    >
+      {time}
     </div>
   );
 }
