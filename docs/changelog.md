@@ -39,7 +39,7 @@
 - **Authentication Services**
   Added necessary authentication services in `src/services/auth_services.ts`
 
-  ## 2025-11-22(Matthew)
+  ## 2025-11-23(Eric)
 
 ### Progress
 - **spotify Services**
