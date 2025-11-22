@@ -153,3 +153,5 @@ export async function checkAuthStatus() {
   // Convert the session object to a boolean (true if session exists, false if null)
   return !!data.session; 
 }
+
+
