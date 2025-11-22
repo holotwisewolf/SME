@@ -32,7 +32,7 @@ const playlistGridData = [
 
 const PlaylistGrid: React.FC = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {playlistGridData.map((playlist) => (
         <PlaylistCard
           key={playlist.playlistId}
