@@ -1,0 +1,44 @@
+import React from 'react';
+
+interface CloudLogoProps {
+    className?: string;
+}
+
+const CloudLogo: React.FC<CloudLogoProps> = ({ className = "w-32 h-32" }) => {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+            // Allows you to pass in "w-20 h-20", etc.
+            className={className}
+        >
+            <defs>
+                <mask id="note-hole">
+                    {/* 1. Base Canvas (White = Visible) */}
+                    <rect width="100%" height="100%" fill="white" />
+
+                    {/* 2. The Note Cutter (Black = Transparent) */}
+                    <g transform="translate(165,210) scale(10)" fill="black" stroke="black">
+                        <path d="M6.021,2.188 L6.021,11.362 C5.46,11.327 4.843,11.414 4.229,11.663 
+            C2.624,12.312 1.696,13.729 2.155,14.825 C2.62,15.924 4.294,16.284 5.898,15.634 
+            C7.131,15.134 7.856,14.184 7.965,13.272 L7.958,4.387 L15.02,3.028 L15.02,9.406 
+            C14.422,9.343 13.746,9.432 13.076,9.703 C11.471,10.353 10.544,11.77 11.004,12.866 
+            C11.467,13.964 13.141,14.325 14.746,13.675 C15.979,13.174 16.836,12.224 16.947,11.313 
+            L16.958,0.002 L6.021,2.188 Z"/>
+                    </g>
+                </mask>
+            </defs>
+
+            {/* 3. The Cloud with the Mask applied */}
+            <g fill="#FFD1D1" mask="url(#note-hole)">
+                <path d="M421.818,218.252c-0.392-71.714-58.606-129.7-130.4-129.7
+        c-60.82,0-111.914,41.642-126.338,97.965c-5.524-0.886-11.188-1.363-16.955-1.363
+        c-58.69,0-106.263,47.573-106.263,106.277c0,26.7,9.884,51.094,26.163,69.763L0,423.448
+        h412.176l0.154-0.177c55.338-1.784,99.67-47.096,99.67-102.869
+        C512,267.86,472.65,224.584,421.818,218.252z"/>
+            </g>
+        </svg>
+    );
+};
+
+export default CloudLogo;
