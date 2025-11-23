@@ -1,83 +1,127 @@
-import React, { useState } from 'react';
+import React, { useContext, createContext, useState } from "react";
+import ExpandButton from "./ExpandButton"; // Your custom button
+import CloudLogo from "./CloudLogo";       // Your custom logo
 
-// --- IMPORTS ---
-// Make sure these files exist in 'src/assets/'
-import logoIcon from '../assets/headphones_icon3.png'; 
-import folderIcon from '../assets/folder_icon3.png';
-import musicIcon from '../assets/music_icon.png';
-import infoIcon from '../assets/info_icon.png';
+const SidebarContext = createContext<{ expanded: boolean }>({ expanded: true });
 
-const icons = [
-  { id: "library", type: "navigation", src: folderIcon, alt: "Library" },
-  { id: "music", type: "navigation", src: musicIcon, alt: "Music" },
-  { id: "info", type: "navigation", src: infoIcon, alt: "Info" }
-];  
+export default function Sidebar({ children }: { children: React.ReactNode }) {
+    // Default to false if you want it closed by default to match your original design
+    const [expanded, setExpanded] = useState(false);
 
-const Sidebar: React.FC = () => {
-  // State to track which tab is clicked (active)
-  const [activeTab, setActiveTab] = useState('library');
-  // State to track which tab is currently being hovered
-  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
+    return (
+        <aside className="h-screen sticky top-0 z-50">
+            <nav className="h-full flex flex-col bg-[var(--color-background-primary)] border-r border-[#444] shadow-xl transition-all duration-300 ease-in-out">
 
-  return (
-    <aside className="w-[70px] bg-[var(--color-background-primary)] flex flex-col border-r border-white h-screen">
-      
-      {/* 1. TOP SECTION (LOGO) */}
-      <div className="h-20 w-full flex items-center justify-center border-b border-white">
-        <div className="bg-[#FFD1D1] p-3 rounded-2xl">
-          <img 
-            src={logoIcon} 
-            alt="App Logo" 
-            className="w-8 h-8 object-contain"
-          />
-        </div>
-      </div>
+                {/* HEADER: Logo + Toggle Button */}
+                <div className="p-4 pb-2 flex justify-between items-center h-20">
+                    <div className={`overflow-hidden transition-all duration-300 ${expanded ? "w-32" : "w-0 opacity-0"}`}>
+                        {/* Text Logo or Full Logo could go here */}
+                        <h1 className="text-[#FFD1D1] font-bold text-xl whitespace-nowrap pl-2">Music Explorer</h1>
+                    </div>
 
-      {/* 2. NAVIGATION SECTION */}
-      <div className="flex-1 flex flex-col items-center pt-10 pb-4 space-y-8">
-        {icons.map((icon) => {
-          
-          const isActive = activeTab === icon.id;
-          const isHovered = hoveredTab === icon.id;
+                    <button
+                        onClick={() => setExpanded((curr) => !curr)}
+                        className="p-1.5 rounded-lg hover:bg-[#333] transition-colors group"
+                    >
+                        {/* Using your custom ExpandButton, rotating it based on state */}
+                        <div className={`transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>
+                            <ExpandButton />
+                        </div>
+                    </button>
+                </div>
 
-          // HOVER LOGIC:
-          // 1. If hovering an item (isHovered): Highlight IT.
-          // 2. If hovering NOTHING (hoveredTab === null) AND this is the active item: Highlight IT.
-          // 3. If hovering SOMETHING ELSE: The active item loses highlight.
-          const shouldHighlight = isHovered || (isActive && hoveredTab === null);
-          
-          return (
-            <div 
-              key={icon.id} 
-              className="relative group cursor-pointer flex items-center justify-center"
-              // Add Mouse Events to track hover state
-              onMouseEnter={() => setHoveredTab(icon.id)}
-              onMouseLeave={() => setHoveredTab(null)}
-              onClick={() => setActiveTab(icon.id)}
-            >
-              
-              {/* HIGHLIGHT BACKGROUND (Dark Square) */}
-              {shouldHighlight && (
-                <div className="absolute -inset-2 bg-[#D1F3FF]/20 rounded-xl pointer-events-none z-0"></div>
-              )}
-              
-              {/* ICON IMAGE */}
-              <div className="relative z-10">
-                  <img 
-                    src={icon.src} 
-                    alt={icon.alt} 
-                    // FIXED: Changed 'isSelected' to 'shouldHighlight'
-                    // This ensures the icon brightens up when the background box appears
-                    className={`w-10 h-10 object-contain transition-opacity ${shouldHighlight ? 'opacity-100' : 'opacity-90'}`}
-                  />
-              </div>
+                {/* ITEMS CONTAINER */}
+                <SidebarContext.Provider value={{ expanded }}>
+                    <ul className="flex-1 px-3 space-y-2 pt-4">{children}</ul>
+                </SidebarContext.Provider>
 
+                {/* FOOTER: User Profile (Optional, styled for Dark Mode) */}
+                <div className="border-t border-[#444] flex p-3">
+                    <img
+                        src="https://ui-avatars.com/api/?background=FFD1D1&color=000&bold=true&name=User"
+                        alt=""
+                        className="w-10 h-10 rounded-md shrink-0"
+                    />
+                    <div
+                        className={`
+              flex justify-between items-center
+              overflow-hidden transition-all duration-300 ${expanded ? "w-40 ml-3" : "w-0"}
+          `}
+                    >
+                        <div className="leading-4 text-white">
+                            <h4 className="font-semibold text-sm">My Profile</h4>
+                            <span className="text-xs text-gray-400">user@music.com</span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+    );
+}
+// --- SIDEBAR ITEM COMPONENT ---
+interface SidebarItemProps {
+    icon: React.ReactNode;
+    text: string;
+    active?: boolean;
+    alert?: boolean;
+    onClick?: () => void; // Added onClick support
+}
+
+export function SidebarItem({ icon, text, active, alert, onClick }: SidebarItemProps) {
+    const { expanded } = useContext(SidebarContext);
+
+    return (
+        <li
+            onClick={onClick}
+            className={`
+        relative flex items-center py-3 px-3 my-1
+        font-medium rounded-md cursor-pointer
+        transition-colors group
+        ${active
+                    ? "bg-[#FFD1D1]/10 text-[#FFD1D1]" // Active: Pink tint + Pink text
+                    : "hover:bg-[#333] text-gray-400 hover:text-white" // Hover: Dark Gray + White text
+                }
+    `}
+        >
+            {/* Icon Wrapper */}
+            <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                {icon}
             </div>
-          );
-        })}
-      </div>
-    </aside>
-  );
-};
 
-export default Sidebar;
+            {/* Text Label (Expands/Collapses) */}
+            <span
+                className={`overflow-hidden transition-all duration-300 whitespace-nowrap ${expanded ? "w-40 ml-3 opacity-100" : "w-0 opacity-0"
+                    }`}
+            >
+                {text}
+            </span>
+
+            {/* Notification Dot (Optional) */}
+            {alert && (
+                <div
+                    className={`absolute right-2 w-2 h-2 rounded bg-[#FFD1D1] ${expanded ? "" : "top-2 right-2"
+                        }`}
+                />
+            )}
+
+            {/* Floating Tooltip (Visible ONLY when collapsed) */}
+            {!expanded && (
+                <div
+                    className={`
+          absolute left-full rounded-md px-2 py-1 ml-6
+          bg-[#FFD1D1] text-black text-xs font-bold
+          invisible opacity-20 -translate-x-3 transition-all
+          group-hover:visible group-hover:opacity-100 group-hover:translate-x-0
+          z-50
+      `}
+                >
+                    {text}
+                </div>
+            )}
+        </li>
+    );
+}
+
+
+
+
