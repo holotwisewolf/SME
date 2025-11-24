@@ -1,5 +1,5 @@
 // src/services/spotifyService.ts
-import { spotifyFetch } from '../lib/spotifyConnection'
+import { spotifyFetch, getSpotifyToken } from '../lib/spotifyConnection'
 
 /**
  * Spotify Service
@@ -75,6 +75,88 @@ export async function getMultipleTracks(trackIds: string[]) {
 export async function getMultipleAlbums(albumIds: string[]) {
   const ids = albumIds.join(',')
   return await spotifyFetch(`albums?ids=${ids}`)
+}
+
+// ============================================
+// Playlist Management Functions (NEW)
+// ============================================
+
+/**
+ * Create a Spotify playlist for the user.
+ * Requires playlist-modify-public or playlist-modify-private scope.
+ */
+/**
+ * Create a Spotify playlist for the user.
+ * Requires playlist-modify-public or playlist-modify-private scope.
+ */
+export async function createSpotifyPlaylist(
+  userId: string,
+  name: string,
+  description: string,
+  isPublic: boolean
+) {
+  const token = await getSpotifyToken() 
+
+  // FIX: Use the correct Spotify API endpoint: https://api.spotify.com/v1/users/{user_id}/playlists
+  const response = await fetch(
+    `https://api.spotify.com/v1/users/${userId}/playlists`, 
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        description,
+        public: isPublic,
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(
+      `Spotify Create Playlist Error ${response.status}: ${error.error?.message || response.statusText}`
+    )
+  }
+
+  return await response.json()
+}
+
+/**
+ * Add tracks to an existing Spotify playlist.
+ * Requires playlist-modify-public or playlist-modify-private scope.
+ */
+export async function addTracksToSpotifyPlaylist(
+  playlistId: string,
+  trackUris: string[] // Array of Spotify URIs (e.g., spotify:track:ID)
+) {
+  const token = await getSpotifyToken()
+
+  // FIX: Use the correct Spotify API endpoint: https://api.spotify.com/v1/playlists/{playlist_id}/tracks
+  const response = await fetch(
+    `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        uris: trackUris,
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(
+      `Spotify Add Tracks Error ${response.status}: ${error.error?.message || response.statusText}`
+    )
+  }
+
+  return await response.json()
 }
 
 // ============================================
