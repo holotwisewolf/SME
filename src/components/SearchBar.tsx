@@ -17,12 +17,12 @@ const SearchBar: React.FC = () => {
       <div className="relative flex items-center w-full h-12">
         {/* THE WRAPPER */}
         <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center">
-        <SearchButton />      
+          <SearchButton />
         </div>
 
         {/* --- CLEAR BUTTON (Right, only shows when text exists) --- */}
         {searchText && (
-          <button 
+          <button
             onClick={handleClear}
             // Position: right-32 (approx 128px) puts it to the left of the dropdown
             className="absolute right-32 top-1/2 -translate-y-1/2 z-20 p-1 
@@ -46,7 +46,7 @@ const SearchBar: React.FC = () => {
         />
 
         <div className="absolute right-1.5 top-1 bottom-1">
-          <select 
+          <select
             className="
               h-full 
               w-28
