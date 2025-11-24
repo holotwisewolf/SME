@@ -1,28 +1,61 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import HomePage from "./pages/homepage";
-import Sidebar from "./components/Sidebar";
+import { useLocation, Routes, Route } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import Layout from "./components/Layout";
 import Header from "./components/Header";
+import PageWrapper from "./components/PageWrapper";
+import AnonHomePage from "./pages/anonhomepage";
 
-function AppLayout() {
+function App() {
+  const location = useLocation();
+
   return (
-    <div className="flex h-screen bg-[#696969] text-[#D1D1D1]">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-6">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
+    <Layout>
+      <div className="flex flex-col h-full">
+        {/* Header is persistent across pages in this layout */}
+        <div className="shrink-0 z-40 sticky top-0">
+          <Header />
+        </div>
+
+        {/* Animated Routes */}
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route
+              path="/"
+              element={
+                <PageWrapper>
+                  <AnonHomePage />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/library"
+              element={
+                <PageWrapper>
+                  <AnonHomePage />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/songs"
+              element={
+                <PageWrapper>
+                  <div className="text-2xl text-white">Songs Page Content</div>
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/favourites"
+              element={
+                <PageWrapper>
+                  <div className="text-2xl text-white">Favourites Page Content</div>
+                </PageWrapper>
+              }
+            />
           </Routes>
-        </main>
+        </AnimatePresence>
       </div>
-    </div>
+    </Layout>
   );
 }
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AppLayout />
-    </BrowserRouter>
-  );
-}
+export default App;

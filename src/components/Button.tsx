@@ -29,9 +29,9 @@ const Header: React.FC = () => {
           My Action
         </button>
         {/* === END: Transparent Bordered Button === */}
-        <button className="text-[#D1D1D1] hover:text-white">Login</button>
+        <button className="text-[#D1D1D1] hover:text-white">Sign Up</button>
         <button className="bg-[#BAFFB5] text-[#292929] font-bold rounded-md px-4 py-2 hover:bg-opacity-90">
-          Logout
+          Login
         </button>
       </div>
     </header>
