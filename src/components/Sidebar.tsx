@@ -1,127 +1,138 @@
-import React, { useContext, createContext, useState } from "react";
-import ExpandButton from "./ExpandButton"; // Your custom button
-import CloudLogo from "./CloudLogo";       // Your custom logo
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import CloudLogo from './CloudLogo';
+import ExpandSidebarButton from './ExpandSidebarButton';
+import folderIcon from '../assets/folder_icon.png';
+import musicIcon from '../assets/music_icon.png';
+import infoIcon from '../assets/info_icon.png';
 
-const SidebarContext = createContext<{ expanded: boolean }>({ expanded: true });
-
-export default function Sidebar({ children }: { children: React.ReactNode }) {
-    // Default to false if you want it closed by default to match your original design
-    const [expanded, setExpanded] = useState(false);
-
-    return (
-        <aside className="h-screen sticky top-0 z-50">
-            <nav className="h-full flex flex-col bg-[var(--color-background-primary)] border-r border-[#444] shadow-xl transition-all duration-300 ease-in-out">
-
-                {/* HEADER: Logo + Toggle Button */}
-                <div className="p-4 pb-2 flex justify-between items-center h-20">
-                    <div className={`overflow-hidden transition-all duration-300 ${expanded ? "w-32" : "w-0 opacity-0"}`}>
-                        {/* Text Logo or Full Logo could go here */}
-                        <h1 className="text-[#FFD1D1] font-bold text-xl whitespace-nowrap pl-2">Music Explorer</h1>
-                    </div>
-
-                    <button
-                        onClick={() => setExpanded((curr) => !curr)}
-                        className="p-1.5 rounded-lg hover:bg-[#333] transition-colors group"
-                    >
-                        {/* Using your custom ExpandButton, rotating it based on state */}
-                        <div className={`transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>
-                            <ExpandButton />
-                        </div>
-                    </button>
-                </div>
-
-                {/* ITEMS CONTAINER */}
-                <SidebarContext.Provider value={{ expanded }}>
-                    <ul className="flex-1 px-3 space-y-2 pt-4">{children}</ul>
-                </SidebarContext.Provider>
-
-                {/* FOOTER: User Profile (Optional, styled for Dark Mode) */}
-                <div className="border-t border-[#444] flex p-3">
-                    <img
-                        src="https://ui-avatars.com/api/?background=FFD1D1&color=000&bold=true&name=User"
-                        alt=""
-                        className="w-10 h-10 rounded-md shrink-0"
-                    />
-                    <div
-                        className={`
-              flex justify-between items-center
-              overflow-hidden transition-all duration-300 ${expanded ? "w-40 ml-3" : "w-0"}
-          `}
-                    >
-                        <div className="leading-4 text-white">
-                            <h4 className="font-semibold text-sm">My Profile</h4>
-                            <span className="text-xs text-gray-400">user@music.com</span>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-        </aside>
-    );
-}
-// --- SIDEBAR ITEM COMPONENT ---
-interface SidebarItemProps {
-    icon: React.ReactNode;
-    text: string;
-    active?: boolean;
-    alert?: boolean;
-    onClick?: () => void; // Added onClick support
+interface SidebarProps {
+    isExpanded: boolean;
+    toggleSidebar: () => void;
 }
 
-export function SidebarItem({ icon, text, active, alert, onClick }: SidebarItemProps) {
-    const { expanded } = useContext(SidebarContext);
+const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
+    const location = useLocation();
+    const activePath = location.pathname;
+
+    const menuItems = [
+        { path: '/library', icon: folderIcon, label: 'Library' },
+        { path: '/songs', icon: musicIcon, label: 'Songs' },
+        { path: '/Info', icon: infoIcon, label: 'Info' },
+    ];
+
+    // Animation variants to keep code clean
+    const sidebarVariants = {
+        expanded: { width: 250 },
+        collapsed: { width: 80 }
+    };
+
+    const itemVariants = {
+        expanded: { paddingLeft: '0.75rem', justifyContent: 'flex-start' },
+        collapsed: { paddingLeft: '0.75rem', justifyContent: 'flex-start' }
+    };
 
     return (
-        <li
-            onClick={onClick}
-            className={`
-        relative flex items-center py-3 px-3 my-1
-        font-medium rounded-md cursor-pointer
-        transition-colors group
-        ${active
-                    ? "bg-[#FFD1D1]/10 text-[#FFD1D1]" // Active: Pink tint + Pink text
-                    : "hover:bg-[#333] text-gray-400 hover:text-white" // Hover: Dark Gray + White text
-                }
-    `}
+        <motion.aside
+            initial={false}
+            animate={isExpanded ? "expanded" : "collapsed"}
+            variants={sidebarVariants}
+            className="relative h-screen bg-[#1a1a1a] border-r border-[white] flex flex-col z-50 overflow-visible rounded-br-2xl"
         >
-            {/* Icon Wrapper */}
-            <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                {icon}
+            {/* Expand/Collapse Button */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+                <ExpandSidebarButton isExpanded={isExpanded} toggleSidebar={toggleSidebar} />
             </div>
 
-            {/* Text Label (Expands/Collapses) */}
-            <span
-                className={`overflow-hidden transition-all duration-300 whitespace-nowrap ${expanded ? "w-40 ml-3 opacity-100" : "w-0 opacity-0"
-                    }`}
-            >
-                {text}
-            </span>
-
-            {/* Notification Dot (Optional) */}
-            {alert && (
-                <div
-                    className={`absolute right-2 w-2 h-2 rounded bg-[#FFD1D1] ${expanded ? "" : "top-2 right-2"
-                        }`}
-                />
-            )}
-
-            {/* Floating Tooltip (Visible ONLY when collapsed) */}
-            {!expanded && (
-                <div
-                    className={`
-          absolute left-full rounded-md px-2 py-1 ml-6
-          bg-[#FFD1D1] text-black text-xs font-bold
-          invisible opacity-20 -translate-x-3 transition-all
-          group-hover:visible group-hover:opacity-100 group-hover:translate-x-0
-          z-50
-      `}
+            {/* Logo Section */}
+            <div className="flex items-center border-b border-[white] h-20 overflow-hidden bg-[#262a33]">
+                <motion.div className="flex items-center w-full h-full relative"
+                    initial={false}
+                    animate={{ paddingRight: isExpanded ? "1.5rem" : "1rem", justifyContent: "flex-end" }}
                 >
-                    {text}
-                </div>
-            )}
-        </li>
+
+                    {/* Text (SME) - Slides open on the left */}
+                    <AnimatePresence>
+                        {isExpanded && (
+                            <motion.span
+                                initial={{ opacity: 0, x: -20, width: 0 }}
+                                animate={{ opacity: 1, x: 0, width: 'auto' }}
+                                exit={{ opacity: 0, x: -20, width: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="absolute left-2 text-white font-bold text-3xl tracking-wider whitespace-nowrap overflow-hidden flex items-center h-12"
+                            >
+                                SME
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Logo - Resized and fits inside */}
+                    <motion.div
+                        layout // This helps smooth out any tiny pixel sub-rendering issues
+                        className="shrink-0 flex items-center justify-center h-12 w-12"
+                    >
+                        <CloudLogo className="w-full h-full" />
+                    </motion.div>
+
+                </motion.div>
+            </div>
+
+            {/* Navigation Items */}
+            <nav className="flex-1 pt-10 pb-6">
+                <ul className="space-y-6">
+                    {menuItems.map((item) => {
+                        const isActive = activePath === item.path || (item.path === '/library' && activePath === '/');
+                        return (
+                            <li key={item.label} className="px-3">
+                                <Link
+                                    to={item.path}
+                                >
+                                    <motion.div
+                                        variants={itemVariants}
+                                        // This prevents the "teleport" by sliding the padding instead of switching align-items
+                                        className={`flex items-center h-12 px-3 rounded-lg transition-colors duration-200 group ${isActive ? 'bg-[#333333] text-white' : 'text-[#e6e6ef] hover:bg-[#444444]'
+                                            }`}
+                                    >
+                                        <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                                            <img
+                                                src={item.icon}
+                                                alt={item.label}
+                                                className={`w-full h-full object-contain transition-all duration-200 ${isActive
+                                                    ? 'brightness-200 invert-0'
+                                                    : 'invert opacity-80 group-hover:opacity-100'
+                                                    }`}
+                                            />
+                                        </div>
+
+                                        <AnimatePresence>
+                                            {isExpanded && (
+                                                <motion.span
+                                                    initial={{ opacity: 0, width: 0 }}
+                                                    animate={{ opacity: 1, width: 'auto', marginLeft: 16 }}
+                                                    exit={{ opacity: 0, width: 0, marginLeft: 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    className="font-medium whitespace-nowrap overflow-hidden text-sm"
+                                                >
+                                                    {item.label}
+                                                </motion.span>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.div>
+                                </Link>
+                                {/* Tooltip for collapsed state */}
+                                {!isExpanded && (
+                                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                                        {item.label}
+                                    </div>
+                                )}
+                            </li>
+                        );
+                    })}
+                </ul>
+            </nav>
+        </motion.aside >
     );
-}
+};
 
-
-
-
+export default Sidebar;

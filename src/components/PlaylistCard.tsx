@@ -1,5 +1,5 @@
 import React from 'react';
-import FavButton from './FavButton'; 
+import FavButton from './FavButton';
 import TrashButton from './TrashButton'
 import ExpandButton from './ExpandButton';
 
@@ -23,11 +23,11 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlistName }) => {
     <div className="bg-[#292929]/60 p-4 rounded-xl flex flex-col h-80 shadow-md relative">
       {/* Header */}
       <div className="flex justify-between items-start mb-4 px-1">
-        <h3 className="font-medium text-[#E0E0E0] text-lg">{playlistName}</h3>
+        <h3 className="font-medium text-[#E0E0E0] text-lg line-clamp-2 leading-tight">{playlistName}</h3>
         <div className="flex space-x-3 text-[#FFD1D1]">
-          <FavButton/>
-          <TrashButton/>
-          <ExpandButton/>
+          <FavButton />
+          <TrashButton />
+          <ExpandButton />
         </div>
       </div>
 
@@ -36,7 +36,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlistName }) => {
         {/* The image shows a large dark rectangle placeholder or multiple small ones */}
         {/* Option A: One large placeholder like 'Chill Vibes' / 'Workout Hits' */}
         <div className="bg-[#292929] rounded-2xl h-32 w-full"></div>
-        
+
         {/* If you have tracks, map them here, otherwise show the placeholder above */}
       </div>
 
