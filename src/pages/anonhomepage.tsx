@@ -4,9 +4,9 @@ import Clock from '../components/Clock';
 
 const HomePage: React.FC = () => {
   return (
-    <div className="flex flex-col h-full px-2 relative pb-32">
+    <div className="flex flex-col h-full px-6 relative pb-32">
       {/* Top Row */}
-      <div className="flex justify-between items-center mb-8 pt-12">
+      <div className="flex justify-between items-center mb-8 pt-2 mt-[35px]">
 
         {/* Left Group: Title + Toggle */}
         <div className="flex items-center gap-6">
