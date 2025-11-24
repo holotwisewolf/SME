@@ -38,7 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
             initial={false}
             animate={isExpanded ? "expanded" : "collapsed"}
             variants={sidebarVariants}
-            className="relative h-screen bg-[#1a1a1a] border-r border-[white] flex flex-col z-50 overflow-visible rounded-br-2xl"
+            className="relative h-screen bg-[#2a2a2e] border-[white] flex flex-col z-50 overflow-visible rounded-br-2xl"
         >
             {/* Expand/Collapse Button */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
@@ -91,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
                                     <motion.div
                                         variants={itemVariants}
                                         // This prevents the "teleport" by sliding the padding instead of switching align-items
-                                        className={`flex items-center h-12 px-3 rounded-lg transition-colors duration-200 group ${isActive ? 'bg-[#333333] text-white' : 'text-[#e6e6ef] hover:bg-[#444444]'
+                                        className={`flex items-center h-12 px-3 rounded-lg transition-colors duration-200 group ${isActive ? 'bg-[#444444] text-white' : 'text-[#e6e6ef] hover:bg-[#525252]'
                                             }`}
                                     >
                                         <div className="w-8 h-8 flex items-center justify-center shrink-0">
