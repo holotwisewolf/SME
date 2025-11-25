@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import CloudLogo from './CloudLogo';
 import ExpandSidebarButton from './ExpandSidebarButton';
+import FavoritesIcon from './FavoritesIcon';
 import folderIcon from '../assets/folder_icon.png';
 import musicIcon from '../assets/music_icon.png';
 import infoIcon from '../assets/info_icon.png';
@@ -12,12 +13,35 @@ interface SidebarProps {
     toggleSidebar: () => void;
 }
 
+interface MenuItem {
+    path: string;
+    icon: string | React.FC<{ className?: string }>;
+    label: string;
+    subItems?: MenuItem[];
+}
+
 const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
     const location = useLocation();
     const activePath = location.pathname;
+    const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
-    const menuItems = [
-        { path: '/library', icon: folderIcon, label: 'Library' },
+    const toggleSubMenu = (label: string) => {
+        if (expandedMenu === label) {
+            setExpandedMenu(null);
+        } else {
+            setExpandedMenu(label);
+        }
+    };
+
+    const menuItems: MenuItem[] = [
+        {
+            path: '/library',
+            icon: folderIcon,
+            label: 'Library',
+            subItems: [
+                { path: '/favorites', icon: FavoritesIcon, label: 'Favorites' }
+            ]
+        },
         { path: '/songs', icon: musicIcon, label: 'Songs' },
         { path: '/Info', icon: infoIcon, label: 'Info' },
     ];
@@ -93,42 +117,115 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
                 <ul className="space-y-6">
                     {menuItems.map((item) => {
                         const isActive = activePath === item.path || (item.path === '/library' && activePath === '/');
+                        const hasSubItems = item.subItems && item.subItems.length > 0;
+                        const isMenuExpanded = expandedMenu === item.label;
+
                         return (
                             <li key={item.label} className="px-3">
-                                <Link
-                                    to={item.path}
+                                <div
+                                    className="relative"
                                 >
-                                    <motion.div
-                                        variants={itemVariants}
-                                        className={`flex items-center h-12 px-3 rounded-lg transition-colors duration-200 group ${isActive ? 'bg-[#444444] text-white' : 'text-[#e6e6ef] hover:bg-[#525252]'
-                                            }`}
+                                    <Link
+                                        to={item.path}
+                                        className="block"
                                     >
-                                        <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                                            <img
-                                                src={item.icon}
-                                                alt={item.label}
-                                                className={`w-full h-full object-contain transition-all duration-200 ${isActive
-                                                    ? 'brightness-200 invert-0'
-                                                    : 'invert opacity-80 group-hover:opacity-100'
-                                                    }`}
-                                            />
-                                        </div>
+                                        <motion.div
+                                            variants={itemVariants}
+                                            className={`flex items-center h-12 px-3 rounded-lg transition-colors duration-200 group relative ${isActive ? 'bg-[#525252] text-white' : 'text-[#e6e6ef] hover:bg-[#444444]'
+                                                }`}
+                                        >
+                                            <div className="w-8 h-8 flex items-center justify-center shrink-0 relative">
+                                                {typeof item.icon === 'string' ? (
+                                                    <img
+                                                        src={item.icon}
+                                                        alt={item.label}
+                                                        className={`w-full h-full object-contain transition-all duration-200 ${isActive
+                                                            ? 'brightness-200 invert-0'
+                                                            : 'invert opacity-80 group-hover:opacity-100'
+                                                            }`}
+                                                    />
+                                                ) : (
+                                                    // Render component icon
+                                                    React.createElement(item.icon, {
+                                                        className: `w-full h-full ${isActive ? 'text-white' : 'text-gray-400'}`
+                                                    })
+                                                )}
+                                            </div>
 
-                                        <AnimatePresence>
-                                            {isExpanded && (
-                                                <motion.span
-                                                    initial={{ opacity: 0, width: 0 }}
-                                                    animate={{ opacity: 1, width: 'auto', marginLeft: 16 }}
-                                                    exit={{ opacity: 0, width: 0, marginLeft: 0 }}
-                                                    transition={{ duration: 0.2 }}
-                                                    className="font-medium whitespace-nowrap overflow-hidden text-sm"
+                                            <AnimatePresence>
+                                                {isExpanded && (
+                                                    <motion.span
+                                                        initial={{ opacity: 0, width: 0 }}
+                                                        animate={{ opacity: 1, width: 'auto', marginLeft: 16 }}
+                                                        exit={{ opacity: 0, width: 0, marginLeft: 0 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        className="font-medium whitespace-nowrap overflow-hidden text-sm flex-1"
+                                                    >
+                                                        {item.label}
+                                                    </motion.span>
+                                                )}
+                                            </AnimatePresence>
+
+                                            {/* Dropdown Button */}
+                                            {hasSubItems && isExpanded && (
+                                                <div
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        toggleSubMenu(item.label);
+                                                    }}
+                                                    className={`
+                                                        w-6 h-6 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ml-2
+                                                        hover:bg-white group/btn
+                                                    `}
                                                 >
-                                                    {item.label}
-                                                </motion.span>
+                                                    <svg
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className={`w-4 h-4 transition-transform duration-300 ${isMenuExpanded ? 'rotate-180' : 'rotate-0'} stroke-gray-400 group-hover/btn:stroke-black`}
+                                                    >
+                                                        <path d="M6 9L12 15L18 9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                    </svg>
+                                                </div>
                                             )}
-                                        </AnimatePresence>
-                                    </motion.div>
-                                </Link>
+                                        </motion.div>
+                                    </Link>
+                                </div>
+
+                                {/* Sub-items */}
+                                <AnimatePresence>
+                                    {hasSubItems && isExpanded && isMenuExpanded && (
+                                        <motion.ul
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden pl-4 mt-1 space-y-1"
+                                        >
+                                            {item.subItems!.map((subItem) => {
+                                                const isSubActive = activePath === subItem.path;
+                                                return (
+                                                    <li key={subItem.label}>
+                                                        <Link to={subItem.path}>
+                                                            <div className={`flex items-center h-10 px-3 rounded-lg transition-colors duration-200 ${isSubActive ? 'bg-[#525252] text-white' : 'text-[#e6e6ef] hover:bg-[#444444]'}`}>
+                                                                <div className="w-5 h-5 flex items-center justify-center shrink-0 mr-3">
+                                                                    {/* Render Component Icon */}
+                                                                    {typeof subItem.icon === 'string' ? (
+                                                                        <img src={subItem.icon} alt="" className="w-full h-full object-contain" />
+                                                                    ) : (
+                                                                        React.createElement(subItem.icon, { className: "w-full h-full" })
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-sm font-medium">{subItem.label}</span>
+                                                            </div>
+                                                        </Link>
+                                                    </li>
+                                                );
+                                            })}
+                                        </motion.ul>
+                                    )}
+                                </AnimatePresence>
+
                                 {/* Tooltip for collapsed state */}
                                 {!isExpanded && (
                                     <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
