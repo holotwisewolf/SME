@@ -1,6 +1,6 @@
 import React from 'react';
-import PlaylistGrid from '../components/PlaylistGrid';
-import Clock from '../components/Clock';
+import PlaylistGrid from '../components/content/PlaylistGrid';
+import Clock from '../components/ui/Clock';
 
 const HomePage: React.FC = () => {
   return (
