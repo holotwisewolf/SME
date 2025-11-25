@@ -96,9 +96,11 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
             <AnimatePresence>
                 {hasSubItems && isExpanded && isMenuExpanded && (
                     <motion.ul
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
+                        // animate maxHeight instead of height
+                        initial={{ maxHeight: 0, opacity: 0 }}
+                        animate={{ maxHeight: 200, opacity: 1 }} // Lowered to 200px for tighter timing
+                        exit={{ maxHeight: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }} // Explicit timing helps here
                         className="overflow-hidden pl-4 mt-2 space-y-1"
                     >
                         {item.subItems!.map((subItem) => (
