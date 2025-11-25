@@ -17,12 +17,20 @@ import FavouritesTracks from "./pages/favourites_pages/FavouritesTracks";
 import FavouritesAlbums from "./pages/favourites_pages/FavouritesAlbums";
 import Songs from "./pages/Songs";
 import Info from "./pages/Info";
+import SignUpPage from "./pages/auth_pages/SignUp";
 
 function App() {
   const location = useLocation();
 
   return (
     <LoginProvider>
+
+      <AnimatePresence>
+        {location.pathname === "/signup" && (
+          <SignUpPage key="signup" />
+        )}
+      </AnimatePresence>
+
       <Layout>
         <div className="flex flex-col h-full">
 

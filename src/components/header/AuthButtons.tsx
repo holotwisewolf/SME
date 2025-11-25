@@ -1,4 +1,5 @@
 import { useLogin } from "../../components/login/LoginProvider";
+import { Link } from "react-router-dom";
 
 const AuthButtons = () => {
   const { openLogin } = useLogin();
@@ -13,7 +14,7 @@ const AuthButtons = () => {
       </button>
 
       <button className="bg-[#bfbfbf] text-black font-bold rounded-md px-8 py-2.5 hover:bg-[#ededed] transition">
-        Sign Up
+        <Link to="/signup">Sign Up</Link>
       </button>
     </div>
   );
