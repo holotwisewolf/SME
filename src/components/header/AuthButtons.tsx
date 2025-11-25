@@ -1,10 +1,13 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const AuthButtons: React.FC = () => {
   return (
     <div className="flex space-x-4 flex-shrink-0">
-      <button
+      <Link
+        to="/login"
         className="
+          flex items-center justify-center
           bg-transparent 
           text-[#D1D1D1] 
           border border-[#888] 
@@ -16,8 +19,8 @@ const AuthButtons: React.FC = () => {
           whitespace-nowrap 
         "
       >
-        Login
-      </button>
+        Log In
+      </Link>
 
       <button
         className="

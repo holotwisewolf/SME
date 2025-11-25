@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface FavoritesIconProps {
+interface FavouritesIconProps {
     className?: string;
 }
 
-const FavoritesIcon: React.FC<FavoritesIconProps> = ({ className = "w-6 h-6" }) => {
+const FavouritesIcon: React.FC<FavouritesIconProps> = ({ className = "w-6 h-6" }) => {
     return (
         <svg
             viewBox="0 0 24 24"
@@ -22,4 +22,4 @@ const FavoritesIcon: React.FC<FavoritesIconProps> = ({ className = "w-6 h-6" }) 
     );
 };
 
-export default FavoritesIcon;
+export default FavouritesIcon;
