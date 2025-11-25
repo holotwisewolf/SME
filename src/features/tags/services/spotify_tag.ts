@@ -3,153 +3,160 @@
 import { supabase } from '../../../lib/supabaseClient';
 import type { Tag, TagType, ItemType } from '../../../types/app';
 
-async function getCurrentUserId() {
+async function getCurrentUserId(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("You must be logged in to perform this action.");
-  }
+  if (!user) throw new Error("You must be logged in to perform this action.");
   return user.id;
 }
 
 /**
- *  1. Fetch All Tags
+ * Fetch all tags (system + custom)
  */
-export async function getAllTags() {
+export async function getAllTags(): Promise<Tag[]> {
   const { data, error } = await supabase
     .from('tags')
-    .select('*')
-    .order('name', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching tags:', error);
-    return [];
-  }
-  return data;
-}
-
-/**
- *  2. Fetch Only Pre-made Tags (System Tags)
- */
-export async function getPreMadeTags() {
-  const { data, error } = await supabase
-    .from('tags')
-    .select('*')
-    .eq('type', 'premade') // ✅ Filter by type
+    .select()
     .order('name');
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error(`Failed to fetch tags: ${error.message}`);
+  return data ?? [];
 }
 
 /**
- *  3. Fetch User Custom Tags
+ * Fetch system-created premade tags
  */
-export async function getUserCustomTags() {
+export async function getPreMadeTags(): Promise<Tag[]> {
+  const { data, error } = await supabase
+    .from('tags')
+    .select()
+    .eq('type', 'premade')
+    .order('name');
+
+  if (error) throw new Error(`Failed to fetch premade tags: ${error.message}`);
+  return data ?? [];
+}
+
+/**
+ * Fetch user-created custom tags
+ */
+export async function getUserCustomTags(): Promise<Tag[]> {
   const userId = await getCurrentUserId();
 
   const { data, error } = await supabase
     .from('tags')
-    .select('*')
+    .select()
     .eq('type', 'custom')
     .eq('creator_id', userId)
     .order('name');
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error(`Failed to fetch user tags: ${error.message}`);
+  return data ?? [];
 }
 
 /**
- *  4. Create Tag (With Type Support!)
- * Defaults to 'custom' if not specified.
+ * Create a tag (custom or premade)
  */
-export async function createTag(tagName: string, type: TagType = 'custom') {
-  const userId = await getCurrentUserId(); // 动态获取 ID
+export async function createTag(
+  tagName: string,
+  type: TagType = 'custom'
+): Promise<Tag> {
+  const userId = await getCurrentUserId();
 
   const { data, error } = await supabase
     .from('tags')
-    .insert([{
+    .insert({
       name: tagName,
-      type: type,
-      creator_id: userId
-    }])
+      type,
+      creator_id: userId,
+    })
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throw new Error(`Failed to create tag: ${error.message}`);
   return data;
 }
 
 /**
- *  5. Assign Tag to Item
+ * Assign tag to an item
  */
-export async function assignTagToItem(itemId: string, itemType: ItemType, tagId: string) {
+export async function assignTagToItem(
+  itemId: string,
+  itemType: ItemType,
+  tagId: string
+): Promise<void> {
   const userId = await getCurrentUserId();
 
   const { error } = await supabase
     .from('item_tags')
-    .insert([{
+    .insert({
       item_id: itemId,
       item_type: itemType,
       tag_id: tagId,
-      user_id: userId
-    }]);
+      user_id: userId,
+    });
 
-  if (error && error.code !== '23505') throw error;
+  // Ignore duplicate mapping error
+  if (error && error.code !== '23505') {
+    throw new Error(`Failed to assign tag: ${error.message}`);
+  }
 }
 
 /**
- *  6. Remove Tag from Item
+ * Remove tag from an item
  */
-export async function removeTagFromItem(itemId: string, itemType: ItemType, tagId: string) {
+export async function removeTagFromItem(
+  itemId: string,
+  itemType: ItemType,
+  tagId: string
+): Promise<void> {
   const { error } = await supabase
     .from('item_tags')
     .delete()
-    .match({
-      item_id: itemId,
-      item_type: itemType,
-      tag_id: tagId
-    });
+    .match({ item_id: itemId, item_type: itemType, tag_id: tagId });
 
-  if (error) throw error;
+  if (error) throw new Error(`Failed to remove tag: ${error.message}`);
 }
 
 /**
- *  7. Get Tags for Item
+ * Get all tags applied to an item
  */
-export async function getItemTags(itemId: string, itemType: ItemType) {
+export async function getItemTags(
+  itemId: string,
+  itemType: ItemType
+): Promise<Tag[]> {
   const { data, error } = await supabase
     .from('item_tags')
     .select(`
       tag_id,
-      tags ( * )
+      tags (*)
     `)
     .eq('item_id', itemId)
     .eq('item_type', itemType);
 
   if (error) {
-    console.error('Error fetching item tags:', error);
-    return [];
+    throw new Error(`Failed to fetch item tags: ${error.message}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return data.map((item: any) => item.tags) as Tag[];
+  return (data ?? []).map((entry) => entry.tags as Tag);
 }
 
 /**
- *  8. Search Tags
+ * Search for tags by name
  */
-export async function searchTags(query: string) {
+export async function searchTags(query: string): Promise<Tag[]> {
   const { data, error } = await supabase
     .from('tags')
-    .select('*')
+    .select()
     .ilike('name', `%${query}%`)
     .limit(10);
 
-  if (error) throw error;
-  return data as Tag[];
+  if (error) throw new Error(`Failed to search tags: ${error.message}`);
+  return data ?? [];
 }
 
-// Legacy support
-export async function createCustomTag(name: string) {
+/**
+ * Legacy alias for createTag(..., "custom")
+ */
+export function createCustomTag(name: string) {
   return createTag(name, 'custom');
 }

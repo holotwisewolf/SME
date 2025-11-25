@@ -1,11 +1,11 @@
 import React from 'react';
 
-const FavoritesAlbums: React.FC = () => {
+const FavouritesTracks: React.FC = () => {
     return (
         <div className="text-white text-2xl p-8">
-            <h1>Favorites Albums</h1>
+            <h1>Favourites Tracks</h1>
         </div>
     );
 };
 
-export default FavoritesAlbums;
+export default FavouritesTracks;

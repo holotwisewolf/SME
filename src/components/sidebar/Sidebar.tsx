@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import SidebarLogo from './SidebarLogo';
 import SidebarMenu from './SidebarMenu';
 import ExpandSidebarButton from './ExpandSidebarButton';
-import FavoritesIcon from '../shared/FavoritesIcon';
+import FavouritesIcon from '../shared/FavouritesIcon';
 import folderIcon from '../../assets/folder_icon.png';
 import musicIcon from '../../assets/music_icon.png';
 import infoIcon from '../../assets/info_icon.png';
@@ -27,13 +27,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
             ]
         },
         {
-            path: '/favorites/playlists',
-            icon: FavoritesIcon,
-            label: 'Favorites',
+            path: '/favourites/playlists',
+            icon: FavouritesIcon,
+            label: 'Favourites',
             subItems: [
-                { path: '/favorites/playlists', icon: folderIcon, label: 'Playlists' },
-                { path: '/favorites/tracks', icon: musicIcon, label: 'Tracks' },
-                { path: '/favorites/albums', icon: musicIcon, label: 'Albums' }
+                { path: '/favourites/playlists', icon: folderIcon, label: 'Playlists' },
+                { path: '/favourites/tracks', icon: musicIcon, label: 'Tracks' },
+                { path: '/favourites/albums', icon: musicIcon, label: 'Albums' }
             ]
         },
         { path: '/songs', icon: musicIcon, label: 'Songs' },

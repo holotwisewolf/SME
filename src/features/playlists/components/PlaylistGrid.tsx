@@ -30,10 +30,21 @@ const playlistGridData = [
   },
 ];
 
-const PlaylistGrid: React.FC = () => {
+interface PlaylistGridProps {
+  source: "library" | "favourites";
+}
+
+const PlaylistGrid: React.FC<PlaylistGridProps> = ({ source }) => {
+  const filteredPlaylists = playlistGridData.filter(playlist => {
+    if (source === 'favourites') {
+      return playlist.icons.favorite;
+    }
+    return true; // Show all for library
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {playlistGridData.map((playlist) => (
+      {filteredPlaylists.map((playlist) => (
         <PlaylistCard
           key={playlist.playlistId}
           playlistName={playlist.playlistName}

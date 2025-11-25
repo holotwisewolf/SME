@@ -6,14 +6,13 @@ import Header from "./components/header/Header";
 import PageWrapper from "./components/shared/PageWrapper";
 
 // Pages
-import PlaylistDashboard from "./features/playlists/playlists_pages/PlaylistDashboard";
-import LoginPage from "./pages/LoginPage";
-import LibraryPlaylists from "./pages/library/LibraryPlaylists";
-import LibraryTracks from "./pages/library/LibraryTracks";
-import LibraryAlbums from "./pages/library/LibraryAlbums";
-import FavoritesPlaylists from "./features/favourites/favourites_pages/FavoritesPlaylists";
-import FavoritesTracks from "./features/favourites/favourites_pages/FavoritesTracks";
-import FavoritesAlbums from "./features/favourites/favourites_pages/FavoritesAlbums";
+import LoginPage from "./pages/auth_pages/LoginPage";
+import LibraryPlaylists from "./pages/library_pages/LibraryPlaylists";
+import LibraryTracks from "./pages/library_pages/LibraryTracks";
+import LibraryAlbums from "./pages/library_pages/LibraryAlbums";
+import FavouritesPlaylists from "./pages/favourites_pages/FavouritesPlaylists";
+import FavouritesTracks from "./pages/favourites_pages/FavouritesTracks";
+import FavouritesAlbums from "./pages/favourites_pages/FavouritesAlbums";
 import Songs from "./pages/Songs";
 import Info from "./pages/Info";
 
@@ -37,15 +36,8 @@ function App() {
               {/* LOGIN (fullscreen drawer, no wrapper) */}
               <Route path="/login" element={<LoginPage />} />
 
-              {/* HOME */}
-              <Route
-                path="/"
-                element={
-                  <PageWrapper>
-                    <PlaylistDashboard />
-                  </PageWrapper>
-                }
-              />
+              {/* HOME - Redirect to Library Playlists */}
+              <Route path="/" element={<Navigate to="/library/playlists" replace />} />
 
               {/* --------------------------- */}
               {/*         LIBRARY             */}
@@ -80,16 +72,16 @@ function App() {
               </Route>
 
               {/* --------------------------- */}
-              {/*         FAVORITES           */}
+              {/*         FAVOURITES          */}
               {/* --------------------------- */}
-              <Route path="/favorites">
+              <Route path="/favourites">
                 {/* Default: redirect to playlists */}
                 <Route index element={<Navigate to="playlists" replace />} />
                 <Route
                   path="playlists"
                   element={
                     <PageWrapper>
-                      <FavoritesPlaylists />
+                      <FavouritesPlaylists />
                     </PageWrapper>
                   }
                 />
@@ -97,7 +89,7 @@ function App() {
                   path="tracks"
                   element={
                     <PageWrapper>
-                      <FavoritesTracks />
+                      <FavouritesTracks />
                     </PageWrapper>
                   }
                 />
@@ -105,7 +97,7 @@ function App() {
                   path="albums"
                   element={
                     <PageWrapper>
-                      <FavoritesAlbums />
+                      <FavouritesAlbums />
                     </PageWrapper>
                   }
                 />
