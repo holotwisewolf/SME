@@ -39,8 +39,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                                     src={item.icon}
                                     alt={item.label}
                                     className={`w-full h-full object-contain transition-all duration-200 ${isActive
-                                        ? 'brightness-200 invert-0'
-                                        : 'invert opacity-80 group-hover:opacity-100'
+                                        ? 'brightness-200'
+                                        : 'opacity-80 group-hover:opacity-100'
                                         }`}
                                 />
                             ) : (
@@ -74,7 +74,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                                     toggleSubMenu(item.label);
                                 }}
                                 className={`
-                                    w-6 h-6 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ml-2
+                                    w-6 h-6 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer mt-1 ml-2
                                     hover:bg-white group/btn
                                 `}
                             >
@@ -99,7 +99,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden pl-4 mt-1 space-y-1"
+                        className="overflow-hidden pl-4 mt-2 space-y-1"
                     >
                         {item.subItems!.map((subItem) => (
                             <SidebarSubItem

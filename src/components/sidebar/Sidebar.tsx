@@ -22,7 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
             label: 'Library',
         },
         {
-            path: '/favorites',
+            path: '/favorites/playlists',
             icon: FavoritesIcon,
             label: 'Favorites',
             subItems: [
