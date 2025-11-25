@@ -14,7 +14,7 @@ const Header: React.FC = () => {
       <div className="flex items-center space-x-4">
         <span className="text-lg font-mono text-[#FFD1D1]">07:05:58</span>
         {/* === START: Transparent Bordered Button === */}
-        <button 
+        <button
           className="
             bg-transparent 
             text-[#D1D1D1] 
