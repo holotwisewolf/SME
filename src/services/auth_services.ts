@@ -1,27 +1,11 @@
 // src/services/auth_services.ts
 
 // Import the initialized Supabase client
-import { supabase } from '../lib/supabaseClient'; 
+// NOTE: Adjust this path if your supabase client is located elsewhere (e.g., '../lib/supabase')
+import { supabase } from '../lib/supabaseClient';
 
 /**
- * Checks if a username is available.
- * Uses ilike for case-insensitive checking.
- * * @param username - The username to check
- * @returns true if available, false if taken
- */
-export async function checkUsernameAvailable(username: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('username')
-    .ilike('username', username) // Case-insensitive match
-    .maybeSingle();
-  
-  if (error) throw error;
-  return data === null; // Available if no match found
-}
-
-/**
- * Registers a new user with username validation.
+ * Registers a new user.
  * * Usage: Call this when the user submits the sign-up form.
  * Logic: Creates a user in Supabase Auth and passes metadata (username) 
  * which should be handled by a Database Trigger to create a row in the 'profiles' table.
@@ -29,12 +13,6 @@ export async function checkUsernameAvailable(username: string): Promise<boolean>
  */
 export async function register(data: any) {
   const { email, password, username } = data;
-  
-  // Validate username is available before attempting signup
-  const isAvailable = await checkUsernameAvailable(username);
-  if (!isAvailable) {
-    throw new Error('Username already taken');
-  }
   
   const { data: authData, error } = await supabase.auth.signUp({
     email,
@@ -153,5 +131,3 @@ export async function checkAuthStatus() {
   // Convert the session object to a boolean (true if session exists, false if null)
   return !!data.session; 
 }
-
-
