@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import SearchButton from './SearchButton';
-import ClearButton from './ClearButton';
-
+import SearchButton from '../ui/SearchButton';
+import ClearButton from '../ui/ClearButton';
+import AnimatedDropdown from './AnimatedDropdown';
 
 const SearchBar: React.FC = () => {
   // State to handle the input value
   const [searchText, setSearchText] = useState('');
+  // State to handle the selected search type
+  const [searchType, setSearchType] = useState('Tracks');
 
   // Function to clear the search text
   const handleClear = () => {
@@ -46,28 +48,11 @@ const SearchBar: React.FC = () => {
         />
 
         <div className="absolute right-1.5 top-1 bottom-1">
-          <select
-            className="
-              h-full 
-              w-28
-              bg-[#333]
-              text-gray-200 
-              text-xs 
-              font-medium
-              text-center 
-              rounded-full
-              border border-gray-600 
-              focus:outline-none 
-              hover:bg-black/60 
-              cursor-pointer
-              appearance-none
-            "
-            style={{ textAlignLast: 'center' }}
-          >
-            <option>Tracks</option>
-            <option>Artists</option>
-            <option>Albums</option>
-          </select>
+          <AnimatedDropdown
+            options={["Tracks", "Artists", "Albums"]}
+            value={searchType}
+            onChange={setSearchType}
+          />
         </div>
       </div>
     </div>

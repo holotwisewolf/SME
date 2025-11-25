@@ -182,7 +182,53 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `getUserCustomTags(userId)`
 - `deleteTag(tagId)`
 
-#### **E. Playlist Module**
+#### **E. Comments Module**
+##### Core Comment Operations
+- `createComment(itemId, itemType, content, parentCommentId?)` 
+  - itemType: 'playlist', 'track', 'album', etc.
+  - parentCommentId: optional, for replies/nested comments
+  - Returns: commentId
+
+- `updateComment(commentId, newContent)`
+  - Updates comment content
+  - Only by comment owner
+
+- `deleteComment(commentId)`
+  - Remove comment from database
+
+- `getComment(commentId)`
+  - Fetch single comment with user details
+
+##### Fetching Comments
+- `getItemComments(itemId, itemType, options?)`
+  - options: { sortBy: 'recent' | 'oldest', limit, offset, includeReplies: true }
+  - Returns paginated list of top-level comments with nested replies
+  - Include user profile and their rating for the item
+
+- `getUserComments(userId, options?)`
+  - Get all comments by a user (both top-level and replies)
+  - options: { limit, offset }
+
+- `getCommentReplies(parentCommentId)`
+  - Fetch all replies to a specific comment
+  - Used for lazy-loading nested replies or "Show more replies"
+  - Like show 5 more replies
+
+- `getCommentWithRating(commentId)`
+  - Fetch comment + user's rating for that item
+  - Shows: "UserX rated 4.5★ and said..."
+
+- `getCommentCount(itemId, itemType)`
+  - Total count including replies
+
+##### Real-time Updates
+- `subscribeToComments(itemId, itemType, callback)`
+  - Real-time updates when new comments added
+  - For live comment feed
+
+- `unsubscribeFromComments(itemId, itemType)`
+
+#### **F. Playlist Module**
 - `createPlaylist(title, description, color)`
 - `deletePlaylist(playlistId)`
 - `updatePlaylist(playlistId, updates)`
@@ -198,7 +244,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - **Phase 2:**
   - `exportPlaylistToSpotify(playlistId)` // Requires OAuth
 
-#### **F. Favorites Module**
+#### **G. Favorites Module**
 - `likeTrack(trackId)`
 - `unlikeTrack(trackId)`
 - `getFavorites(userId)`
@@ -206,7 +252,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `getFavoritesCount(userId)`
 - `filterFavorites(userId, filters)` // filters: tags, ratings
 
-#### **G. Recommendation Module**
+#### **H. Recommendation Module**
 - `generatePersonalizedRecommendations(userId)` // For "For You" page using graph traversal
 - `buildUserPreferenceGraph(userId)` // Create graph with nodes (tracks/albums/artists/genres/tags) and edges
 - `addGraphNode(nodeId, nodeType, metadata)` // Add node to graph (track, album, artist, genre, tag)
@@ -218,7 +264,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `getRelatedArtists(artistId)` // From Spotify API or graph
 - `getRelatedGenres(genreId)` // From graph connections
 
-#### **H. Community Module**
+#### **I. Community Module**
 - `getCommunityContent(filters, sort, timeRange)` // Universal fetcher for tracks/albums/playlists
 - `getCommunityRatedPlaylists(filters, sort, timeRange)`
 - `getCommunityRatedTracks(filters, sort, timeRange)`
@@ -232,7 +278,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `getTrendingGenres(timeRange)`
 - `getUserActivityStats(userId)` // Total ratings, comments, tags
 
-#### **I. Search & Filter Module**
+#### **J. Search & Filter Module**
 - `spotifySearch(query, type, spotifyFilters)` // Search Spotify catalog
 - `filterUserContent(content, filters)` // Filter user's playlists/favorites by tags/ratings/date
 - `sortUserContent(content, sortBy)` // Sort by rating, date added, etc.
@@ -244,20 +290,20 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `getPaginatedResults(items, page, limit)`
 - `buildFilterQuery(filters)`
 
-#### **J. UI State Management Module**
+#### **K. UI State Management Module**
 - `updateUIState(state)`
 - `getUIState()`
 - `cacheResults(key, data)`
 - `getCachedResults(key)`
 - `clearCache()`
 
-#### **K. Real-time Module**
+#### **L. Real-time Module**
 - `subscribeToChannel(channel, callback)`
 - `unsubscribeFromChannel(channel)`
 - `broadcastUpdate(channel, data)`
 - `handleRealTimeEvent(event)`
 
-#### **L. Profile Module**
+#### **M. Profile Module**
 - `getUserProfile(userId)`
 - `updatePrivacySettings(settings)`
 - `getRatingStatistics(userId)` // tracks, albums, AND playlists
@@ -268,7 +314,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 
 ### **Backend Modules (Supabase)**
 
-#### **M. Database Module (Supabase)**
+#### **N. Database Module (Supabase)**
 - `initializeDatabase()`
 - `executeQuery(query)`
 - `executeBatch(queries)`
@@ -276,7 +322,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
 - `setupRLS()`
 - `migrateSchema()`
 
-#### **N. Edge Functions Module (Supabase)**
+#### **O. Edge Functions Module (Supabase)**
 - `generateClientCredentials()`
 - `validateRequest()`
 - `rateLimitCheck()`
@@ -285,7 +331,7 @@ Spotify Music Explorer is a web application that enhances Spotify users' music d
   - `syncSpotifyPlaylists(userId)` // Optional: Import user's playlists
   - `refreshSpotifyToken(userId)` // Handle token refresh if needed
 
-#### **O. AI Integration Module (Phase 2 - Bonus)**
+#### **P. AI Integration Module (Phase 2 - Bonus)**
 - `generateTagSuggestions(trackData)`
 - `generatePlaylistName(tracks, tags)`
 - `enhanceRecommendationExplanation(recommendationData)`
