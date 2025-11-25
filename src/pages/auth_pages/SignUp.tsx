@@ -9,6 +9,7 @@ const SignUpPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [username, setUsername] = useState("");
 
     return (
         <motion.div
@@ -25,9 +26,9 @@ const SignUpPage = () => {
             <div className="w-full max-w-md bg-[#1f1f1f] p-10 rounded-2xl shadow-2xl">
 
                 {/* Header */}
-                <div className="flex flex-col items-center mb-6">
+                <div className="flex flex-col items-center mb-4">
                     {/* Icon */}
-                    <div className='mb-6'>
+                    <div className='mb-4'>
                         <CloudLogo />
                     </div>
 
@@ -41,6 +42,12 @@ const SignUpPage = () => {
                 <div className="space-y-4">
 
                     <InputGroup>
+                        <TextInput
+                            label="Username"
+                            placeholder="username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                        />
                         <TextInput
                             label="Email"
                             placeholder="email@example.com"
