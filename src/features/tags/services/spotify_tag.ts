@@ -1,14 +1,7 @@
 // src/services/spotify_tag.ts
 
-import { supabase, type Database } from '../lib/supabaseClient';
-
-// Derive types automatically
-// "Database['public']['Enums']['tag_type']" automatically means "premade" | "custom"
-export type Tag = Database['public']['Tables']['tags']['Row'];
-export type TagType = Database['public']['Enums']['tag_type']; 
-export type ItemType = Database['public']['Enums']['item_type']; 
-
-
+import { supabase } from '../../../lib/supabaseClient';
+import type { Tag, TagType, ItemType } from '../../../types/app';
 
 async function getCurrentUserId() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -17,6 +10,7 @@ async function getCurrentUserId() {
   }
   return user.id;
 }
+
 /**
  *  1. Fetch All Tags
  */
@@ -25,7 +19,7 @@ export async function getAllTags() {
     .from('tags')
     .select('*')
     .order('name', { ascending: true });
-  
+
   if (error) {
     console.error('Error fetching tags:', error);
     return [];
@@ -56,7 +50,7 @@ export async function getUserCustomTags() {
   const { data, error } = await supabase
     .from('tags')
     .select('*')
-    .eq('type', 'custom') 
+    .eq('type', 'custom')
     .eq('creator_id', userId)
     .order('name');
 
@@ -73,9 +67,9 @@ export async function createTag(tagName: string, type: TagType = 'custom') {
 
   const { data, error } = await supabase
     .from('tags')
-    .insert([{ 
-      name: tagName, 
-      type: type, 
+    .insert([{
+      name: tagName,
+      type: type,
       creator_id: userId
     }])
     .select()
@@ -93,11 +87,11 @@ export async function assignTagToItem(itemId: string, itemType: ItemType, tagId:
 
   const { error } = await supabase
     .from('item_tags')
-    .insert([{ 
-        item_id: itemId, 
-        item_type: itemType, 
-        tag_id: tagId,
-        user_id: userId
+    .insert([{
+      item_id: itemId,
+      item_type: itemType,
+      tag_id: tagId,
+      user_id: userId
     }]);
 
   if (error && error.code !== '23505') throw error;
@@ -110,10 +104,10 @@ export async function removeTagFromItem(itemId: string, itemType: ItemType, tagI
   const { error } = await supabase
     .from('item_tags')
     .delete()
-    .match({ 
-      item_id: itemId, 
+    .match({
+      item_id: itemId,
       item_type: itemType,
-      tag_id: tagId 
+      tag_id: tagId
     });
 
   if (error) throw error;
@@ -136,7 +130,7 @@ export async function getItemTags(itemId: string, itemType: ItemType) {
     console.error('Error fetching item tags:', error);
     return [];
   }
-  
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.map((item: any) => item.tags) as Tag[];
 }
