@@ -17,9 +17,14 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
     const menuItems: MenuItem[] = [
         {
-            path: '/library',
+            path: '/library/playlists',
             icon: folderIcon,
             label: 'Library',
+            subItems: [
+                { path: '/library/playlists', icon: folderIcon, label: 'Playlists' },
+                { path: '/library/tracks', icon: musicIcon, label: 'Tracks' },
+                { path: '/library/albums', icon: musicIcon, label: 'Albums' }
+            ]
         },
         {
             path: '/favorites/playlists',
