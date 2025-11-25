@@ -33,7 +33,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isExpanded, menuItems }) => {
     };
 
     return (
-        <nav className="flex-1 pt-10 pb-6">
+        <nav className="flex-1 pt-8 pb-6">
             <ul className="space-y-6">
                 {menuItems.map((item) => (
                     <SidebarItem
