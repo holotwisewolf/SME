@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import InputGroup from "../../components/ui/InputGroup";
+import TextInput from "../../components/ui/TextInput";
+import PasswordInput from "../../components/ui/PasswordInput";
+import CloudLogo from "../../components/shared/CloudLogo";
 
 const SignUpPage = () => {
     const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     return (
         <motion.div
@@ -21,8 +27,8 @@ const SignUpPage = () => {
                 {/* Header */}
                 <div className="flex flex-col items-center mb-6">
                     {/* Icon */}
-                    <div className="w-14 h-14 bg-[#FFD1D1] rounded-full flex items-center justify-center mb-4">
-                        <span className="text-2xl text-black font-bold">★</span>
+                    <div className='mb-6'>
+                        <CloudLogo />
                     </div>
 
                     <h1 className="text-3xl font-bold text-white">Welcome</h1>
@@ -34,48 +40,32 @@ const SignUpPage = () => {
                 {/* Inputs */}
                 <div className="space-y-4">
 
-                    {/* Username */}
-                    <input
-                        type="text"
-                        placeholder="Username"
-                        className="w-full p-3 rounded-lg bg-[#151515] text-white border border-gray-600"
-                    />
-
-                    {/* Email */}
-                    <input
-                        type="email"
-                        placeholder="Email Address"
-                        className="w-full p-3 rounded-lg bg-[#151515] text-white border border-gray-600"
-                    />
-
-                    {/* Password (with show/hide icon) */}
-                    <div className="relative">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Password"
-                            className="w-full p-3 rounded-lg bg-[#151515] text-white border border-gray-600 pr-12"
+                    <InputGroup>
+                        <TextInput
+                            label="Email"
+                            placeholder="email@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                         />
 
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword((s) => !s)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                        >
-                            {showPassword ? "🙈" : "👁️"}
-                        </button>
-                    </div>
+                        <PasswordInput
+                            label="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                    </InputGroup>
                 </div>
 
                 {/* Submit button */}
                 <button
-                    className="w-full bg-[#FFD1D1] text-black font-semibold py-3 rounded-lg mt-6 hover:bg-[#f8baba] transition"
+                    className="w-full bg-[#FFD1D1] text-black font-semibold py-4 rounded-lg mt-8 hover:bg-[#f8baba] transition"
                 >
                     Sign Up
                 </button>
 
                 {/* Footer */}
                 <p className="text-gray-500 text-xs text-center mt-6">
-                    Make up something nice here 👀
+                    Password must be at least 8 characters long
                 </p>
             </div>
         </motion.div>

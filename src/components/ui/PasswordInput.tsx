@@ -40,8 +40,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
               placeholder-gray-500 
               rounded-xl px-4 py-3.5 pr-12
               border border-transparent
-              focus:border-[#FFD1D1]/40
-              focus:ring-2 focus:ring-[#FFD1D1]/20
+              focus:ring-2 focus:ring-gray-500/60  
               outline-none
               transition duration-200
             "
