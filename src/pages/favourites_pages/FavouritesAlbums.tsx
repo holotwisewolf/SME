@@ -1,11 +1,11 @@
 import React from 'react';
 
-const LibraryPlaylists: React.FC = () => {
+const FavouritesAlbums: React.FC = () => {
     return (
         <div className="text-white text-2xl p-8">
-            <h1>Library Playlists</h1>
+            <h1>Favourites Albums</h1>
         </div>
     );
 };
 
-export default LibraryPlaylists;
+export default FavouritesAlbums;
