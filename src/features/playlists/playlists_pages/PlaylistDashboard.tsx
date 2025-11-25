@@ -1,8 +1,8 @@
 import React from 'react';
-import PlaylistGrid from '../components/content/PlaylistGrid';
-import Clock from '../components/ui/Clock';
+import PlaylistGrid from '../components/PlaylistGrid';
+import Clock from '../../../components/ui/Clock';
 
-const HomePage: React.FC = () => {
+const PlaylistDasboard: React.FC = () => {
   return (
     <div className="flex flex-col h-full px-6 relative pb-32">
       {/* Top Row */}
@@ -38,4 +38,4 @@ const HomePage: React.FC = () => {
   );
 };
 
-export default HomePage;
+export default PlaylistDasboard;

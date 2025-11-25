@@ -48,7 +48,7 @@ const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemNa
       const all = await getAllTags();
       // Fetch tags specifically assigned to this item ID
       const assigned = await getItemTags(spotifyId, safeItemType);
-      
+
       // Cast data to our local Tag interface and update state
       setAvailableTags((all || []) as Tag[]);
       setAssignedTags((assigned || []) as Tag[]);
@@ -67,7 +67,7 @@ const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemNa
     try {
       // Create the tag in the database (defaults to 'custom' type)
       const newTag = await createTag(newTagName);
-      
+
       if (newTag) {
         // Optimistic update: Add to list immediately
         setAvailableTags(prev => [...prev, newTag as Tag]);
@@ -83,10 +83,10 @@ const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemNa
    */
   const toggleTag = async (tag: Tag) => {
     if (!tag || !tag.id) return;
-    
+
     // Check if the tag is already assigned to this item
     const isAssigned = assignedTags.some(t => t.id === tag.id);
-    
+
     try {
       if (isAssigned) {
         // If assigned -> Remove it
@@ -108,10 +108,10 @@ const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemNa
   return (
     // Overlay Background
     <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50">
-      
+
       {/* Modal Content Box */}
       <div className="bg-[#292929] w-96 p-6 rounded-xl border border-[#444] shadow-2xl">
-        
+
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-[#BAFFB5]">Manage Tags</h3>
@@ -121,9 +121,9 @@ const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemNa
 
         {/* Input Section for New Tags */}
         <div className="flex gap-2 mb-4 border-b border-[#444] pb-4">
-          <input 
-            type="text" 
-            placeholder="New tag name..." 
+          <input
+            type="text"
+            placeholder="New tag name..."
             value={newTagName}
             onChange={(e) => setNewTagName(e.target.value)}
             className="flex-1 bg-[#1a1a1a] text-white px-3 py-2 rounded outline-none border border-[#444] focus:border-[#BAFFB5]"
@@ -140,8 +140,8 @@ const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemNa
               // Check if this specific tag is selected
               const isSelected = assignedTags.some(t => t.id === tag.id);
               return (
-                <div 
-                  key={tag.id} 
+                <div
+                  key={tag.id}
                   onClick={() => toggleTag(tag)}
                   className={`
                     cursor-pointer p-2 rounded flex justify-between items-center transition 
