@@ -1,8 +1,8 @@
 import { useLocation, Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import Layout from "./components/Layout";
-import Header from "./components/Header";
-import PageWrapper from "./components/PageWrapper";
+import Layout from "./components/shared/Layout";
+import Header from "./components/header/Header";
+import PageWrapper from "./components/shared/PageWrapper";
 import AnonHomePage from "./pages/anonhomepage";
 
 function App() {
