@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import SearchButton from './SearchButton';
-import ClearButton from './ClearButton';
+import SearchButton from '../ui/SearchButton';
+import ClearButton from '../ui/ClearButton';
 import AnimatedDropdown from './AnimatedDropdown';
 
 const SearchBar: React.FC = () => {

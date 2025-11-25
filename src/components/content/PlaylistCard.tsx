@@ -1,7 +1,7 @@
 import React from 'react';
-import FavButton from './FavButton';
-import TrashButton from './TrashButton'
-import ExpandButton from './ExpandButton';
+import FavButton from '../ui/FavButton';
+import TrashButton from '../ui/TrashButton'
+import ExpandButton from '../ui/ExpandButton';
 
 interface Track {
   trackId: string;

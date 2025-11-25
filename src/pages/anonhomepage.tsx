@@ -1,12 +1,12 @@
 import React from 'react';
-import PlaylistGrid from '../components/PlaylistGrid';
-import Clock from '../components/Clock';
+import PlaylistGrid from '../components/content/PlaylistGrid';
+import Clock from '../components/ui/Clock';
 
 const HomePage: React.FC = () => {
   return (
     <div className="flex flex-col h-full px-6 relative pb-32">
       {/* Top Row */}
-      <div className="flex justify-between items-center mb-8 pt-2 mt-[35px]">
+      <div className="flex justify-between items-center mb-8 pt-2 mt-6">
 
         {/* Left Group: Title + Toggle */}
         <div className="flex items-center gap-6">
