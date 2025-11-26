@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import UserProfileIcon from "../ui/DefUserAvatar";
+import MenuIcon from "../ui/MenuIcon";
 import { AuthService } from "../../services/auth_services";
 import { useLogin } from "../login/LoginProvider";
 
@@ -43,27 +44,30 @@ const UserDropdown: React.FC = () => {
 
     return (
         <div ref={containerRef} className="relative z-50">
-            {/* Trigger Icon */}
             {/* Trigger Icon & User Info */}
-            <div
-                className="flex items-center gap-4 cursor-pointer group"
-                onClick={() => setIsOpen(!isOpen)}
-            >
+            <div className="flex items-center gap-4">
                 {profile && (
-                    <div className="flex flex-col items-end hidden md:flex">
-                        <span className="text-xl font-bold text-white group-hover:text-gray-200 transition-colors">
+                    <div className="flex flex-col items-end hidden md:flex mt-1.5">
+                        <span className="text-white font-bold text-l tracking-wide leading-none transition-colors">
                             {profile.display_name || "User"}
                         </span>
-                        <span className="text-sm text-gray-400 font-medium">
+                        <span className="text-[#6b7280] text-[10px] font-medium tracking-widest uppercase mt-1">
                             @{profile.username || "username"}
                         </span>
                     </div>
                 )}
 
-                <button
-                    className="flex items-center justify-center w-14 h-14 rounded-full hover:bg-white/10 transition-colors focus:outline-none"
-                >
+                {/* Avatar (Non-clickable) */}
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#2a2a2a]">
                     <UserProfileIcon className="w-12 h-12 text-[#D1D1D1]" />
+                </div>
+
+                {/* Menu Trigger */}
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors focus:outline-none"
+                >
+                    <MenuIcon className="w-8 h-8 text-white" />
                 </button>
             </div>
 
