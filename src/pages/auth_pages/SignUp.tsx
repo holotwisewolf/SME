@@ -15,7 +15,6 @@ const SignUpPage = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
-    const [inviteCode, setInviteCode] = useState("");
     const [loading, setLoading] = useState(false);
 
     const [hoveringEdge, setHoveringEdge] = useState(false);
@@ -31,7 +30,7 @@ const SignUpPage = () => {
 
         setLoading(true);
         try {
-            const { session } = await AuthService.register({ email, password, username, inviteCode });
+            const { session } = await AuthService.register({ email, password, username });
 
             if (session) {
                 navigate("/setup-profile");
@@ -171,13 +170,6 @@ const SignUpPage = () => {
                             label="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                        />
-
-                        <TextInput
-                            label="Invite Code (Optional)"
-                            placeholder="Enter code for dev access"
-                            value={inviteCode}
-                            onChange={(e) => setInviteCode(e.target.value)}
                         />
                     </InputGroup>
                 </div>

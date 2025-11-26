@@ -6,6 +6,7 @@ export interface MenuItem {
     icon: string | React.FC<{ className?: string }>;
     label: string;
     subItems?: MenuItem[];
+    requiredRole?: 'dev' | 'user';
 }
 
 interface SidebarSubItemProps {

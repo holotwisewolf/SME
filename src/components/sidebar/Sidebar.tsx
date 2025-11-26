@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import SidebarLogo from './SidebarLogo';
 import SidebarMenu from './SidebarMenu';
@@ -9,6 +9,8 @@ import musicIcon from '../../assets/music_icon.png';
 import infoIcon from '../../assets/info_icon.png';
 import SettingsIcon from '../ui/SettingsIcon';
 import type { MenuItem } from './SidebarSubItem';
+import { AuthService } from '../../services/auth_services';
+import { useLogin } from '../login/LoginProvider';
 
 interface SidebarProps {
     isExpanded: boolean;
@@ -16,7 +18,18 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
-    const menuItems: MenuItem[] = [
+    const { user, profile } = useLogin();
+    const [isDev, setIsDev] = useState(false);
+
+    useEffect(() => {
+        if (profile && profile.app_role === 'dev') {
+            setIsDev(true);
+        } else {
+            setIsDev(false);
+        }
+    }, [profile]);
+
+    const allMenuItems: MenuItem[] = [
         {
             path: '/library/playlists',
             icon: folderIcon,
@@ -39,8 +52,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
         },
         { path: '/songs', icon: musicIcon, label: 'Songs' },
         { path: '/Info', icon: infoIcon, label: 'Info' },
-        { path: '/testing-ground', icon: SettingsIcon, label: 'Testing Ground' },
+        { path: '/testing-ground', icon: SettingsIcon, label: 'Testing Ground', requiredRole: 'dev' },
     ];
+
+    const menuItems = allMenuItems.filter(item => {
+        if (item.requiredRole === 'dev' && !isDev) return false;
+        return true;
+    });
 
     // Animation variants to keep code clean
     const sidebarVariants = {
