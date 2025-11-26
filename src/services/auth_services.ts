@@ -38,7 +38,25 @@ export async function register(data: any) {
  * * @param data - Object containing { email, password }
  */
 export async function login(data: any) {
-  const { email, password } = data;
+  let { email, password } = data;
+
+  // Check if input is an email
+  const isEmail = email.includes('@');
+
+  if (!isEmail) {
+    // Treat as username and lookup email
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email') // NOTE: This requires 'email' column in 'profiles' table
+      .eq('username', email)
+      .single();
+
+    if (profileError || !profile) {
+      throw new Error("Username not found");
+    }
+
+    email = (profile as any).email;
+  }
 
   const { data: session, error } = await supabase.auth.signInWithPassword({
     email,
@@ -133,6 +151,77 @@ export async function checkAuthStatus() {
   return !!data.session;
 }
 
+/**
+ * Uploads a user avatar to the 'avatars' bucket.
+ * @param file - The image file to upload.
+ * @param userId - The user's ID (used for file naming).
+ * @returns The public URL of the uploaded image.
+ */
+export async function uploadAvatar(file: File, userId: string) {
+  const fileExt = file.name.split('.').pop();
+  const filePath = `${userId}/${Math.random()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file);
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+  return data.publicUrl;
+}
+
+/**
+ * Fetches the user's profile data from the 'profiles' table.
+ * @param userId - The UUID of the user.
+ */
+export async function getProfile(userId: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Updates the authenticated user's password.
+ * @param password - The new password.
+ */
+export async function updatePassword(password: string) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
+
+/**
+ * Updates the user's username (stored in user_metadata).
+ * @param username - The new username.
+ */
+export async function updateUsername(username: string) {
+  const { data, error } = await supabase.auth.updateUser({
+    data: { username }
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Validates an invite code for developer access.
+ * Logic: Checks a 'codes' table or uses a hardcoded check for now.
+ * @param code - The invite code to check.
+ */
+export async function validateInviteCode(code: string) {
+  // Mock validation for now, or replace with DB query:
+  // const { data } = await supabase.from('invite_codes').select('*').eq('code', code).single();
+  // return !!data;
+
+  // Simple mock:
+  return code === "DEV-1234";
+}
+
 export const AuthService: IAuthService = {
   register,
   login,
@@ -140,6 +229,11 @@ export const AuthService: IAuthService = {
   resetPassword,
   verifyEmail,
   updateProfile,
+  uploadAvatar,
+  getProfile,
+  updatePassword,
+  updateUsername,
+  validateInviteCode,
   getSession,
   checkAuthStatus
 };

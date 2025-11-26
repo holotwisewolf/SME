@@ -15,7 +15,7 @@ const AuthButtons = () => {
         onClick={openLogin}
         className="bg-transparent text-[#D1D1D1] border border-[#888] rounded-md px-8 py-2.5 hover:bg-[#D1D1D1]/20 transition cursor-pointer"
       >
-        Log In
+        Sign In
       </button>
 
       <Link
