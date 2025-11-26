@@ -1,7 +1,7 @@
 // src/components/TaggingModal.tsx
 import React, { useState, useEffect } from 'react';
 // Import service functions for database operations
-import { getAllTags, createTag, assignTagToItem, removeTagFromItem, getItemTags } from '../services/spotify_tag';
+import { getAllTags, createTag, assignTagToItem, removeTagFromItem, getItemTags } from '../services/tag_services';
 
 // Manually define the Tag interface to ensure type safety locally
 interface Tag {

@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import PlaylistGrid from '../components/PlaylistGrid';
-import Clock from '../../../components/ui/Clock';
+import AscendingButton from '../../../components/ui/AscendingButton';
+import DescendingButton from '../../../components/ui/DescendingButton';
+import FilterButton from '../../../components/ui/FilterButton';
 
 interface PlaylistDashboardProps {
   source: "library" | "favourites";
@@ -8,6 +11,8 @@ interface PlaylistDashboardProps {
 
 const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   const isLibrary = source === "library";
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isFilterActive, setIsFilterActive] = useState(false);
 
   return (
     <div className="flex flex-col h-full px-6 relative pb-32">
@@ -15,24 +20,54 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
       {/* Header Section */}
       <div className="flex justify-between items-center mb-8 pt-2 mt-6">
         <div className="flex items-center gap-6">
-
           <h1 className="text-4xl font-bold text-[#FFD1D1] tracking-tight leading-none">
             {isLibrary ? "Your Playlists" : "Your Favourites"}
           </h1>
+        </div>
 
-          {/* Sorting Toggle (same for both) */}
-          <div className="bg-[#292929] rounded-full p-1 flex items-center h-10">
-            <button className="bg-[#1a1a1a] text-white px-5 h-full rounded-full text-sm font-medium">
-              Ascending
+        {/* Sorting & Filtering Controls (Right Aligned) */}
+        <div className="flex items-center gap-3">
+
+          {/* Filter Button */}
+          <button
+            onClick={() => setIsFilterActive(!isFilterActive)}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isFilterActive ? 'bg-[#FFD1D1] text-black' : 'bg-[#292929] text-gray-400 hover:text-white'}`}
+          >
+            <FilterButton className="w-5 h-5" color="currentColor" isActive={isFilterActive} />
+          </button>
+
+          {/* Sort Toggle */}
+          <div className="bg-[#292929] rounded-full p-1 flex items-center h-10 relative isolate">
+            <button
+              onClick={() => setSortOrder('asc')}
+              className={`relative px-4 h-full rounded-full flex items-center justify-center z-10 transition-colors duration-200 ${sortOrder === 'asc' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              {sortOrder === 'asc' && (
+                <motion.div
+                  layoutId="activeSort"
+                  className="absolute inset-0 bg-[#1a1a1a] rounded-full -z-10 shadow-sm"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <AscendingButton className="w-4 h-4" color="currentColor" />
             </button>
-            <button className="text-gray-400 px-5 h-full rounded-full text-sm font-medium hover:text-white">
-              Descending
+
+            <button
+              onClick={() => setSortOrder('desc')}
+              className={`relative px-4 h-full rounded-full flex items-center justify-center z-10 transition-colors duration-200 ${sortOrder === 'desc' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              {sortOrder === 'desc' && (
+                <motion.div
+                  layoutId="activeSort"
+                  className="absolute inset-0 bg-[#1a1a1a] rounded-full -z-10 shadow-sm"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <DescendingButton className="w-4 h-4" color="currentColor" />
             </button>
           </div>
 
         </div>
-
-        <Clock />
       </div>
 
       {/* Playlist Grid */}

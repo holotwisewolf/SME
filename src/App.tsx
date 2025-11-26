@@ -18,16 +18,29 @@ import FavouritesAlbums from "./pages/favourites_pages/FavouritesAlbums";
 import Songs from "./pages/Songs";
 import Info from "./pages/Info";
 import SignUpPage from "./pages/auth_pages/SignUp";
+import TestingGround from "./features/dev/dev_pages/testing_ground";
+import DevRoute from "./features/dev/DevRoute";
+import SetUpUserProfile from "./pages/user_pages/SetUpUserProfile";
+import UserProfile from "./pages/user_pages/UserProfile";
+import UserSettings from "./pages/user_pages/UserSettings";
 
 function App() {
   const location = useLocation();
-
   return (
     <LoginProvider>
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {location.pathname === "/signup" && (
           <SignUpPage key="signup" />
+        )}
+        {location.pathname === "/setup-profile" && (
+          <SetUpUserProfile key="setup-profile" />
+        )}
+        {location.pathname === "/profile" && (
+          <UserProfile key="profile" />
+        )}
+        {location.pathname === "/settings" && (
+          <UserSettings key="settings" />
         )}
       </AnimatePresence>
 
@@ -126,7 +139,17 @@ function App() {
                 }
               />
 
+              <Route path="/testing-ground" element={
+                <DevRoute>
+                  <PageWrapper>
+                    <TestingGround />
+                  </PageWrapper>
+                </DevRoute>
+              }
+              />
             </Routes>
+
+
           </AnimatePresence>
         </div>
       </Layout>

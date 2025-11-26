@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabaseClient'; 
+import { supabase } from '../lib/supabaseClient';
 import { spotifyFetch, clearSpotifyToken } from '../lib/spotifyConnection';
 
 /**
@@ -7,37 +7,17 @@ import { spotifyFetch, clearSpotifyToken } from '../lib/spotifyConnection';
  * or clicks a "Connect Spotify" button.
  */
 export async function linkSpotifyAccount() {
-  // A. Get the current logged-in user from Supabase Auth
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
-  if (authError || !user) {
-    throw new Error('No user is currently logged in.');
-  }
+  // Trigger the OAuth flow
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'spotify',
+    options: {
+      scopes: 'user-read-email user-read-private playlist-read-private playlist-read-collaborative user-library-read user-top-read', // Add necessary scopes
+      redirectTo: window.location.origin + '/profile', // Redirect back to profile or a callback page
+    }
+  });
 
-  try {
-    // B. Fetch the user's Spotify Profile to get their Spotify ID
-    // We use spotifyFetch which handles the tokens for us
-    const spotifyProfile = await spotifyFetch('me'); 
-
-    // C. Update the 'profiles' table in your database
-    const { data, error: updateError } = await supabase
-      .from('profiles') //
-      .update({
-        spotify_connected: true,
-        spotify_user_id: spotifyProfile.id, // e.g., 'spotify_user_123'
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.id) // Match the profile to the current user
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
-    
-    return data;
-  } catch (err) {
-    console.error('Error linking Spotify account:', err);
-    throw err;
-  }
+  if (error) throw error;
+  return data;
 }
 
 /**

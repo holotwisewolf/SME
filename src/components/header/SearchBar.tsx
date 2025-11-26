@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import SearchButton from '../ui/SearchButton';
 import ClearButton from '../ui/ClearButton';
-import AnimatedDropdown from './AnimatedDropdown';
+import AnimatedDropdown from '../ui/AnimatedDropdown';
 
 const SearchBar: React.FC = () => {
   // State to handle the input value

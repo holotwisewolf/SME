@@ -3,6 +3,7 @@
 // Import the initialized Supabase client
 // NOTE: Adjust this path if your supabase client is located elsewhere (e.g., '../lib/supabase')
 import { supabase } from '../lib/supabaseClient';
+import type { IAuthService } from '../contracts/auth_contracts';
 
 /**
  * Registers a new user.
@@ -11,17 +12,23 @@ import { supabase } from '../lib/supabaseClient';
  * which should be handled by a Database Trigger to create a row in the 'profiles' table.
  * * @param data - Object containing { email, password, username }
  */
+const DEV_INVITE = import.meta.env.VITE_DEV_INVITE;
+
 export async function register(data: any) {
-  const { email, password, username } = data;
-  
+  const { email, password, username, inviteCode } = data;
+
+  // Determine role based on code match
+  const isDev = inviteCode && inviteCode === DEV_INVITE;
+
   const { data: authData, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       // Pass extra metadata to allow the Postgres Trigger to populate the 'profiles' table
       data: {
-        username: username, 
+        username: username,
         display_name: username, // Set default display name same as username
+        app_role: isDev ? 'dev' : 'user', // Set app_role based on invite code
       }
     }
   });
@@ -34,10 +41,32 @@ export async function register(data: any) {
  * Logs in an existing user.
  * * Usage: Call this when the user submits the login form.
  * Logic: Authenticates using email/password and establishes a session (JWT).
- * * @param data - Object containing { email, password }
+ * * @param data - Object containing { email, password, remember }
  */
 export async function login(data: any) {
-  const { email, password } = data;
+  let { email, password, remember } = data;
+
+  // Check if input is an email
+  const isEmail = email.includes('@');
+
+  if (!isEmail) {
+    // Treat as username and lookup email
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email') // NOTE: This requires 'email' column in 'profiles' table
+      .eq('username', email)
+      .single();
+
+    if (profileError || !profile) {
+      throw new Error("Username not found");
+    }
+
+    email = (profile as any).email;
+  }
+
+  // Note: Supabase v2 persistence is handled at client initialization.
+  // Dynamic persistence switching is not directly supported in the same way.
+  // Defaulting to configured persistence (usually 'local').
 
   const { data: session, error } = await supabase.auth.signInWithPassword({
     email,
@@ -67,7 +96,7 @@ export async function logout() {
 export async function resetPassword(email: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     // Redirect the user to this URL after they click the email link
-    redirectTo: window.location.origin + '/update-password', 
+    redirectTo: window.location.origin + '/update-password',
   });
 
   if (error) throw error;
@@ -129,5 +158,87 @@ export async function getSession() {
 export async function checkAuthStatus() {
   const { data } = await supabase.auth.getSession();
   // Convert the session object to a boolean (true if session exists, false if null)
-  return !!data.session; 
+  return !!data.session;
 }
+
+/**
+ * Uploads a user avatar to the 'avatars' bucket.
+ * @param file - The image file to upload.
+ * @param userId - The user's ID (used for file naming).
+ * @returns The public URL of the uploaded image.
+ */
+export async function uploadAvatar(file: File, userId: string) {
+  const fileExt = file.name.split('.').pop();
+  const filePath = `${userId}/${Math.random()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file);
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+  return data.publicUrl;
+}
+
+/**
+ * Fetches the user's profile data from the 'profiles' table.
+ * @param userId - The UUID of the user.
+ */
+export async function getProfile(userId: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Updates the authenticated user's password.
+ * @param password - The new password.
+ */
+export async function updatePassword(password: string) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
+
+/**
+ * Updates the user's username (stored in user_metadata).
+ * @param username - The new username.
+ */
+export async function updateUsername(username: string) {
+  const { data, error } = await supabase.auth.updateUser({
+    data: { username }
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Validates an invite code for developer access.
+ * Logic: Checks a 'codes' table or uses a hardcoded check for now.
+ * @param code - The invite code to check.
+ */
+export async function validateInviteCode(code: string) {
+  return code === DEV_INVITE;
+}
+
+export const AuthService: IAuthService = {
+  register,
+  login,
+  logout,
+  resetPassword,
+  verifyEmail,
+  updateProfile,
+  uploadAvatar,
+  getProfile,
+  updatePassword,
+  updateUsername,
+  validateInviteCode,
+  getSession,
+  checkAuthStatus
+};
