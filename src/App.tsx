@@ -19,7 +19,7 @@ import Songs from "./pages/Songs";
 import Info from "./pages/Info";
 import SignUpPage from "./pages/auth_pages/SignUp";
 
-import TempoTestPage from "./pages/TempoTestPage";
+import TestingGround from "./features/dev/dev_pages/testing_ground";
 
 function App() {
   const location = useLocation();
@@ -128,10 +128,15 @@ function App() {
                 }
               />
 
-              {/* 👇👇👇 新增这个临时测试路由 👇👇👇 */}
-              <Route path="/tempo-test" element={<TempoTestPage />} />
-
+              <Route path="/testing-ground" element={
+                <PageWrapper>
+                  <TestingGround />
+                </PageWrapper>
+              }
+              />
             </Routes>
+
+
           </AnimatePresence>
         </div>
       </Layout>
