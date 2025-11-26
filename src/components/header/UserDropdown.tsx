@@ -10,16 +10,10 @@ const UserDropdown: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
-    const { user } = useLogin();
-    const [profile, setProfile] = useState<any>(null);
+    const { user, profile } = useLogin();
 
-    useEffect(() => {
-        if (user) {
-            AuthService.getProfile(user.id).then((data) => {
-                if (data) setProfile(data);
-            }).catch(err => console.error("Failed to load profile", err));
-        }
-    }, [user]);
+    // Local profile fetch removed in favor of global context
+    // useEffect(() => { ... }, [user]);
 
     // Close dropdown when clicking outside
     useEffect(() => {

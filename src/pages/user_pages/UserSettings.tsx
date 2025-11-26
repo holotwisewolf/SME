@@ -6,9 +6,11 @@ import SelectInput from "../../components/ui/SelectInput";
 import TextInput from "../../components/ui/TextInput";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { AuthService } from "../../services/auth_services";
+import { useLogin } from "../../components/login/LoginProvider";
 
 const UserSettings = () => {
     const navigate = useNavigate();
+    const { setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [isPublicRating, setIsPublicRating] = useState(true);
     const [isDeveloper, setIsDeveloper] = useState(false);
@@ -79,11 +81,16 @@ const UserSettings = () => {
                 devStatus = true;
             }
 
-            await AuthService.updateProfile(userId, {
+            const updatedProfile = await AuthService.updateProfile(userId, {
                 rating_privacy_default: isPublicRating,
                 app_role: devStatus ? 'dev' : 'user',
                 updated_at: new Date().toISOString(),
             });
+
+            // Update global profile immediately
+            if (updatedProfile && updatedProfile.length > 0) {
+                setProfile(updatedProfile[0]);
+            }
 
             alert("Settings saved successfully!");
             navigate(-1);

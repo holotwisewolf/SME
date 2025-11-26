@@ -8,9 +8,11 @@ import EditIcon from "../../components/ui/EditIcon";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { AuthService } from "../../services/auth_services";
 import { linkSpotifyAccount, unlinkSpotifyAccount } from "../../services/spotify_auth";
+import { useLogin } from "../../components/login/LoginProvider";
 
 const SetUpUserProfile = () => {
     const navigate = useNavigate();
+    const { setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [username, setUsername] = useState("");
     const [displayName, setDisplayName] = useState("");
@@ -87,12 +89,17 @@ const SetUpUserProfile = () => {
         setLoading(true);
         try {
             // 1. Update Profile
-            await AuthService.updateProfile(userId, {
+            const updatedProfile = await AuthService.updateProfile(userId, {
                 display_name: displayName,
                 bio: bio,
                 avatar_url: avatarUrl,
                 updated_at: new Date().toISOString(),
             });
+
+            // Update global profile immediately
+            if (updatedProfile && updatedProfile.length > 0) {
+                setProfile(updatedProfile[0]);
+            }
 
             // 2. Handle Spotify Linking
             if (linkSpotify) {

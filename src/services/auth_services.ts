@@ -64,10 +64,9 @@ export async function login(data: any) {
     email = (profile as any).email;
   }
 
-  // Set persistence based on 'remember' flag
-  await (supabase.auth as any).setPersistence(
-    remember ? 'local' : 'session'
-  );
+  // Note: Supabase v2 persistence is handled at client initialization.
+  // Dynamic persistence switching is not directly supported in the same way.
+  // Defaulting to configured persistence (usually 'local').
 
   const { data: session, error } = await supabase.auth.signInWithPassword({
     email,
