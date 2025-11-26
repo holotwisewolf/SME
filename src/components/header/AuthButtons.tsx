@@ -1,8 +1,13 @@
 import { useLogin } from "../../components/login/LoginProvider";
 import { Link } from "react-router-dom";
+import UserDropdown from "./UserDropdown";
 
 const AuthButtons = () => {
-  const { openLogin } = useLogin();
+  const { openLogin, user } = useLogin();
+
+  if (user) {
+    return <UserDropdown />;
+  }
 
   return (
     <div className="flex space-x-4">
