@@ -7,9 +7,11 @@ import EditIcon from "../../components/ui/EditIcon";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { AuthService } from "../../services/auth_services";
 import { linkSpotifyAccount, unlinkSpotifyAccount } from "../../services/spotify_auth";
+import { useLogin } from "../../components/login/LoginProvider";
 
 const UserProfile = () => {
     const navigate = useNavigate();
+    const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [username, setUsername] = useState("");
     const [displayName, setDisplayName] = useState("");
@@ -104,7 +106,22 @@ const UserProfile = () => {
     const handleSave = async () => {
         if (!userId) return;
         setLoading(true);
+
+        // Backup current profile
+        const backupProfile = { ...profile };
+
         try {
+            // 1. Optimistic Update
+            const optimisticProfile = {
+                ...profile,
+                display_name: displayName,
+                bio: bio,
+                avatar_url: avatarUrl,
+                updated_at: new Date().toISOString(),
+            };
+            setProfile(optimisticProfile);
+
+            // 2. API Call
             await AuthService.updateProfile(userId, {
                 display_name: displayName,
                 bio: bio,
@@ -117,6 +134,9 @@ const UserProfile = () => {
         } catch (error: any) {
             console.error("Update failed:", error);
             alert(error.message || "Failed to update profile.");
+
+            // Rollback on error
+            setProfile(backupProfile);
         } finally {
             setLoading(false);
         }

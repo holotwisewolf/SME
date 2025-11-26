@@ -10,7 +10,7 @@ import { useLogin } from "../../components/login/LoginProvider";
 
 const UserSettings = () => {
     const navigate = useNavigate();
-    const { setProfile } = useLogin();
+    const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [isPublicRating, setIsPublicRating] = useState(true);
     const [isDeveloper, setIsDeveloper] = useState(false);
@@ -68,6 +68,10 @@ const UserSettings = () => {
     const handleSave = async () => {
         if (!userId) return;
         setLoading(true);
+
+        // Backup current profile for rollback
+        const backupProfile = { ...profile };
+
         try {
             // Validate developer code if checking the box
             let devStatus = isDeveloper;
@@ -81,22 +85,30 @@ const UserSettings = () => {
                 devStatus = true;
             }
 
-            const updatedProfile = await AuthService.updateProfile(userId, {
+            // 1. Optimistic Update
+            const optimisticProfile = {
+                ...profile,
+                rating_privacy_default: isPublicRating,
+                app_role: devStatus ? 'dev' : 'user',
+                updated_at: new Date().toISOString(),
+            };
+            setProfile(optimisticProfile);
+
+            // 2. API Call
+            await AuthService.updateProfile(userId, {
                 rating_privacy_default: isPublicRating,
                 app_role: devStatus ? 'dev' : 'user',
                 updated_at: new Date().toISOString(),
             });
-
-            // Update global profile immediately
-            if (updatedProfile && updatedProfile.length > 0) {
-                setProfile(updatedProfile[0]);
-            }
 
             alert("Settings saved successfully!");
             navigate(-1);
         } catch (error: any) {
             console.error("Settings save failed:", error);
             alert(error.message || "Failed to save settings.");
+
+            // Rollback on error
+            setProfile(backupProfile);
         } finally {
             setLoading(false);
         }

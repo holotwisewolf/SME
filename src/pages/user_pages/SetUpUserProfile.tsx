@@ -12,7 +12,7 @@ import { useLogin } from "../../components/login/LoginProvider";
 
 const SetUpUserProfile = () => {
     const navigate = useNavigate();
-    const { setProfile } = useLogin();
+    const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [username, setUsername] = useState("");
     const [displayName, setDisplayName] = useState("");
@@ -87,21 +87,30 @@ const SetUpUserProfile = () => {
     const handleSave = async () => {
         if (!userId) return;
         setLoading(true);
+
+        // Backup current profile
+        const backupProfile = { ...profile };
+
         try {
-            // 1. Update Profile
-            const updatedProfile = await AuthService.updateProfile(userId, {
+            // 1. Optimistic Update
+            const optimisticProfile = {
+                ...profile,
+                display_name: displayName,
+                bio: bio,
+                avatar_url: avatarUrl,
+                updated_at: new Date().toISOString(),
+            };
+            setProfile(optimisticProfile);
+
+            // 2. API Call (Update Profile)
+            await AuthService.updateProfile(userId, {
                 display_name: displayName,
                 bio: bio,
                 avatar_url: avatarUrl,
                 updated_at: new Date().toISOString(),
             });
 
-            // Update global profile immediately
-            if (updatedProfile && updatedProfile.length > 0) {
-                setProfile(updatedProfile[0]);
-            }
-
-            // 2. Handle Spotify Linking
+            // 3. Handle Spotify Linking
             if (linkSpotify) {
                 // Only link if not already connected (check logic could be improved)
                 await linkSpotifyAccount();
@@ -110,11 +119,14 @@ const SetUpUserProfile = () => {
                 await unlinkSpotifyAccount();
             }
 
-            // 3. Navigate to main app
+            // 4. Navigate to main app
             navigate("/library/playlists");
         } catch (error: any) {
             console.error("Setup failed:", error);
             alert(error.message || "Failed to save profile.");
+
+            // Rollback on error
+            setProfile(backupProfile);
         } finally {
             setLoading(false);
         }
