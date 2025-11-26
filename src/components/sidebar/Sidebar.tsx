@@ -38,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
         },
         { path: '/songs', icon: musicIcon, label: 'Songs' },
         { path: '/Info', icon: infoIcon, label: 'Info' },
+        { path: '/testing-ground', icon: infoIcon, label: 'Testing Ground' },
     ];
 
     // Animation variants to keep code clean
