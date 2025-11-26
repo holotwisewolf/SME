@@ -6,6 +6,7 @@ import InputGroup from "../../components/ui/InputGroup";
 import TextInput from "../../components/ui/TextInput";
 import PasswordInput from "../../components/ui/PasswordInput";
 import CloudLogo from "../../components/shared/CloudLogo";
+import { AuthService } from "../../services/auth_services";
 
 const SignUpPage = () => {
     const navigate = useNavigate();
@@ -20,12 +21,45 @@ const SignUpPage = () => {
     const [isDragging, setIsDragging] = useState(false);
 
     const DRAG_THRESHOLD = 120;   // how far to pull to trigger exit
-    // Fake request handler
+    // Real request handler
     const handleSignUp = async () => {
+        if (!email || !password || !username) {
+            alert("Please fill in all fields.");
+            return;
+        }
+
         setLoading(true);
-        await new Promise((res) => setTimeout(res, 1500)); // simulate delay
-        setLoading(false);
-        navigate("/setup-profile");
+        try {
+            const { session } = await AuthService.register({ email, password, username });
+
+            if (session) {
+                navigate("/setup-profile");
+            } else {
+                // If no session (e.g. email confirmation required), try to login immediately
+                // This handles cases where email confirmation might be disabled or we want to force a check
+                try {
+                    const loginSession = await AuthService.login({ email, password });
+                    if (loginSession) {
+                        navigate("/setup-profile");
+                    } else {
+                        alert("Please check your email to confirm your account.");
+                        navigate("/");
+                    }
+                } catch (loginError: any) {
+                    if (loginError.message.includes("Email not confirmed")) {
+                        alert("Please check your email to confirm your account.");
+                        navigate("/");
+                    } else {
+                        throw loginError;
+                    }
+                }
+            }
+        } catch (error: any) {
+            console.error("Sign up error:", error);
+            alert(error.message || "Sign up failed");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

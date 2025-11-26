@@ -3,11 +3,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import UserProfileIcon from "../ui/DefUserAvatar";
 import { AuthService } from "../../services/auth_services";
+import { useLogin } from "../login/LoginProvider";
 
 const UserDropdown: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
+    const { user } = useLogin();
+    const [profile, setProfile] = useState<any>(null);
+
+    useEffect(() => {
+        if (user) {
+            AuthService.getProfile(user.id).then((data) => {
+                if (data) setProfile(data);
+            }).catch(err => console.error("Failed to load profile", err));
+        }
+    }, [user]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -33,12 +44,28 @@ const UserDropdown: React.FC = () => {
     return (
         <div ref={containerRef} className="relative z-50">
             {/* Trigger Icon */}
-            <button
+            {/* Trigger Icon & User Info */}
+            <div
+                className="flex items-center gap-3 cursor-pointer group"
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors focus:outline-none"
             >
-                <UserProfileIcon className="w-8 h-8 text-[#D1D1D1]" />
-            </button>
+                {profile && (
+                    <div className="flex flex-col items-end hidden md:flex">
+                        <span className="text-sm font-semibold text-white group-hover:text-gray-200 transition-colors">
+                            {profile.display_name || "User"}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                            @{profile.username || "username"}
+                        </span>
+                    </div>
+                )}
+
+                <button
+                    className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors focus:outline-none"
+                >
+                    <UserProfileIcon className="w-8 h-8 text-[#D1D1D1]" />
+                </button>
+            </div>
 
             {/* Dropdown Menu */}
             <AnimatePresence>
