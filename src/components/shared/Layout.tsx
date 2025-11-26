@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             We can add a Header here if needed, or just render children.
             For now, we render children which will be the PageWrapper + Page Content.
         */}
-                <main className="flex-1 overflow-y-auto scrollbar-hide">
+                <main className="flex-1 overflow-hidden">
                     {children}
                 </main>
             </div>

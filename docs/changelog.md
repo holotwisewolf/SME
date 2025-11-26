@@ -69,3 +69,33 @@
 	- getPreMadeTags()
 	- getUserCustomTags(userId)
 	- deleteTag(tagId)
+
+### 2025-11-26(SF)
+
+### Progress
+
+  - **/src/features/comment/services/comment_services.ts**
+    Create a new comment folder in `../src/feature`
+    - export async function createComment(...)
+    - export async function updateComment(...)
+    - export async function deleteComment(...)
+    - export async function getComment(...)
+    - export async function getItemComments(...)
+    - export async function getUserComments(...)
+    - export async function getCommentReplies(...)
+    - export async function getCommentWithRating(...)
+    - export async function getCommentCount(...)
+    - export function subscribeToComments(...)
+    - export function unsubscribeFromComments(...)
+
+  - **supabase**
+    Have modify to the comment with YJ
+
+  - **app.ts** 
+    Added some needed
+    - export type Comment = Database['public']['Tables']['comments']['Row'];
+
+    - export type CommentInsert = Database['public']['Tables']['comments']['Insert'];
+
+    - export type CommentUpdate = Database['public']['Tables']['comments']['Update'];
+

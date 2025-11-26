@@ -2,6 +2,7 @@
 
 import { supabase } from '../../../lib/supabaseClient';
 import type { Tag, TagType, ItemType } from '../../../types/app';
+import type { ITagService } from '../../../contracts/tag_contracts';
 
 async function getCurrentUserId(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -160,3 +161,15 @@ export async function searchTags(query: string): Promise<Tag[]> {
 export function createCustomTag(name: string) {
   return createTag(name, 'custom');
 }
+
+export const TagService: ITagService = {
+  getAllTags,
+  getPreMadeTags,
+  getUserCustomTags,
+  createTag,
+  assignTagToItem,
+  removeTagFromItem,
+  getItemTags,
+  searchTags,
+  createCustomTag
+};
