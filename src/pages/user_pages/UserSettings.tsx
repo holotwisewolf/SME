@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import PasswordInput from "../../components/ui/PasswordInput";
-import Checkbox from "../../components/ui/Checkbox";
+import SelectInput from "../../components/ui/SelectInput";
 import TextInput from "../../components/ui/TextInput";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { AuthService } from "../../services/auth_services";
@@ -34,8 +34,8 @@ const UserSettings = () => {
 
                 const profile = await AuthService.getProfile(session.user.id);
                 if (profile) {
-                    setIsPublicRating(profile.public_rating ?? true);
-                    setIsDeveloper(profile.is_dev ?? false);
+                    setIsPublicRating(profile.rating_privacy_default ?? true);
+                    setIsDeveloper(profile.app_role === 'dev');
                 }
             } catch (error) {
                 console.error("Error loading settings:", error);
@@ -45,8 +45,6 @@ const UserSettings = () => {
         };
         loadData();
     }, [navigate]);
-
-    // Removed early return for initializing to prevent animation blink
 
     const handlePasswordUpdate = async () => {
         if (!newPassword) {
@@ -82,8 +80,8 @@ const UserSettings = () => {
             }
 
             await AuthService.updateProfile(userId, {
-                public_rating: isPublicRating,
-                is_dev: devStatus,
+                rating_privacy_default: isPublicRating,
+                app_role: devStatus ? 'dev' : 'user',
                 updated_at: new Date().toISOString(),
             });
 
@@ -113,10 +111,11 @@ const UserSettings = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 to-transparent pointer-events-none" />
 
             <motion.div
+                layout
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="w-full max-w-md bg-[#1f1f1f] p-10 rounded-2xl shadow-2xl relative select-none border border-white/5 max-h-[90vh] overflow-y-auto scrollbar-hide min-h-[600px] flex flex-col justify-center"
+                className="w-full max-w-md bg-[#1f1f1f] p-10 rounded-2xl shadow-2xl relative select-none border border-white/5 max-h-[90vh] overflow-y-auto scrollbar-hide min-h-[600px] flex flex-col my-auto"
             >
                 {initializing ? (
                     <div className="flex items-center justify-center h-full">
@@ -156,60 +155,73 @@ const UserSettings = () => {
                             <div className="bg-[#2a2a2a]/50 p-4 rounded-xl border border-white/5">
                                 <h3 className="text-white font-medium mb-4">Security</h3>
 
-                                {!showPasswordChange ? (
-                                    <button
-                                        onClick={() => setShowPasswordChange(true)}
-                                        className="w-full bg-[#363636] text-white text-sm font-medium py-3 rounded-lg hover:bg-[#404040] transition flex items-center justify-between px-4"
-                                    >
-                                        Change Password
-                                        <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                ) : (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        className="space-y-3"
-                                    >
-                                        <PasswordInput
-                                            label="Old Password"
-                                            value={oldPassword}
-                                            onChange={(e) => setOldPassword(e.target.value)}
-                                            className="bg-[#1f1f1f]"
-                                        />
-                                        <PasswordInput
-                                            label="New Password"
-                                            value={newPassword}
-                                            onChange={(e) => setNewPassword(e.target.value)}
-                                            className="bg-[#1f1f1f]"
-                                        />
-                                        <div className="flex gap-2 mt-2">
-                                            <button
-                                                onClick={() => setShowPasswordChange(false)}
-                                                className="flex-1 py-2 text-xs text-gray-400 hover:text-white transition"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={handlePasswordUpdate}
-                                                className="flex-1 bg-[#f8baba] text-black text-xs font-bold py-2 rounded hover:bg-[#FFD1D1] transition"
-                                            >
-                                                Update
-                                            </button>
-                                        </div>
-                                    </motion.div>
-                                )}
+                                <AnimatePresence>
+                                    {!showPasswordChange ? (
+                                        <motion.button
+                                            layout
+                                            key="change-password-btn"
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            onClick={() => setShowPasswordChange(true)}
+                                            className="w-full bg-[#363636] text-white text-sm font-medium py-3 rounded-lg hover:bg-[#404040] transition flex items-center justify-between px-4 overflow-hidden"
+                                        >
+                                            Change Password
+                                            <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </motion.button>
+                                    ) : (
+                                        <motion.div
+                                            layout
+                                            key="password-fields"
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="space-y-3 overflow-hidden"
+                                        >
+                                            <PasswordInput
+                                                label="Old Password"
+                                                value={oldPassword}
+                                                onChange={(e) => setOldPassword(e.target.value)}
+                                                className="bg-[#1f1f1f]"
+                                            />
+                                            <PasswordInput
+                                                label="New Password"
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                className="bg-[#1f1f1f]"
+                                            />
+                                            <div className="flex gap-2 mt-2">
+                                                <button
+                                                    onClick={() => setShowPasswordChange(false)}
+                                                    className="flex-1 py-2 text-xs text-gray-400 hover:text-white transition"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={handlePasswordUpdate}
+                                                    className="flex-1 bg-[#f8baba] text-black text-xs font-bold py-2 rounded hover:bg-[#FFD1D1] transition"
+                                                >
+                                                    Update
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
 
                             {/* Privacy Section */}
                             <div className="bg-[#2a2a2a]/50 p-4 rounded-xl border border-white/5">
                                 <h3 className="text-white font-medium mb-4">Privacy</h3>
-                                <Checkbox
+                                <SelectInput
                                     label="Enable playlists to be viewed and rated by others?"
-                                    checked={isPublicRating}
-                                    onChange={setIsPublicRating}
-                                    className="text-sm"
+                                    value={isPublicRating ? "yes" : "no"}
+                                    onChange={(val) => setIsPublicRating(val === "yes")}
+                                    options={[
+                                        { label: "Yes", value: "yes" },
+                                        { label: "No", value: "no" },
+                                    ]}
                                 />
                             </div>
 
@@ -217,20 +229,30 @@ const UserSettings = () => {
                             <div className="bg-[#2a2a2a]/50 p-4 rounded-xl border border-white/5">
                                 <h3 className="text-white font-medium mb-4">Developer</h3>
                                 <div className="space-y-4">
-                                    <Checkbox
+                                    <SelectInput
                                         label="I'm a developer"
-                                        checked={isDeveloper}
-                                        onChange={setIsDeveloper}
-                                        className="text-sm"
+                                        value={isDeveloper ? "yes" : "no"}
+                                        onChange={(val) => {
+                                            const isYes = val === "yes";
+                                            setIsDeveloper(isYes);
+                                            if (!isYes) {
+                                                setInviteCode(""); // Reset code if disabled
+                                            }
+                                        }}
+                                        options={[
+                                            { label: "Yes", value: "yes" },
+                                            { label: "No", value: "no" },
+                                        ]}
                                     />
 
                                     <AnimatePresence>
                                         {isDeveloper && (
                                             <motion.div
+                                                layout
                                                 initial={{ height: 0, opacity: 0 }}
                                                 animate={{ height: "auto", opacity: 1 }}
                                                 exit={{ height: 0, opacity: 0 }}
-                                                className="overflow-hidden"
+                                                className="overflow-hidden p-1"
                                             >
                                                 <TextInput
                                                     label="Invite Code"

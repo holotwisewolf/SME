@@ -12,8 +12,13 @@ import type { IAuthService } from '../contracts/auth_contracts';
  * which should be handled by a Database Trigger to create a row in the 'profiles' table.
  * * @param data - Object containing { email, password, username }
  */
+const DEV_INVITE = import.meta.env.VITE_DEV_INVITE;
+
 export async function register(data: any) {
-  const { email, password, username } = data;
+  const { email, password, username, inviteCode } = data;
+
+  // Determine role based on code match
+  const isDev = inviteCode && inviteCode === DEV_INVITE;
 
   const { data: authData, error } = await supabase.auth.signUp({
     email,
@@ -23,6 +28,7 @@ export async function register(data: any) {
       data: {
         username: username,
         display_name: username, // Set default display name same as username
+        app_role: isDev ? 'dev' : 'user', // Set app_role based on invite code
       }
     }
   });
@@ -35,10 +41,10 @@ export async function register(data: any) {
  * Logs in an existing user.
  * * Usage: Call this when the user submits the login form.
  * Logic: Authenticates using email/password and establishes a session (JWT).
- * * @param data - Object containing { email, password }
+ * * @param data - Object containing { email, password, remember }
  */
 export async function login(data: any) {
-  let { email, password } = data;
+  let { email, password, remember } = data;
 
   // Check if input is an email
   const isEmail = email.includes('@');
@@ -57,6 +63,11 @@ export async function login(data: any) {
 
     email = (profile as any).email;
   }
+
+  // Set persistence based on 'remember' flag
+  await (supabase.auth as any).setPersistence(
+    remember ? 'local' : 'session'
+  );
 
   const { data: session, error } = await supabase.auth.signInWithPassword({
     email,
@@ -214,12 +225,7 @@ export async function updateUsername(username: string) {
  * @param code - The invite code to check.
  */
 export async function validateInviteCode(code: string) {
-  // Mock validation for now, or replace with DB query:
-  // const { data } = await supabase.from('invite_codes').select('*').eq('code', code).single();
-  // return !!data;
-
-  // Simple mock:
-  return code === "DEV-1234";
+  return code === DEV_INVITE;
 }
 
 export const AuthService: IAuthService = {

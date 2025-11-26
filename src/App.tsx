@@ -19,6 +19,7 @@ import Songs from "./pages/Songs";
 import Info from "./pages/Info";
 import SignUpPage from "./pages/auth_pages/SignUp";
 import TestingGround from "./features/dev/dev_pages/testing_ground";
+import DevRoute from "./features/dev/DevRoute";
 import SetUpUserProfile from "./pages/user_pages/SetUpUserProfile";
 import UserProfile from "./pages/user_pages/UserProfile";
 import UserSettings from "./pages/user_pages/UserSettings";
@@ -139,9 +140,11 @@ function App() {
               />
 
               <Route path="/testing-ground" element={
-                <PageWrapper>
-                  <TestingGround />
-                </PageWrapper>
+                <DevRoute>
+                  <PageWrapper>
+                    <TestingGround />
+                  </PageWrapper>
+                </DevRoute>
               }
               />
             </Routes>

@@ -21,7 +21,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
     const inputType = showPassword ? "text" : "password";
 
     return (
-        <div className={`flex flex-col gap-1 w-full ${className}`}>
+        <div className="flex flex-col gap-1 w-full">
             {label && (
                 <label className="text-gray-300 text-sm font-medium px-1">
                     {label}
@@ -34,7 +34,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
                     onChange={onChange}
                     placeholder={placeholder}
                     autoComplete="new-password"
-                    className="
+                    className={`
               w-full
               bg-[#3b3b3b] text-white 
               placeholder-gray-500 
@@ -43,7 +43,8 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
               focus:ring-2 focus:ring-gray-500/60  
               outline-none
               transition duration-200
-            "
+              ${className}
+            `}
                 />
 
                 {/* Reveal / Hide Button */}
