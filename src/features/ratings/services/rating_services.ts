@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabaseClient';
 import type { Rating, ItemType, ItemStats } from '../../../types/app';
+import type { IRatingService } from '../../../contracts/rating_contracts';
 
 /**
  * Create or update a user's rating for an item.
@@ -201,3 +202,13 @@ export function subscribeToRatingUpdates(
 
     return channel;
 }
+
+export const RatingService: IRatingService = {
+    submitPersonalRating,
+    updateRating,
+    deleteRating,
+    getPersonalRating,
+    toggleRatingPrivacy,
+    getRatingHistory,
+    subscribeToRatingUpdates
+};

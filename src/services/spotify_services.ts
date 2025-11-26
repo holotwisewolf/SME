@@ -1,5 +1,6 @@
 // src/services/spotifyService.ts
 import { spotifyFetch, getSpotifyToken } from '../lib/spotifyConnection'
+import type { ISpotifyService } from '../contracts/spotify_contracts';
 
 /**
  * Spotify Service
@@ -85,21 +86,17 @@ export async function getMultipleAlbums(albumIds: string[]) {
  * Create a Spotify playlist for the user.
  * Requires playlist-modify-public or playlist-modify-private scope.
  */
-/**
- * Create a Spotify playlist for the user.
- * Requires playlist-modify-public or playlist-modify-private scope.
- */
 export async function createSpotifyPlaylist(
   userId: string,
   name: string,
   description: string,
   isPublic: boolean
 ) {
-  const token = await getSpotifyToken() 
+  const token = await getSpotifyToken()
 
   // FIX: Use the correct Spotify API endpoint: https://api.spotify.com/v1/users/{user_id}/playlists
   const response = await fetch(
-    `https://api.spotify.com/v1/users/${userId}/playlists`, 
+    `https://api.spotify.com/v1/users/${userId}/playlists`,
     {
       method: "POST",
       headers: {
@@ -215,3 +212,21 @@ export function formatDuration(ms: number): string {
   const seconds = Math.floor((ms % 60000) / 1000)
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
+
+export const SpotifyService: ISpotifyService = {
+  searchTracks,
+  searchAlbums,
+  searchArtists,
+  searchAll,
+  getAlbumDetails,
+  getTrackDetails,
+  getArtistDetails,
+  getMultipleTracks,
+  getMultipleAlbums,
+  createSpotifyPlaylist,
+  addTracksToSpotifyPlaylist,
+  getTrackPreview,
+  generateSpotifyLink,
+  extractSpotifyId,
+  formatDuration
+};
