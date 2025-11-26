@@ -19,6 +19,8 @@ import Songs from "./pages/Songs";
 import Info from "./pages/Info";
 import SignUpPage from "./pages/auth_pages/SignUp";
 
+import TempoTestPage from "./pages/TempoTestPage";
+
 function App() {
   const location = useLocation();
 
@@ -125,6 +127,9 @@ function App() {
                   </PageWrapper>
                 }
               />
+
+              {/* 👇👇👇 新增这个临时测试路由 👇👇👇 */}
+              <Route path="/tempo-test" element={<TempoTestPage />} />
 
             </Routes>
           </AnimatePresence>
