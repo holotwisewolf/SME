@@ -23,13 +23,12 @@ import TestingGround from "./features/dev/dev_pages/testing_ground";
 
 function App() {
   const location = useLocation();
-
   return (
     <LoginProvider>
 
       <AnimatePresence>
         {location.pathname === "/signup" && (
-          <SignUpPage key="signup" />
+          <SignUpPage key={location.key} />
         )}
       </AnimatePresence>
 

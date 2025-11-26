@@ -3,6 +3,7 @@
 // Import the initialized Supabase client
 // NOTE: Adjust this path if your supabase client is located elsewhere (e.g., '../lib/supabase')
 import { supabase } from '../lib/supabaseClient';
+import type { IAuthService } from '../contracts/auth_contracts';
 
 /**
  * Registers a new user.
@@ -13,14 +14,14 @@ import { supabase } from '../lib/supabaseClient';
  */
 export async function register(data: any) {
   const { email, password, username } = data;
-  
+
   const { data: authData, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       // Pass extra metadata to allow the Postgres Trigger to populate the 'profiles' table
       data: {
-        username: username, 
+        username: username,
         display_name: username, // Set default display name same as username
       }
     }
@@ -67,7 +68,7 @@ export async function logout() {
 export async function resetPassword(email: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     // Redirect the user to this URL after they click the email link
-    redirectTo: window.location.origin + '/update-password', 
+    redirectTo: window.location.origin + '/update-password',
   });
 
   if (error) throw error;
@@ -129,5 +130,16 @@ export async function getSession() {
 export async function checkAuthStatus() {
   const { data } = await supabase.auth.getSession();
   // Convert the session object to a boolean (true if session exists, false if null)
-  return !!data.session; 
+  return !!data.session;
 }
+
+export const AuthService: IAuthService = {
+  register,
+  login,
+  logout,
+  resetPassword,
+  verifyEmail,
+  updateProfile,
+  getSession,
+  checkAuthStatus
+};

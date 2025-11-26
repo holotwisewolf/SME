@@ -8,7 +8,7 @@ interface SidebarLogoProps {
 
 const SidebarLogo: React.FC<SidebarLogoProps> = ({ isExpanded }) => {
     return (
-        <div className="h-20 border-b border-[#42434a] bg-[#18181b] flex items-center relative overflow-hidden">
+        <div className="h-20 border-b border-[#42434a] bg-[#18181b] flex items-center relative overflow-hidden shrink-0">
             <div className="flex items-center w-full h-full px-4 relative">
                 {/* LOGO (Stable, does not move) */}
                 <motion.div

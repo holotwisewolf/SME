@@ -7,6 +7,7 @@ import FavouritesIcon from '../shared/FavouritesIcon';
 import folderIcon from '../../assets/folder_icon.png';
 import musicIcon from '../../assets/music_icon.png';
 import infoIcon from '../../assets/info_icon.png';
+import SettingsIcon from '../ui/SettingsIcon';
 import type { MenuItem } from './SidebarSubItem';
 
 interface SidebarProps {
@@ -38,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
         },
         { path: '/songs', icon: musicIcon, label: 'Songs' },
         { path: '/Info', icon: infoIcon, label: 'Info' },
-        { path: '/testing-ground', icon: infoIcon, label: 'Testing Ground' },
+        { path: '/testing-ground', icon: SettingsIcon, label: 'Testing Ground' },
     ];
 
     // Animation variants to keep code clean
@@ -54,16 +55,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
             variants={sidebarVariants}
             className="relative h-screen bg-[#2a2a2e] border-[white] flex flex-col z-50 overflow-visible rounded-br-2xl"
         >
-            {/* Expand/Collapse Button */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-                <ExpandSidebarButton isExpanded={isExpanded} toggleSidebar={toggleSidebar} />
-            </div>
+
 
             {/* FIXED LOGO SECTION */}
             <SidebarLogo isExpanded={isExpanded} />
 
             {/* Navigation Items */}
             <SidebarMenu isExpanded={isExpanded} menuItems={menuItems} />
+
+            {/* Expand/Collapse Button */}
+            <div className="mb-8 flex justify-center shrink-0">
+                <ExpandSidebarButton isExpanded={isExpanded} toggleSidebar={toggleSidebar} />
+            </div>
         </motion.aside>
     );
 };
