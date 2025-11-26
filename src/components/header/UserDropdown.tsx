@@ -46,24 +46,24 @@ const UserDropdown: React.FC = () => {
             {/* Trigger Icon */}
             {/* Trigger Icon & User Info */}
             <div
-                className="flex items-center gap-3 cursor-pointer group"
+                className="flex items-center gap-4 cursor-pointer group"
                 onClick={() => setIsOpen(!isOpen)}
             >
                 {profile && (
                     <div className="flex flex-col items-end hidden md:flex">
-                        <span className="text-base font-semibold text-white group-hover:text-gray-200 transition-colors">
+                        <span className="text-xl font-bold text-white group-hover:text-gray-200 transition-colors">
                             {profile.display_name || "User"}
                         </span>
-                        <span className="text-sm text-gray-400">
+                        <span className="text-sm text-gray-400 font-medium">
                             @{profile.username || "username"}
                         </span>
                     </div>
                 )}
 
                 <button
-                    className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-white/10 transition-colors focus:outline-none"
+                    className="flex items-center justify-center w-14 h-14 rounded-full hover:bg-white/10 transition-colors focus:outline-none"
                 >
-                    <UserProfileIcon className="w-10 h-10 text-[#D1D1D1]" />
+                    <UserProfileIcon className="w-12 h-12 text-[#D1D1D1]" />
                 </button>
             </div>
 
