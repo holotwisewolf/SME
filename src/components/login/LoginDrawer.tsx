@@ -25,7 +25,7 @@ const LoginDrawer = () => {
 
         setLoading(true);
         try {
-            const { session, error } = await AuthService.login({ email, password });
+            const { session, error } = await AuthService.login({ email, password, remember });
             if (error) throw error;
 
             if (session) {
@@ -40,6 +40,20 @@ const LoginDrawer = () => {
             alert(error.message || "Failed to login. Please check your credentials.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+            alert("Please enter your email address first.");
+            return;
+        }
+        try {
+            await AuthService.resetPassword(email);
+            alert("Password reset email sent! Please check your inbox.");
+        } catch (error: any) {
+            console.error("Reset password failed:", error);
+            alert(error.message || "Failed to send reset email.");
         }
     };
 
@@ -101,7 +115,11 @@ const LoginDrawer = () => {
                                     label="Remember me"
                                 />
 
-                                <button type="button" className="text-sm text-gray-400 hover:text-white transition mt-2">
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    className="text-sm text-gray-400 hover:text-white transition mt-2"
+                                >
                                     Forgot password?
                                 </button>
                             </div>

@@ -19,6 +19,7 @@ const UserProfile = () => {
     const [loading, setLoading] = useState(false);
     const [initializing, setInitializing] = useState(true);
     const [isEditingUsername, setIsEditingUsername] = useState(false);
+    const [isLinking, setIsLinking] = useState(false);
 
     // Fetch initial data
     useEffect(() => {
@@ -88,12 +89,15 @@ const UserProfile = () => {
                 }
             } else {
                 // Link
+                setIsLinking(true);
                 await linkSpotifyAccount();
-                setIsSpotifyLinked(true);
+                // Do not set isSpotifyLinked(true) here. 
+                // The app will redirect to Spotify, and upon return, the profile data will reflect the linked status.
             }
         } catch (error) {
             console.error("Spotify toggle failed:", error);
             alert("Failed to update Spotify connection.");
+            setIsLinking(false);
         }
     };
 
@@ -254,9 +258,14 @@ const UserProfile = () => {
                                 ) : (
                                     <button
                                         onClick={handleSpotifyToggle}
-                                        className="w-full bg-[#BAFFB5] text-black font-semibold py-2.5 rounded-xl hover:bg-[#a3e69e] transition flex items-center justify-center gap-2"
+                                        disabled={isLinking}
+                                        className="w-full bg-[#BAFFB5] text-black font-semibold py-2.5 rounded-xl hover:bg-[#a3e69e] transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        Link Spotify Account
+                                        {isLinking ? (
+                                            <LoadingSpinner className="w-5 h-5 text-black" />
+                                        ) : (
+                                            "Link Spotify Account"
+                                        )}
                                     </button>
                                 )}
                             </div>

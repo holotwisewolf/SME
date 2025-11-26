@@ -51,19 +51,19 @@ const UserDropdown: React.FC = () => {
             >
                 {profile && (
                     <div className="flex flex-col items-end hidden md:flex">
-                        <span className="text-sm font-semibold text-white group-hover:text-gray-200 transition-colors">
+                        <span className="text-base font-semibold text-white group-hover:text-gray-200 transition-colors">
                             {profile.display_name || "User"}
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-sm text-gray-400">
                             @{profile.username || "username"}
                         </span>
                     </div>
                 )}
 
                 <button
-                    className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors focus:outline-none"
+                    className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-white/10 transition-colors focus:outline-none"
                 >
-                    <UserProfileIcon className="w-8 h-8 text-[#D1D1D1]" />
+                    <UserProfileIcon className="w-10 h-10 text-[#D1D1D1]" />
                 </button>
             </div>
 
