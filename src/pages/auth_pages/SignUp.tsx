@@ -6,13 +6,11 @@ import InputGroup from "../../components/ui/InputGroup";
 import TextInput from "../../components/ui/TextInput";
 import PasswordInput from "../../components/ui/PasswordInput";
 import CloudLogo from "../../components/shared/CloudLogo";
-import LoadingSpinner from "../../components/ui/LoadingSpinner";
 
 const SignUpPage = () => {
     const navigate = useNavigate();
     const dragControls = useDragControls();
 
-    const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
@@ -27,6 +25,7 @@ const SignUpPage = () => {
         setLoading(true);
         await new Promise((res) => setTimeout(res, 1500)); // simulate delay
         setLoading(false);
+        navigate("/setup-profile");
     };
 
     return (
@@ -53,15 +52,12 @@ const SignUpPage = () => {
                 }}
             />
 
-
-
             {/* GLOW EFFECT */}
             <motion.div
                 animate={{ opacity: hoveringEdge || isDragging ? 0.25 : 0 }}
                 transition={{ duration: 0.25 }}
                 className="pointer-events-none absolute left-0 top-0 h-full w-28 bg-gradient-to-r from-white/20 to-transparent blur-xl"
             ></motion.div>
-
 
             {/* ARROW ICON */}
             <motion.div
@@ -89,7 +85,7 @@ const SignUpPage = () => {
                 dragMomentum={false}
 
                 onDragStart={() => setIsDragging(true)}
-                onDragEnd={(e, info) => {
+                onDragEnd={(_, info) => {
                     setIsDragging(false);
                     if (info.offset.x > DRAG_THRESHOLD) {
                         navigate(-1);
@@ -107,8 +103,6 @@ const SignUpPage = () => {
                 }}
                 className="w-full max-w-md bg-[#1f1f1f] p-10 rounded-2xl shadow-2xl relative select-none"
             >
-
-
                 {/* Header */}
                 <div className="flex flex-col items-center mb-4">
                     <div className='mb-4'>
