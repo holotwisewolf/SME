@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "../../../lib/supabaseClient";
 
-import { AuthService } from "../../features/auth/services/auth_services";
+import { AuthService } from "../services/auth_services";
 
 interface LoginContextType {
     isOpen: boolean;

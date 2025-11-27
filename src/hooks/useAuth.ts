@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLogin } from "../components/login/LoginProvider";
+import { useLogin } from "../features/auth/components/LoginProvider";
 import { AuthService } from "../features/auth/services/auth_services";
 
 export function useAuth() {

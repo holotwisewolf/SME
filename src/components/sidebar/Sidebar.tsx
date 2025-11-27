@@ -10,7 +10,7 @@ import infoIcon from '../../assets/info_icon.png';
 import SettingsIcon from '../ui/SettingsIcon';
 import type { MenuItem } from './SidebarSubItem';
 import { AuthService } from '../../features/auth/services/auth_services';
-import { useLogin } from '../login/LoginProvider';
+import { useLogin } from '../../features/auth/components/LoginProvider';
 
 interface SidebarProps {
     isExpanded: boolean;

@@ -1,12 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useLogin } from "./LoginProvider";
-import TextInput from "../ui/TextInput";
-import PasswordInput from "../ui/PasswordInput";
-import InputGroup from "../ui/InputGroup";
+import TextInput from "../../../components/ui/TextInput";
+import PasswordInput from "../../../components/ui/PasswordInput";
+import InputGroup from "../../../components/ui/InputGroup";
 import { useState } from "react";
-import Checkbox from "../ui/Checkbox";
-import { AuthService } from "../../features/auth/services/auth_services";
-import LoadingSpinner from "../ui/LoadingSpinner";
+import Checkbox from "../../../components/ui/Checkbox";
+import { AuthService } from "../services/auth_services";
+import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 
 const LoginDrawer = () => {
     const { isOpen, closeLogin } = useLogin();

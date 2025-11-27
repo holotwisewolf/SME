@@ -1,6 +1,5 @@
-
-import { spotifyFetch, getSpotifyToken } from '../../../lib/spotifyConnection';
-import type { ISpotifyService } from '../../../contracts/spotify_contracts';
+import { spotifyFetch, getSpotifyToken } from './spotifyConnection';
+import type { ISpotifyService } from '../contracts/spotify_contracts';
 
 // ============================================
 // Search Functions
@@ -10,21 +9,22 @@ export async function searchTracks(query: string, limit: number = 10) {
   const data = await spotifyFetch(
     `search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`
   )
-  return data.tracks
+  // FIX: ensure return is ALWAYS an array
+  return data?.tracks?.items ?? [];
 }
 
 export async function searchAlbums(query: string, limit: number = 10) {
   const data = await spotifyFetch(
     `search?q=${encodeURIComponent(query)}&type=album&limit=${limit}`
   )
-  return data.albums
+  return data?.albums?.items ?? [];
 }
 
 export async function searchArtists(query: string, limit: number = 10) {
   const data = await spotifyFetch(
     `search?q=${encodeURIComponent(query)}&type=artist&limit=${limit}`
   )
-  return data.artists
+  return data?.artists?.items ?? [];
 }
 
 /**
@@ -35,9 +35,9 @@ export async function searchAll(query: string, limit: number = 10) {
     `search?q=${encodeURIComponent(query)}&type=track,album,artist&limit=${limit}`
   )
   return {
-    tracks: data.tracks,
-    albums: data.albums,
-    artists: data.artists,
+    tracks: data?.tracks?.items ?? [],
+    albums: data?.albums?.items ?? [],
+    artists: data?.artists?.items ?? [],
   }
 }
 
