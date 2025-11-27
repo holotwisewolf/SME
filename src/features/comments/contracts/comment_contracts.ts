@@ -1,5 +1,6 @@
-import type { Comment, ItemType } from '../types/app';
-import type { CommentWithProfile, CommentWithContext } from '../features/comments/services/comment_services';
+import type { Comment } from '../types/app';
+import type { ItemType } from '../../../types/global';
+import type { CommentWithProfile, CommentWithContext } from '../services/comment_services';
 
 export interface FetchOptions {
     sortBy?: 'recent' | 'oldest';

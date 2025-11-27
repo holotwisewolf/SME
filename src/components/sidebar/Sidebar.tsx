@@ -9,7 +9,7 @@ import musicIcon from '../../assets/music_icon.png';
 import infoIcon from '../../assets/info_icon.png';
 import SettingsIcon from '../ui/SettingsIcon';
 import type { MenuItem } from './SidebarSubItem';
-import { AuthService } from '../../services/auth_services';
+import { AuthService } from '../../features/auth/services/auth_services';
 import { useLogin } from '../login/LoginProvider';
 
 interface SidebarProps {

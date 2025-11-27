@@ -1,8 +1,9 @@
 // src/services/spotify_tag.ts
 
 import { supabase } from '../../../lib/supabaseClient';
-import type { Tag, TagType, ItemType } from '../../../types/app';
-import type { ITagService } from '../../../contracts/tag_contracts';
+import type { Tag, TagType } from '../type/tag_types';
+import type { ItemType } from '../../../types/global';
+import type { ITagService } from '../contracts/tag_contracts';
 
 async function getCurrentUserId(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();

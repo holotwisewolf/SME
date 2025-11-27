@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import UserProfileIcon from "../ui/DefUserAvatar";
 import MenuIcon from "../ui/MenuIcon";
-import { AuthService } from "../../services/auth_services";
+import { AuthService } from "../../features/auth/services/auth_services";
 import { useLogin } from "../login/LoginProvider";
 
 const UserDropdown: React.FC = () => {

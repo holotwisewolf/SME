@@ -1,11 +1,6 @@
-import { supabase } from '../lib/supabaseClient';
-import { spotifyFetch, clearSpotifyToken } from '../lib/spotifyConnection';
+import { supabase } from '../../../lib/supabaseClient';
+import { clearSpotifyToken } from '../../../lib/spotifyConnection';
 
-/**
- * Links the current logged-in user to their Spotify account.
- * * Usage: Call this after the user successfully logs in with Spotify
- * or clicks a "Connect Spotify" button.
- */
 export async function linkSpotifyAccount() {
   // Trigger the OAuth flow
   const { data, error } = await supabase.auth.signInWithOAuth({

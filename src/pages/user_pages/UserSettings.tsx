@@ -5,7 +5,7 @@ import PasswordInput from "../../components/ui/PasswordInput";
 import SelectInput from "../../components/ui/SelectInput";
 import TextInput from "../../components/ui/TextInput";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
-import { AuthService } from "../../services/auth_services";
+import { AuthService } from "../../features/auth/services/auth_services";
 import { useLogin } from "../../components/login/LoginProvider";
 
 const UserSettings = () => {

@@ -6,7 +6,7 @@ import InputGroup from "../../components/ui/InputGroup";
 import TextInput from "../../components/ui/TextInput";
 import PasswordInput from "../../components/ui/PasswordInput";
 import CloudLogo from "../../components/shared/CloudLogo";
-import { AuthService } from "../../services/auth_services";
+import { AuthService } from "../../features/auth/services/auth_services";
 
 const SignUpPage = () => {
     const navigate = useNavigate();

@@ -1,4 +1,5 @@
-import type { Rating, ItemType } from '../types/app';
+import type { Rating } from '../types/app';
+import type { ItemType } from '../../../types/global';
 
 export interface IRatingService {
     submitPersonalRating(userId: string, itemId: string, itemType: ItemType, ratingValue: number, isPublic: boolean): Promise<Rating[]>;

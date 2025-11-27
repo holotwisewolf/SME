@@ -28,7 +28,6 @@ function App() {
   const location = useLocation();
   return (
     <LoginProvider>
-
       <AnimatePresence mode="wait">
         {location.pathname === "/signup" && (
           <SignUpPage key="signup" />

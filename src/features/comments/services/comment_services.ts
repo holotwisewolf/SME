@@ -1,8 +1,9 @@
 // src/services/comment_services.ts
 
 import { supabase } from '../../../lib/supabaseClient';
-import type { Comment, ItemType } from '../../../types/app'; // 或者 '../types/supabase'，取决于你把 supabase.ts 放哪了
-import type { ICommentService, FetchOptions } from '../../../contracts/comment_contracts';
+import type { Comment } from '../type/comment_types';
+import type { ItemType } from '../../../types/global';
+import type { ICommentService, FetchOptions } from '../contracts/comment_contracts';
 
 export type CommentWithProfile = Comment & {
     profiles: {
