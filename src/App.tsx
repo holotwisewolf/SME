@@ -1,34 +1,33 @@
 import { useLocation, Routes, Route, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 
-import { LoginProvider } from "./components/login/LoginProvider";
-import LoginDrawer from "./components/login/LoginDrawer";
+import { LoginProvider } from "./features/auth/components/LoginProvider";
+import LoginDrawer from "./features/auth/components/LoginDrawer";
 
 import Layout from "./components/shared/Layout";
 import Header from "./components/header/Header";
 import PageWrapper from "./components/shared/PageWrapper";
 
 // Pages
-import LibraryPlaylists from "./pages/library_pages/LibraryPlaylists";
-import LibraryTracks from "./pages/library_pages/LibraryTracks";
-import LibraryAlbums from "./pages/library_pages/LibraryAlbums";
-import FavouritesPlaylists from "./pages/favourites_pages/FavouritesPlaylists";
-import FavouritesTracks from "./pages/favourites_pages/FavouritesTracks";
-import FavouritesAlbums from "./pages/favourites_pages/FavouritesAlbums";
+import LibraryPlaylists from "./features/library/library_pages/LibraryPlaylists";
+import LibraryTracks from "./features/library/library_pages/LibraryTracks";
+import LibraryAlbums from "./features/library/library_pages/LibraryAlbums";
+import FavouritesPlaylists from "./features/favourites/favourites_pages/FavouritesPlaylists";
+import FavouritesTracks from "./features/favourites/favourites_pages/FavouritesTracks";
+import FavouritesAlbums from "./features/favourites/favourites_pages/FavouritesAlbums";
 import Songs from "./pages/Songs";
 import Info from "./pages/Info";
-import SignUpPage from "./pages/auth_pages/SignUp";
+import SignUpPage from "./features/auth/pages/SignUp";
 import TestingGround from "./features/dev/dev_pages/testing_ground";
 import DevRoute from "./features/dev/DevRoute";
-import SetUpUserProfile from "./pages/user_pages/SetUpUserProfile";
-import UserProfile from "./pages/user_pages/UserProfile";
-import UserSettings from "./pages/user_pages/UserSettings";
+import SetUpUserProfile from "./features/user/user_pages/SetUpUserProfile";
+import UserProfile from "./features/user/user_pages/UserProfile";
+import UserSettings from "./features/user/user_pages/UserSettings";
 
 function App() {
   const location = useLocation();
   return (
     <LoginProvider>
-
       <AnimatePresence mode="wait">
         {location.pathname === "/signup" && (
           <SignUpPage key="signup" />
@@ -147,6 +146,13 @@ function App() {
                 </DevRoute>
               }
               />
+
+              {/* Overlay Routes (rendered by AnimatePresence above, but needed here for router matching) */}
+              <Route path="/signup" element={<></>} />
+              <Route path="/setup-profile" element={<></>} />
+              <Route path="/profile" element={<></>} />
+              <Route path="/settings" element={<></>} />
+
             </Routes>
 
 

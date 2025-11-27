@@ -10,7 +10,7 @@ import {
 } from '../../comments/services/comment_services';
 
 // Ensure the path points to app.ts
-import type { ItemType } from '../../../types/app';
+import type { ItemType } from '../../../types/global';
 
 const CommentDebugger: React.FC = () => {
     // State

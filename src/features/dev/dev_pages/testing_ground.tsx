@@ -94,12 +94,14 @@ const TestingGround: React.FC = () => {
                 </div>
             </div>
 
-            <div className="mt-12 text-gray-600 text-sm">
-                Testing Module: Comment Services (CRUD + Realtime)
-                <CommentDebugger />
+            <div className="mt-12 text-gray-600 text-sm w-full max-w-2xl">
+                <div className="mt-12 border-t border-gray-800 pt-8">
+                    Testing Module: Comment Services (CRUD + Realtime)
+                    <CommentDebugger />
+                </div>
             </div>
         </div>
-    );
+    )
 };
 
 export default TestingGround;
