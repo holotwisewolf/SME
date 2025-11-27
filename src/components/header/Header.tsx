@@ -1,6 +1,6 @@
 import React from 'react';
 import HeaderSearchBar from './HeaderSearchBar';
-import AuthButtons from './AuthButtons';
+import AuthButtons from '../../features/auth/components/AuthButtons';
 
 const Header: React.FC = () => {
   return (

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SpotifyResultItem from './SpotifyResultItem';
 import SpotifyAlbumItem from './SpotifyAlbumItem';
 import SpotifyArtistItem from './SpotifyArtistItem';
-import type { SpotifyTrack, SpotifyAlbum, SpotifyArtist } from '../types';
+import type { SpotifyTrack, SpotifyAlbum, SpotifyArtist } from '../type/spotify_types';
 
 type SearchType = 'Tracks' | 'Albums' | 'Artists';
 
@@ -16,7 +16,7 @@ interface SpotifyResultListProps {
 }
 
 const SpotifyResultList: React.FC<SpotifyResultListProps> = ({ results, type, selectedIndex, onSelect, isLoading }) => {
-    if (results.length === 0 && !isLoading) return null;
+    if ((!results || !Array.isArray(results) || results.length === 0) && !isLoading) return null;
 
     return (
         <AnimatePresence>

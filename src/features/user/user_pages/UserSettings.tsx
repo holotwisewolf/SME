@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import PasswordInput from "../../components/ui/PasswordInput";
-import SelectInput from "../../components/ui/SelectInput";
-import TextInput from "../../components/ui/TextInput";
-import LoadingSpinner from "../../components/ui/LoadingSpinner";
-import { AuthService } from "../../features/auth/services/auth_services";
-import { useLogin } from "../../components/login/LoginProvider";
+import PasswordInput from "../../../components/ui/PasswordInput";
+
+import Checkbox from "../../../components/ui/Checkbox";
+import TextInput from "../../../components/ui/TextInput";
+import LoadingSpinner from "../../../components/ui/LoadingSpinner";
+import { AuthService } from "../../auth/services/auth_services";
+import { useLogin } from "../../auth/components/LoginProvider";
 
 const UserSettings = () => {
     const navigate = useNavigate();
@@ -23,6 +24,11 @@ const UserSettings = () => {
     const [loading, setLoading] = useState(false);
     const [initializing, setInitializing] = useState(true);
 
+    const [initialState, setInitialState] = useState({
+        isPublicRating: true,
+        isDeveloper: false,
+    });
+
     // Fetch initial settings
     useEffect(() => {
         const loadData = async () => {
@@ -36,8 +42,13 @@ const UserSettings = () => {
 
                 const profile = await AuthService.getProfile(session.user.id);
                 if (profile) {
-                    setIsPublicRating(profile.rating_privacy_default ?? true);
-                    setIsDeveloper(profile.app_role === 'dev');
+                    const initialData = {
+                        isPublicRating: profile.rating_privacy_default ?? true,
+                        isDeveloper: profile.app_role === 'dev',
+                    };
+                    setIsPublicRating(initialData.isPublicRating);
+                    setIsDeveloper(initialData.isDeveloper);
+                    setInitialState(initialData);
                 }
             } catch (error) {
                 console.error("Error loading settings:", error);
@@ -47,6 +58,14 @@ const UserSettings = () => {
         };
         loadData();
     }, [navigate]);
+
+    // Check for changes
+    // Note: If user was NOT a dev and checks the box, that's a change.
+    // If user WAS a dev and unchecks, that's a change.
+    // Invite code entry is part of the process but the "state" change is the boolean.
+    const hasChanges =
+        isPublicRating !== initialState.isPublicRating ||
+        isDeveloper !== initialState.isDeveloper;
 
     const handlePasswordUpdate = async () => {
         if (!newPassword) {
@@ -66,16 +85,16 @@ const UserSettings = () => {
     };
 
     const handleSave = async () => {
-        if (!userId) return;
+        if (!userId || !hasChanges) return;
         setLoading(true);
 
         // Backup current profile for rollback
         const backupProfile = { ...profile };
 
         try {
-            // Validate developer code if checking the box
+            // Validate developer code if checking the box AND user wasn't already a dev
             let devStatus = isDeveloper;
-            if (isDeveloper && inviteCode) {
+            if (isDeveloper && !initialState.isDeveloper && inviteCode) {
                 const isValid = await AuthService.validateInviteCode(inviteCode);
                 if (!isValid) {
                     alert("Invalid invite code.");
@@ -83,6 +102,10 @@ const UserSettings = () => {
                     return;
                 }
                 devStatus = true;
+            } else if (isDeveloper && !initialState.isDeveloper && !inviteCode) {
+                alert("Please enter an invite code.");
+                setLoading(false);
+                return;
             }
 
             // 1. Optimistic Update
@@ -99,6 +122,12 @@ const UserSettings = () => {
                 rating_privacy_default: isPublicRating,
                 app_role: devStatus ? 'dev' : 'user',
                 updated_at: new Date().toISOString(),
+            });
+
+            // Update initial state
+            setInitialState({
+                isPublicRating,
+                isDeveloper: devStatus,
             });
 
             alert("Settings saved successfully!");
@@ -233,14 +262,10 @@ const UserSettings = () => {
                             {/* Privacy Section */}
                             <div className="bg-[#2a2a2a]/50 p-4 rounded-xl border border-white/5">
                                 <h3 className="text-white font-medium mb-4">Privacy</h3>
-                                <SelectInput
+                                <Checkbox
                                     label="Enable playlists to be viewed and rated by others?"
-                                    value={isPublicRating ? "yes" : "no"}
-                                    onChange={(val) => setIsPublicRating(val === "yes")}
-                                    options={[
-                                        { label: "Yes", value: "yes" },
-                                        { label: "No", value: "no" },
-                                    ]}
+                                    checked={isPublicRating}
+                                    onChange={setIsPublicRating}
                                 />
                             </div>
 
@@ -248,24 +273,21 @@ const UserSettings = () => {
                             <div className="bg-[#2a2a2a]/50 p-4 rounded-xl border border-white/5">
                                 <h3 className="text-white font-medium mb-4">Developer</h3>
                                 <div className="space-y-4">
-                                    <SelectInput
-                                        label="I'm a developer"
-                                        value={isDeveloper ? "yes" : "no"}
+                                    <Checkbox
+                                        label={initialState.isDeveloper
+                                            ? "Linked to Dev, uncheck to unlink"
+                                            : "I'm a developer"}
+                                        checked={isDeveloper}
                                         onChange={(val) => {
-                                            const isYes = val === "yes";
-                                            setIsDeveloper(isYes);
-                                            if (!isYes) {
+                                            setIsDeveloper(val);
+                                            if (!val) {
                                                 setInviteCode(""); // Reset code if disabled
                                             }
                                         }}
-                                        options={[
-                                            { label: "Yes", value: "yes" },
-                                            { label: "No", value: "no" },
-                                        ]}
                                     />
 
                                     <AnimatePresence>
-                                        {isDeveloper && (
+                                        {isDeveloper && !initialState.isDeveloper && (
                                             <motion.div
                                                 layout
                                                 initial={{ height: 0, opacity: 0 }}
@@ -298,8 +320,12 @@ const UserSettings = () => {
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="flex-1 bg-[#f8baba] text-black font-semibold py-4 rounded-lg hover:bg-[#FFD1D1] transition disabled:opacity-50"
-                                disabled={loading}
+                                className={`flex-1 font-semibold py-4 rounded-lg transition disabled:cursor-not-allowed
+                                    ${hasChanges
+                                        ? "bg-[#f8baba] text-black hover:bg-[#FFD1D1]"
+                                        : "bg-[#f8baba]/20 text-[#f8baba]/50"
+                                    }`}
+                                disabled={loading || !hasChanges}
                             >
                                 {loading ? "Saving..." : "Save Preferences"}
                             </button>

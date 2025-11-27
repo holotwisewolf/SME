@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import PlaylistGrid from '../components/PlaylistGrid';
+import PlaylistGrid from './PlaylistGrid';
 import AscendingButton from '../../../components/ui/AscendingButton';
 import DescendingButton from '../../../components/ui/DescendingButton';
 import FilterButton from '../../../components/ui/FilterButton';

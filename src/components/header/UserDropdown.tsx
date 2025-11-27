@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import UserProfileIcon from "../ui/DefUserAvatar";
 import MenuIcon from "../ui/MenuIcon";
 import { AuthService } from "../../features/auth/services/auth_services";
-import { useLogin } from "../login/LoginProvider";
+import { useLogin } from "../../features/auth/components/LoginProvider";
 
 const UserDropdown: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);

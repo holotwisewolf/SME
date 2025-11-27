@@ -1,25 +1,51 @@
+/// <reference lib="deno.ns" />
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-let cachedToken = null;
+// Cache
+let cachedToken: any = null;
 let cachedExpiresAt = 0;
 
-Deno.serve(async () => {
+// CORS headers
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json"
+};
+
+Deno.serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      status: 200,
+      headers: CORS_HEADERS,
+    });
+  }
+
+  // MAIN FUNCTION LOGIC
   try {
     const clientId = Deno.env.get("SPOTIFY_CLIENT_ID");
     const clientSecret = Deno.env.get("SPOTIFY_CLIENT_SECRET");
 
     if (!clientId || !clientSecret) {
-      return jsonError("Missing Spotify credentials", 500);
+      return new Response(JSON.stringify({ error: "Missing Spotify credentials" }), {
+        status: 500,
+        headers: CORS_HEADERS,
+      });
     }
 
-    // If we have a cached token and it's still valid → reuse it
+    // return cached token if valid
     if (cachedToken && cachedExpiresAt > Date.now()) {
-      return jsonResponse(cachedToken);
+      return new Response(JSON.stringify(cachedToken), {
+        status: 200,
+        headers: CORS_HEADERS,
+      });
     }
 
-    // Request new token
+    // Request token
     const basic = btoa(`${clientId}:${clientSecret}`);
-    const response = await fetch("https://accounts.spotify.com/api/token", {
+
+    const spotifyRes = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
       headers: {
         Authorization: `Basic ${basic}`,
@@ -28,31 +54,21 @@ Deno.serve(async () => {
       body: "grant_type=client_credentials",
     });
 
-    if (!response.ok) {
-      return jsonError(`Spotify API error: ${response.status}`, response.status);
-    }
+    const data = await spotifyRes.json();
 
-    const data = await response.json();
-
-    // Cache for reuse — expires_in is usually 3600 seconds (1 hr)
+    // Cache
     cachedToken = data;
-    cachedExpiresAt = Date.now() + data.expires_in * 1000;
+    cachedExpiresAt = Date.now() + (data.expires_in * 1000);
 
-    return jsonResponse(data);
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: CORS_HEADERS,
+    });
+
   } catch (err) {
-    return jsonError("Server error: " + err.message, 500);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: CORS_HEADERS,
+    });
   }
 });
-
-function jsonResponse(body: any) {
-  return new Response(JSON.stringify(body), {
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-function jsonError(msg: string, status: number) {
-  return new Response(JSON.stringify({ error: msg }), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}

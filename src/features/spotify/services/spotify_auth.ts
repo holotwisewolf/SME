@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabaseClient';
-import { clearSpotifyToken } from '../../../lib/spotifyConnection';
+import { clearSpotifyToken } from './spotifyConnection';
 
 export async function linkSpotifyAccount() {
   // Trigger the OAuth flow
