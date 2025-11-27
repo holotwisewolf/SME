@@ -5,7 +5,7 @@ import PasswordInput from "../ui/PasswordInput";
 import InputGroup from "../ui/InputGroup";
 import { useState } from "react";
 import Checkbox from "../ui/Checkbox";
-import { AuthService } from "../../services/auth_services";
+import { AuthService } from "../../features/auth/services/auth_services";
 import LoadingSpinner from "../ui/LoadingSpinner";
 
 const LoginDrawer = () => {

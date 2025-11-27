@@ -1,6 +1,7 @@
 import { supabase } from '../../../lib/supabaseClient';
-import type { Rating, ItemType, ItemStats } from '../../../types/app';
-import type { IRatingService } from '../../../contracts/rating_contracts';
+import type { Rating } from '../type/rating_types';
+import type { ItemType } from '../../../types/global';
+import type { IRatingService } from '../contracts/rating_contracts';
 
 /**
  * Create or update a user's rating for an item.

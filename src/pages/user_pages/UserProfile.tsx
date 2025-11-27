@@ -5,8 +5,8 @@ import TextInput from "../../components/ui/TextInput";
 import DefUserAvatar from "../../components/ui/DefUserAvatar";
 import EditIcon from "../../components/ui/EditIcon";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
-import { AuthService } from "../../services/auth_services";
-import { linkSpotifyAccount, unlinkSpotifyAccount } from "../../services/spotify_auth";
+import { AuthService } from "../../features/auth/services/auth_services";
+import { linkSpotifyAccount, unlinkSpotifyAccount } from "../../features/spotify/services/spotify_auth";
 import { useLogin } from "../../components/login/LoginProvider";
 
 const UserProfile = () => {

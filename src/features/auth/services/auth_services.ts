@@ -2,7 +2,7 @@
 
 // Import the initialized Supabase client
 // NOTE: Adjust this path if your supabase client is located elsewhere (e.g., '../lib/supabase')
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../../lib/supabaseClient';
 import type { IAuthService } from '../contracts/auth_contracts';
 
 /**

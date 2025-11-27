@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLogin } from "../components/login/LoginProvider";
-import { AuthService } from "../services/auth_services";
+import { AuthService } from "../features/auth/services/auth_services";
 
 export function useAuth() {
     const { user } = useLogin();

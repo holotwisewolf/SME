@@ -1,4 +1,5 @@
-import type { Tag, TagType, ItemType } from '../types/app';
+import type { Tag, TagType } from '../type/tag_types';
+import type { ItemType } from '../../../types/global';
 
 export interface ITagService {
     getAllTags(): Promise<Tag[]>;

@@ -1,11 +1,6 @@
-// src/services/spotifyService.ts
-import { spotifyFetch, getSpotifyToken } from '../lib/spotifyConnection'
-import type { ISpotifyService } from '../contracts/spotify_contracts';
 
-/**
- * Spotify Service
- * High-level business logic and helper functions
- */
+import { spotifyFetch, getSpotifyToken } from '../../../lib/spotifyConnection';
+import type { ISpotifyService } from '../../../contracts/spotify_contracts';
 
 // ============================================
 // Search Functions
