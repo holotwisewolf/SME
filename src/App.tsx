@@ -17,7 +17,7 @@ import FavouritesTracks from "./features/favourites/favourites_pages/FavouritesT
 import FavouritesAlbums from "./features/favourites/favourites_pages/FavouritesAlbums";
 import Songs from "./pages/Songs";
 import Info from "./pages/Info";
-import SignUpPage from "./features/auth/auth_pages/SignUp";
+import SignUpPage from "./features/auth/pages/SignUp";
 import TestingGround from "./features/dev/dev_pages/testing_ground";
 import DevRoute from "./features/dev/DevRoute";
 import SetUpUserProfile from "./features/user/user_pages/SetUpUserProfile";

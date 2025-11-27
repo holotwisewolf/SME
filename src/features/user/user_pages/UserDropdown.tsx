@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import UserProfileIcon from "../ui/DefUserAvatar";
-import MenuIcon from "../ui/MenuIcon";
-import { AuthService } from "../../features/auth/services/auth_services";
-import { useLogin } from "../../features/auth/components/LoginProvider";
+import UserProfileIcon from "../../../components/ui/DefUserAvatar";
+import MenuIcon from "../../../components/ui/MenuIcon";
+import { AuthService } from "../../auth/services/auth_services";
+import { useLogin } from "../../auth/components/LoginProvider";
 
 const UserDropdown: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
