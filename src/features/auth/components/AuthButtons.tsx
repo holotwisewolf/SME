@@ -1,6 +1,6 @@
 import { useLogin } from "./LoginProvider";
 import { Link } from "react-router-dom";
-import UserDropdown from "../../../components/header/UserDropdown";
+import UserDropdown from "../../user/user_pages/UserDropdown";
 
 const AuthButtons = () => {
   const { openLogin, user } = useLogin();
