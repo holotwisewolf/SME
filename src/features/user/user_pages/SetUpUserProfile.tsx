@@ -62,6 +62,11 @@ const SetUpUserProfile = () => {
 
         const file = e.target.files[0];
         try {
+            // Delete old avatar if exists
+            if (avatarUrl) {
+                await AuthService.deleteAvatar(avatarUrl);
+            }
+
             const url = await AuthService.uploadAvatar(file, userId);
             setAvatarUrl(url);
         } catch (error) {
