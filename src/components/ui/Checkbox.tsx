@@ -4,6 +4,7 @@ interface AnimatedCheckboxProps {
     checked?: boolean;
     onChange?: (value: boolean) => void;
     label?: string;
+    description?: string;
     className?: string;
 }
 
@@ -11,6 +12,7 @@ const Checkbox: React.FC<AnimatedCheckboxProps> = ({
     checked,
     onChange,
     label = "Remember me",
+    description,
     className = "",
 }) => {
     // internal fallback state if no parent state is used
@@ -28,9 +30,9 @@ const Checkbox: React.FC<AnimatedCheckboxProps> = ({
 
     return (
         <label
-            className={`flex items-center space-x-3 cursor-pointer group select-none ${className}`}
+            className={`flex items-start space-x-3 cursor-pointer group select-none ${className}`}
         >
-            <div className="relative w-6 h-6">
+            <div className="relative w-6 h-6 flex-shrink-0 mt-0.5">
                 {/* Hidden native checkbox */}
                 <input
                     type="checkbox"
@@ -74,13 +76,20 @@ const Checkbox: React.FC<AnimatedCheckboxProps> = ({
                 </div>
             </div>
 
-            {/* Label */}
-            <span
-                className={`transition-colors duration-300 ${isChecked ? "text-white" : "text-gray-400 group-hover:text-gray-300"
-                    }`}
-            >
-                {label}
-            </span>
+            {/* Label and Description */}
+            <div className="flex flex-col">
+                <span
+                    className={`transition-colors duration-300 ${isChecked ? "text-white" : "text-gray-400 group-hover:text-gray-300"
+                        }`}
+                >
+                    {label}
+                </span>
+                {description && (
+                    <span className="text-xs text-gray-500 mt-1">
+                        {description}
+                    </span>
+                )}
+            </div>
         </label>
     );
 };

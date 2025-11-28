@@ -13,7 +13,7 @@ const UserSettings = () => {
     const navigate = useNavigate();
     const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
-    const [isPublicRating, setIsPublicRating] = useState(true);
+    const [isPublicRating, setIsPublicRating] = useState(false);
     const [isDeveloper, setIsDeveloper] = useState(false);
     const [inviteCode, setInviteCode] = useState("");
 
@@ -25,7 +25,7 @@ const UserSettings = () => {
     const [initializing, setInitializing] = useState(true);
 
     const [initialState, setInitialState] = useState({
-        isPublicRating: true,
+        isPublicRating: false,
         isDeveloper: false,
     });
 
@@ -43,7 +43,7 @@ const UserSettings = () => {
                 const profile = await AuthService.getProfile(session.user.id);
                 if (profile) {
                     const initialData = {
-                        isPublicRating: profile.rating_privacy_default ?? true,
+                        isPublicRating: !(profile.is_private_profile ?? false),
                         isDeveloper: profile.app_role === 'dev',
                     };
                     setIsPublicRating(initialData.isPublicRating);
@@ -111,7 +111,7 @@ const UserSettings = () => {
             // 1. Optimistic Update
             const optimisticProfile = {
                 ...profile,
-                rating_privacy_default: isPublicRating,
+                is_private_profile: !isPublicRating,
                 app_role: devStatus ? 'dev' : 'user',
                 updated_at: new Date().toISOString(),
             };
@@ -119,7 +119,7 @@ const UserSettings = () => {
 
             // 2. API Call
             await AuthService.updateProfile(userId, {
-                rating_privacy_default: isPublicRating,
+                is_private_profile: !isPublicRating,
                 app_role: devStatus ? 'dev' : 'user',
                 updated_at: new Date().toISOString(),
             });
@@ -263,7 +263,8 @@ const UserSettings = () => {
                             <div className="bg-[#2a2a2a]/50 p-4 rounded-xl border border-white/5">
                                 <h3 className="text-white font-medium mb-4">Privacy</h3>
                                 <Checkbox
-                                    label="Enable playlists to be viewed and rated by others?"
+                                    label="Public Visibility"
+                                    description="When enabled, your profile and activity are visible to the community."
                                     checked={isPublicRating}
                                     onChange={setIsPublicRating}
                                 />
