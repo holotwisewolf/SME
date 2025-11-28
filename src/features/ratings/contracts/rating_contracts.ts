@@ -1,4 +1,4 @@
-import type { Rating } from '../types/app';
+import type { Rating } from '../type/rating_types';
 import type { ItemType } from '../../../types/global';
 
 export interface IRatingService {
