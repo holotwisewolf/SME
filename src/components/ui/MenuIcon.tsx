@@ -10,7 +10,8 @@ const MenuIcon = ({
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className={className}
+            className={`${className} transition-none will-change-auto`}
+            style={{ transition: 'none' }}
             {...props}
         >
             <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
@@ -22,6 +23,7 @@ const MenuIcon = ({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    style={{ transition: 'none' }}
                 />
             </g>
         </svg>
