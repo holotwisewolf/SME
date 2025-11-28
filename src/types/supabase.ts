@@ -17,7 +17,7 @@ export type Database = {
       activity_log: {
         Row: {
           activity_type: Database["public"]["Enums"]["activity_type"]
-          created_at: string | null
+          created_at: string
           id: string
           item_id: string
           item_type: Database["public"]["Enums"]["item_type"]
@@ -26,7 +26,7 @@ export type Database = {
         }
         Insert: {
           activity_type: Database["public"]["Enums"]["activity_type"]
-          created_at?: string | null
+          created_at?: string
           id?: string
           item_id: string
           item_type: Database["public"]["Enums"]["item_type"]
@@ -35,7 +35,7 @@ export type Database = {
         }
         Update: {
           activity_type?: Database["public"]["Enums"]["activity_type"]
-          created_at?: string | null
+          created_at?: string
           id?: string
           item_id?: string
           item_type?: Database["public"]["Enums"]["item_type"]
@@ -50,44 +50,37 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "activity_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       comments: {
         Row: {
           content: string
-          created_at: string | null
+          created_at: string
           id: string
           item_id: string
           item_type: Database["public"]["Enums"]["item_type"]
           parent_comment_id: string | null
-          updated_at: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
           content: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           item_id: string
           item_type: Database["public"]["Enums"]["item_type"]
           parent_comment_id?: string | null
-          updated_at?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
           content?: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           item_id?: string
           item_type?: Database["public"]["Enums"]["item_type"]
           parent_comment_id?: string | null
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -105,106 +98,77 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       favorites: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
-          playlist_id: string | null
-          spotify_album_id: string | null
-          spotify_track_id: string
+          item_id: string
+          item_type: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: string
-          playlist_id?: string | null
-          spotify_album_id?: string | null
-          spotify_track_id: string
+          item_id: string
+          item_type: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
-          playlist_id?: string | null
-          spotify_album_id?: string | null
-          spotify_track_id?: string
+          item_id?: string
+          item_type?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "favorites_playlist_id_fkey"
-            columns: ["playlist_id"]
-            isOneToOne: false
-            referencedRelation: "playlists"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "favorites_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "favorites_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       item_stats: {
         Row: {
-          average_rating: number | null
-          comment_count: number | null
-          created_at: string | null
-          favorite_count: number | null
+          average_rating: number
+          comment_count: number
+          created_at: string
+          favorite_count: number
           id: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
-          rating_count: number | null
-          tag_count: number | null
-          updated_at: string | null
+          item_type: string
+          rating_count: number
+          rating_sum: number
+          tag_count: number
+          updated_at: string
         }
         Insert: {
-          average_rating?: number | null
-          comment_count?: number | null
-          created_at?: string | null
-          favorite_count?: number | null
+          average_rating?: number
+          comment_count?: number
+          created_at?: string
+          favorite_count?: number
           id?: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
-          rating_count?: number | null
-          tag_count?: number | null
-          updated_at?: string | null
+          item_type: string
+          rating_count?: number
+          rating_sum?: number
+          tag_count?: number
+          updated_at?: string
         }
         Update: {
-          average_rating?: number | null
-          comment_count?: number | null
-          created_at?: string | null
-          favorite_count?: number | null
+          average_rating?: number
+          comment_count?: number
+          created_at?: string
+          favorite_count?: number
           id?: string
           item_id?: string
-          item_type?: Database["public"]["Enums"]["item_type"]
-          rating_count?: number | null
-          tag_count?: number | null
-          updated_at?: string | null
+          item_type?: string
+          rating_count?: number
+          rating_sum?: number
+          tag_count?: number
+          updated_at?: string
         }
         Relationships: []
       }
       item_tags: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
           item_id: string
           item_type: Database["public"]["Enums"]["item_type"]
@@ -212,7 +176,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           item_id: string
           item_type: Database["public"]["Enums"]["item_type"]
@@ -220,7 +184,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           item_id?: string
           item_type?: Database["public"]["Enums"]["item_type"]
@@ -242,32 +206,25 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "item_tags_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       playlist_exports: {
         Row: {
-          export_date: string | null
+          export_date: string
           id: string
           playlist_id: string
           playlist_name: string
           user_id: string
         }
         Insert: {
-          export_date?: string | null
+          export_date?: string
           id?: string
           playlist_id: string
           playlist_name: string
           user_id: string
         }
         Update: {
-          export_date?: string | null
+          export_date?: string
           id?: string
           playlist_id?: string
           playlist_name?: string
@@ -288,18 +245,11 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "playlist_exports_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       playlist_items: {
         Row: {
-          added_at: string | null
+          added_at: string
           added_by: string | null
           id: string
           playlist_id: string
@@ -308,7 +258,7 @@ export type Database = {
           spotify_track_id: string
         }
         Insert: {
-          added_at?: string | null
+          added_at?: string
           added_by?: string | null
           id?: string
           playlist_id: string
@@ -317,7 +267,7 @@ export type Database = {
           spotify_track_id: string
         }
         Update: {
-          added_at?: string | null
+          added_at?: string
           added_by?: string | null
           id?: string
           playlist_id?: string
@@ -334,13 +284,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "playlist_items_added_by_fkey"
-            columns: ["added_by"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
-          },
-          {
             foreignKeyName: "playlist_items_playlist_id_fkey"
             columns: ["playlist_id"]
             isOneToOne: false
@@ -352,38 +295,38 @@ export type Database = {
       playlists: {
         Row: {
           color: string | null
-          created_at: string | null
+          created_at: string
           description: string | null
           id: string
           is_public: boolean | null
           spotify_playlist_id: string | null
           title: string
           track_count: number | null
-          updated_at: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
           color?: string | null
-          created_at?: string | null
+          created_at?: string
           description?: string | null
           id?: string
           is_public?: boolean | null
           spotify_playlist_id?: string | null
           title: string
           track_count?: number | null
-          updated_at?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
           color?: string | null
-          created_at?: string | null
+          created_at?: string
           description?: string | null
           id?: string
           is_public?: boolean | null
           spotify_playlist_id?: string | null
           title?: string
           track_count?: number | null
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -393,13 +336,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "playlists_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -408,72 +344,72 @@ export type Database = {
           app_role: string | null
           avatar_url: string | null
           bio: string | null
-          created_at: string | null
+          created_at: string
           display_name: string | null
+          email: string | null
           id: string
-          rating_privacy_default: boolean | null
+          is_private_profile: boolean | null
           spotify_connected: boolean | null
           spotify_user_id: string | null
-          updated_at: string | null
+          updated_at: string
           username: string | null
         }
         Insert: {
           app_role?: string | null
           avatar_url?: string | null
           bio?: string | null
-          created_at?: string | null
+          created_at?: string
           display_name?: string | null
+          email?: string | null
           id: string
-          rating_privacy_default?: boolean | null
+          is_private_profile?: boolean | null
           spotify_connected?: boolean | null
           spotify_user_id?: string | null
-          updated_at?: string | null
+          updated_at?: string
           username?: string | null
         }
         Update: {
           app_role?: string | null
           avatar_url?: string | null
           bio?: string | null
-          created_at?: string | null
+          created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
-          rating_privacy_default?: boolean | null
+          is_private_profile?: boolean | null
           spotify_connected?: boolean | null
           spotify_user_id?: string | null
-          updated_at?: string | null
+          updated_at?: string
           username?: string | null
         }
         Relationships: []
       }
       ratings: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
-          is_public: boolean | null
           item_id: string
           item_type: Database["public"]["Enums"]["item_type"]
           rating: number
-          updated_at: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: string
-          is_public?: boolean | null
           item_id: string
           item_type: Database["public"]["Enums"]["item_type"]
           rating: number
-          updated_at?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
-          is_public?: boolean | null
           item_id?: string
           item_type?: Database["public"]["Enums"]["item_type"]
           rating?: number
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -484,18 +420,11 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "ratings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       spotify_cache: {
         Row: {
-          created_at: string | null
+          created_at: string
           data: Json
           expires_at: string
           id: string
@@ -503,7 +432,7 @@ export type Database = {
           resource_type: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           data: Json
           expires_at: string
           id?: string
@@ -511,7 +440,7 @@ export type Database = {
           resource_type: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           data?: Json
           expires_at?: string
           id?: string
@@ -523,7 +452,7 @@ export type Database = {
       tags: {
         Row: {
           color: string | null
-          created_at: string | null
+          created_at: string
           creator_id: string | null
           description: string | null
           id: string
@@ -533,7 +462,7 @@ export type Database = {
         }
         Insert: {
           color?: string | null
-          created_at?: string | null
+          created_at?: string
           creator_id?: string | null
           description?: string | null
           id?: string
@@ -543,7 +472,7 @@ export type Database = {
         }
         Update: {
           color?: string | null
-          created_at?: string | null
+          created_at?: string
           creator_id?: string | null
           description?: string | null
           id?: string
@@ -559,13 +488,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "tags_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       user_preferences: {
@@ -573,7 +495,7 @@ export type Database = {
           favorite_artists: string[] | null
           favorite_genres: string[] | null
           id: string
-          last_updated: string | null
+          last_updated: string
           preference_vector: Json | null
           user_id: string
         }
@@ -581,7 +503,7 @@ export type Database = {
           favorite_artists?: string[] | null
           favorite_genres?: string[] | null
           id?: string
-          last_updated?: string | null
+          last_updated?: string
           preference_vector?: Json | null
           user_id: string
         }
@@ -589,7 +511,7 @@ export type Database = {
           favorite_artists?: string[] | null
           favorite_genres?: string[] | null
           id?: string
-          last_updated?: string | null
+          last_updated?: string
           preference_vector?: Json | null
           user_id?: string
         }
@@ -601,27 +523,10 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "user_stats"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
     }
     Views: {
-      global_rating_stats: {
-        Row: {
-          average_rating: number | null
-          item_id: string | null
-          item_type: Database["public"]["Enums"]["item_type"] | null
-          last_rated_at: string | null
-          rating_count: number | null
-        }
-        Relationships: []
-      }
       trending_items: {
         Row: {
           activity_breakdown: Json | null
@@ -629,18 +534,6 @@ export type Database = {
           item_id: string | null
           item_type: Database["public"]["Enums"]["item_type"] | null
           last_activity_at: string | null
-        }
-        Relationships: []
-      }
-      user_stats: {
-        Row: {
-          total_comments: number | null
-          total_favorites: number | null
-          total_playlists: number | null
-          total_ratings: number | null
-          total_tags: number | null
-          user_id: string | null
-          username: string | null
         }
         Relationships: []
       }
@@ -794,4 +687,3 @@ export const Constants = {
     },
   },
 } as const
-

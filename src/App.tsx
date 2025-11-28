@@ -21,7 +21,7 @@ import SignUpPage from "./features/auth/pages/SignUp";
 import TestingGround from "./features/dev/dev_pages/testing_ground";
 import DevRoute from "./features/dev/DevRoute";
 import SetUpUserProfile from "./features/user/user_pages/SetUpUserProfile";
-import UserProfile from "./features/user/user_pages/UserProfile";
+import UserAccount from "./features/user/user_pages/UserAccount";
 import UserSettings from "./features/user/user_pages/UserSettings";
 import { TracksFullPage } from "./features/spotify/pages/TracksFullPage";
 import { AlbumsFullPage } from "./features/spotify/pages/AlbumsFullPage";
@@ -38,8 +38,8 @@ function App() {
         {location.pathname === "/setup-profile" && (
           <SetUpUserProfile key="setup-profile" />
         )}
-        {location.pathname === "/profile" && (
-          <UserProfile key="profile" />
+        {location.pathname === "/account" && (
+          <UserAccount key="account" />
         )}
         {location.pathname === "/settings" && (
           <UserSettings key="settings" />
@@ -153,7 +153,7 @@ function App() {
               {/* Overlay Routes (rendered by AnimatePresence above, but needed here for router matching) */}
               <Route path="/signup" element={<></>} />
               <Route path="/setup-profile" element={<></>} />
-              <Route path="/profile" element={<></>} />
+              <Route path="/account" element={<></>} />
               <Route path="/settings" element={<></>} />
 
               {/* SPOTIFY FULL PAGES */}

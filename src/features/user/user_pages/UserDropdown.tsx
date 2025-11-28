@@ -41,7 +41,7 @@ const UserDropdown: React.FC = () => {
             {/* Trigger Icon & User Info */}
             <div className="flex items-center gap-4">
                 {profile && (
-                    <div className="flex flex-col items-end hidden md:flex mt-1.5">
+                    <div className="flex flex-col items-end hidden md:flex mt-1.5 pointer-events-none">
                         <span className="text-white font-bold text-l tracking-wide leading-none transition-colors">
                             {profile.display_name || "User"}
                         </span>
@@ -59,9 +59,9 @@ const UserDropdown: React.FC = () => {
                 {/* Menu Trigger */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="p-2 hover:bg-white/10 rounded-full transition-colors focus:outline-none"
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors focus:outline-none focus-visible:ring-0 isolate transform-gpu"
                 >
-                    <MenuIcon className="w-8 h-8 text-white" />
+                    <MenuIcon className="w-8 h-8 text-white pointer-events-none select-none" />
                 </button>
             </div>
 
@@ -77,11 +77,11 @@ const UserDropdown: React.FC = () => {
                     >
                         <div className="py-1">
                             <Link
-                                to="/profile"
+                                to="/account"
                                 onClick={() => setIsOpen(false)}
                                 className="block px-4 py-2 text-sm text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
                             >
-                                Profile
+                                Account
                             </Link>
                             <Link
                                 to="/settings"
