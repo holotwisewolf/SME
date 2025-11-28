@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { SpotifyArtist } from '../types';
+import type { SpotifyArtist } from '../type/spotify_types';
 
 interface SpotifyArtistItemProps {
     artist: SpotifyArtist;
