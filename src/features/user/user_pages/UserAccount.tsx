@@ -9,7 +9,7 @@ import { AuthService } from "../../auth/services/auth_services";
 import { linkSpotifyAccount, unlinkSpotifyAccount } from "../../spotify/services/spotify_auth";
 import { useLogin } from "../../auth/components/LoginProvider";
 
-const UserProfile = () => {
+const UserAccount = () => {
     const navigate = useNavigate();
     const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
@@ -345,4 +345,4 @@ const UserProfile = () => {
     );
 };
 
-export default UserProfile;
+export default UserAccount;

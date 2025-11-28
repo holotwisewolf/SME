@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, LayoutGroup } from 'framer-motion';
 import PlaylistGrid from './PlaylistGrid';
 import AscendingButton from '../../../components/ui/AscendingButton';
 import DescendingButton from '../../../components/ui/DescendingButton';
@@ -36,36 +36,38 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
             <FilterButton className="w-5 h-5" color="currentColor" isActive={isFilterActive} />
           </button>
 
-          {/* Sort Toggle */}
-          <div className="bg-[#292929] rounded-full p-1 flex items-center h-10 relative isolate">
-            <button
-              onClick={() => setSortOrder('asc')}
-              className={`relative px-4 h-full rounded-full flex items-center justify-center z-10 transition-colors duration-200 ${sortOrder === 'asc' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
-            >
-              {sortOrder === 'asc' && (
-                <motion.div
-                  layoutId="activeSort"
-                  className="absolute inset-0 bg-[#1a1a1a] rounded-full -z-10 shadow-sm"
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                />
-              )}
-              <AscendingButton className="w-4 h-4" color="currentColor" />
-            </button>
+          {/* Sort Toggle - Wrapped in LayoutGroup to isolate animations */}
+          <LayoutGroup id="playlist-sort">
+            <div className="bg-[#292929] rounded-full p-1 flex items-center h-10 relative isolate">
+              <button
+                onClick={() => setSortOrder('asc')}
+                className={`relative px-4 h-full rounded-full flex items-center justify-center z-10 transition-colors duration-200 ${sortOrder === 'asc' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                {sortOrder === 'asc' && (
+                  <motion.div
+                    layoutId="playlistSortIndicator"
+                    className="absolute inset-0 bg-[#1a1a1a] rounded-full -z-10 shadow-sm"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <AscendingButton className="w-4 h-4" color="currentColor" />
+              </button>
 
-            <button
-              onClick={() => setSortOrder('desc')}
-              className={`relative px-4 h-full rounded-full flex items-center justify-center z-10 transition-colors duration-200 ${sortOrder === 'desc' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
-            >
-              {sortOrder === 'desc' && (
-                <motion.div
-                  layoutId="activeSort"
-                  className="absolute inset-0 bg-[#1a1a1a] rounded-full -z-10 shadow-sm"
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                />
-              )}
-              <DescendingButton className="w-4 h-4" color="currentColor" />
-            </button>
-          </div>
+              <button
+                onClick={() => setSortOrder('desc')}
+                className={`relative px-4 h-full rounded-full flex items-center justify-center z-10 transition-colors duration-200 ${sortOrder === 'desc' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                {sortOrder === 'desc' && (
+                  <motion.div
+                    layoutId="playlistSortIndicator"
+                    className="absolute inset-0 bg-[#1a1a1a] rounded-full -z-10 shadow-sm"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <DescendingButton className="w-4 h-4" color="currentColor" />
+              </button>
+            </div>
+          </LayoutGroup>
 
         </div>
       </div>
