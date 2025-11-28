@@ -1,4 +1,4 @@
-import type { Comment } from '../types/app';
+import type { Comment } from '../type/comment_types';
 import type { ItemType } from '../../../types/global';
 import type { CommentWithProfile, CommentWithContext } from '../services/comment_services';
 
