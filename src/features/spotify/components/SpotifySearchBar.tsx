@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SpotifyService } from '../../features/spotify/services/spotify_services.ts';
-import SpotifyResultList from '../../features/spotify/components/SpotifyResultList.tsx';
-import LoadingSpinner from '../ui/LoadingSpinner';
-import SearchButton from '../ui/SearchButton';
-import AnimatedDropdown from '../ui/AnimatedDropdown';
-import ClearButton from '../ui/ClearButton';
+import { SpotifyService } from '../services/spotify_services.ts';
+import SpotifyResultList from './SpotifyResultList.tsx';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner.tsx';
+import SearchButton from '../../../components/ui/SearchButton.tsx';
+import AnimatedDropdown from '../../../components/ui/AnimatedDropdown.tsx';
+import ClearButton from '../../../components/ui/ClearButton.tsx';
 
-const HeaderSearchBar: React.FC = () => {
+const SpotifySearchBar: React.FC = () => {
   const [searchType, setSearchType] = useState('Tracks');
   const [searchText, setSearchText] = useState('');
-
-  // Search States
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -44,11 +42,10 @@ const HeaderSearchBar: React.FC = () => {
         setIsOpen(false);
       }
     }, 300);
-
     return () => clearTimeout(timeoutId);
   }, [searchText, searchType]);
 
-  // Click Outside
+  // Click Outside - FIXED: Empty dependency array to avoid stale closures
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -57,12 +54,11 @@ const HeaderSearchBar: React.FC = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, []); // Empty array - listener only added once
 
   // Keyboard Navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) return;
-
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
@@ -86,13 +82,10 @@ const HeaderSearchBar: React.FC = () => {
 
   const handleSelect = (item: any) => {
     console.log("Selected:", item);
-    // Here you would navigate to the detail page
-    // navigate(`/${searchType.toLowerCase()}/${item.id}`);
-    setSearchText(""); // Optional: clear search after selection
+    setSearchText("");
     setIsOpen(false);
   };
 
-  // Function to clear the search text
   const handleClear = () => {
     setSearchText('');
     setResults([]);
@@ -102,28 +95,12 @@ const HeaderSearchBar: React.FC = () => {
   return (
     <div ref={containerRef} className="flex-1 max-w-[600px] min-w-[200px]">
       <div className="relative flex items-center w-full h-12">
-        {/* THE WRAPPER */}
         <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center pointer-events-none">
-          {loading ? (
-            <LoadingSpinner className="w-6 h-6 text-[#1db954]" />
-          ) : (
-            <SearchButton />
-          )}
+          {loading ? <LoadingSpinner className="w-6 h-6 text-[#1db954]" /> : <SearchButton />}
         </div>
 
-        {/* --- CLEAR BUTTON (Right, only shows when text exists) --- */}
         {searchText && (
-          <button
-            onClick={handleClear}
-            // Position: right-32 (approx 128px) puts it to the left of the dropdown
-            className="absolute right-32 top-1/2 -translate-y-1/2 z-20 p-1 
-              rounded-full 
-              hover:bg-white/20
-              hover:scale-110 
-              transition-all 
-              focus:outline-none"
-            title="Clear Search"
-          >
+          <button onClick={handleClear} className="absolute right-32 top-1/2 -translate-y-1/2 z-20 p-1 rounded-full hover:bg-white/20 hover:scale-110 transition-all focus:outline-none" title="Clear Search">
             <ClearButton />
           </button>
         )}
@@ -134,31 +111,18 @@ const HeaderSearchBar: React.FC = () => {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => {
-            if (searchText.trim()) setIsOpen(true);
-          }}
+          onFocus={() => { if (searchText.trim()) setIsOpen(true); }}
           className="w-full h-full bg-[#555555] text-white placeholder-gray-300 rounded-full pl-12 pr-36 border border-white focus:outline-none focus:ring-1 focus:ring-white transition"
         />
 
         <div className="absolute right-1.5 top-1 bottom-1">
-          <AnimatedDropdown
-            options={["Tracks", "Artists", "Albums"]}
-            value={searchType}
-            onChange={setSearchType}
-          />
+          <AnimatedDropdown options={["Tracks", "Artists", "Albums"]} value={searchType} onChange={(value) => { setSearchType(value); setIsOpen(false); }} />
         </div>
 
-        {/* Results Panel */}
-        <SpotifyResultList
-          results={results}
-          type={searchType as any}
-          selectedIndex={selectedIndex}
-          onSelect={handleSelect}
-          isLoading={loading}
-        />
+        <SpotifyResultList results={results} type={searchType as any} selectedIndex={selectedIndex} onSelect={handleSelect} isLoading={loading} isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     </div>
   );
 };
 
-export default HeaderSearchBar;
+export default SpotifySearchBar;

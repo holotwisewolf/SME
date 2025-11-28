@@ -23,6 +23,9 @@ import DevRoute from "./features/dev/DevRoute";
 import SetUpUserProfile from "./features/user/user_pages/SetUpUserProfile";
 import UserProfile from "./features/user/user_pages/UserProfile";
 import UserSettings from "./features/user/user_pages/UserSettings";
+import { TracksFullPage } from "./features/spotify/pages/TracksFullPage";
+import { AlbumsFullPage } from "./features/spotify/pages/AlbumsFullPage";
+import { ArtistsFullPage } from "./features/spotify/pages/ArtistsFullPage";
 
 function App() {
   const location = useLocation();
@@ -152,6 +155,32 @@ function App() {
               <Route path="/setup-profile" element={<></>} />
               <Route path="/profile" element={<></>} />
               <Route path="/settings" element={<></>} />
+
+              {/* SPOTIFY FULL PAGES */}
+              <Route
+                path="/tracksfullpage"
+                element={
+                  <PageWrapper>
+                    <TracksFullPage />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/albumsfullpage"
+                element={
+                  <PageWrapper>
+                    <AlbumsFullPage />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="/artistsfullpage"
+                element={
+                  <PageWrapper>
+                    <ArtistsFullPage />
+                  </PageWrapper>
+                }
+              />
 
             </Routes>
 
