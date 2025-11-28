@@ -182,6 +182,34 @@ export async function uploadAvatar(file: File, userId: string) {
 }
 
 /**
+ * Deletes a user avatar from the 'avatars' bucket.
+ * @param avatarUrl - The full public URL of the avatar to delete.
+ */
+export async function deleteAvatar(avatarUrl: string) {
+  try {
+    // Extract the file path from the public URL
+    // URL format: https://{project}.supabase.co/storage/v1/object/public/avatars/{userId}/{filename}
+    const url = new URL(avatarUrl);
+    const pathParts = url.pathname.split('/');
+    // Find 'avatars' in the path and get everything after it
+    const avatarsIndex = pathParts.indexOf('avatars');
+    if (avatarsIndex === -1) {
+      throw new Error('Invalid avatar URL format');
+    }
+    const filePath = pathParts.slice(avatarsIndex + 1).join('/');
+
+    const { error } = await supabase.storage
+      .from('avatars')
+      .remove([filePath]);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error deleting avatar:', error);
+    // Don't throw - we don't want to block the user if deletion fails
+  }
+}
+
+/**
  * Fetches the user's profile data from the 'profiles' table.
  * @param userId - The UUID of the user.
  */
@@ -235,6 +263,7 @@ export const AuthService: IAuthService = {
   verifyEmail,
   updateProfile,
   uploadAvatar,
+  deleteAvatar,
   getProfile,
   updatePassword,
   updateUsername,

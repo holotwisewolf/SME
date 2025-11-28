@@ -77,6 +77,11 @@ const UserAccount = () => {
 
         const file = e.target.files[0];
         try {
+            // Delete old avatar if exists
+            if (avatarUrl) {
+                await AuthService.deleteAvatar(avatarUrl);
+            }
+
             const url = await AuthService.uploadAvatar(file, userId);
             setAvatarUrl(url);
         } catch (error) {
@@ -222,6 +227,30 @@ const UserAccount = () => {
                                         <EditIcon className="w-5 h-5 text-white" />
                                     </div>
                                 </label>
+
+                                {/* Delete Avatar Button - Only show if avatar exists */}
+                                {avatarUrl && (
+                                    <button
+                                        onClick={async () => {
+                                            if (confirm("Remove profile picture?")) {
+                                                try {
+                                                    await AuthService.deleteAvatar(avatarUrl);
+                                                    setAvatarUrl(null);
+                                                } catch (error) {
+                                                    console.error("Failed to delete avatar:", error);
+                                                    alert("Failed to delete avatar.");
+                                                }
+                                            }
+                                        }}
+                                        className="absolute top-0 left-0 w-5 h-5 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center transition-all backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100"
+                                        title="Remove avatar"
+                                    >
+                                        <svg className="w-2.5 h-2.5 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <path d="M18 6L6 18M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                )}
+
                                 <input
                                     id="edit-avatar-upload"
                                     type="file"
