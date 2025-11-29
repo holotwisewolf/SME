@@ -1,5 +1,5 @@
 import React from 'react';
-import PlaylistDashboard from "../../playlist/components/PlaylistDashboard";
+import PlaylistDashboard from "../../features/playlist/components/PlaylistDashboard";
 
 const LibraryPlaylists: React.FC = () => {
     return (

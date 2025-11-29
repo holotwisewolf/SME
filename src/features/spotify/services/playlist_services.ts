@@ -1,10 +1,10 @@
 import { supabase } from '../../../lib/supabaseClient';
-import type { Playlist, CreatePlaylistRequest, AddTrackToPlaylistRequest } from '../contracts/playlist_contract';
+import type { Tables } from '../../../types/supabase';
 
 /**
  * Get all playlists for the current user
  */
-export async function getUserPlaylists(): Promise<Playlist[]> {
+export async function getUserPlaylists(): Promise<Tables<'playlists'>[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
@@ -16,22 +16,13 @@ export async function getUserPlaylists(): Promise<Playlist[]> {
 
     if (error) throw error;
 
-    return (data || []).map(item => ({
-        id: item.id,
-        name: item.title,
-        description: item.description || undefined,
-        image_url: undefined, // 'color' is available, but not image_url in DB yet
-        track_count: item.track_count || 0,
-        is_public: item.is_public || false,
-        owner_id: item.user_id,
-        created_at: item.created_at
-    }));
+    return data || [];
 }
 
 /**
  * Create a new playlist
  */
-export async function createPlaylist(request: CreatePlaylistRequest): Promise<Playlist> {
+export async function createPlaylist(request: { name: string; description?: string; is_public: boolean }): Promise<Tables<'playlists'>> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
@@ -49,21 +40,13 @@ export async function createPlaylist(request: CreatePlaylistRequest): Promise<Pl
 
     if (error) throw error;
 
-    return {
-        id: data.id,
-        name: data.title,
-        description: data.description || undefined,
-        track_count: data.track_count || 0,
-        is_public: data.is_public || false,
-        owner_id: data.user_id,
-        created_at: data.created_at
-    };
+    return data;
 }
 
 /**
  * Add a track to a playlist
  */
-export async function addTrackToPlaylist(request: AddTrackToPlaylistRequest): Promise<void> {
+export async function addTrackToPlaylist(request: { playlistId: string; trackId: string }): Promise<void> {
     // 1. Check if track already exists in playlist
     const { data: existing } = await supabase
         .from('playlist_items')
@@ -101,6 +84,48 @@ export async function addTrackToPlaylist(request: AddTrackToPlaylistRequest): Pr
 }
 
 /**
+ * Add multiple tracks to a playlist
+ */
+export async function addTracksToPlaylist(request: { playlistId: string; trackIds: string[] }): Promise<void> {
+    // 1. Get current max position
+    const { data: maxPosData } = await supabase
+        .from('playlist_items')
+        .select('position')
+        .eq('playlist_id', request.playlistId)
+        .order('position', { ascending: false })
+        .limit(1)
+        .single();
+
+    const nextPosition = (maxPosData?.position || 0) + 1;
+
+    // 2. Filter out existing tracks to avoid duplicates
+    const { data: existing } = await supabase
+        .from('playlist_items')
+        .select('spotify_track_id')
+        .eq('playlist_id', request.playlistId)
+        .in('spotify_track_id', request.trackIds);
+
+    const existingIds = new Set(existing?.map(item => item.spotify_track_id) || []);
+    const newTrackIds = request.trackIds.filter(id => !existingIds.has(id));
+
+    if (newTrackIds.length === 0) return;
+
+    // 3. Prepare inserts
+    const inserts = newTrackIds.map((trackId, index) => ({
+        playlist_id: request.playlistId,
+        spotify_track_id: trackId,
+        position: nextPosition + index
+    }));
+
+    // 4. Bulk insert
+    const { error } = await supabase
+        .from('playlist_items')
+        .insert(inserts);
+
+    if (error) throw error;
+}
+
+/**
  * Get tracks for a playlist
  */
 export async function getPlaylistTracks(playlistId: string): Promise<string[]> {
@@ -115,11 +140,11 @@ export async function getPlaylistTracks(playlistId: string): Promise<string[]> {
 }
 
 /**
- * Add a track to favourites (Wrapper for FavouritesService)
+ * Add an item to favourites (Wrapper for FavouritesService)
  */
-export async function addToFavourites(trackId: string): Promise<void> {
+export async function addToFavourites(itemId: string, type: 'track' | 'album' = 'track'): Promise<void> {
     const { addToFavourites: addToFavs } = await import('../../favourites/services/favourites_services');
-    return addToFavs(trackId);
+    return addToFavs(itemId, type);
 }
 
 /**

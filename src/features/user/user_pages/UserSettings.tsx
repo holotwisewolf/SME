@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import PasswordInput from "../../../components/ui/PasswordInput";
 
-import Checkbox from "../../../components/ui/Checkbox";
+import Checkbox from "../../../components/ui/CheckboxIcon";
 import TextInput from "../../../components/ui/TextInput";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import { AuthService } from "../../auth/services/auth_services";

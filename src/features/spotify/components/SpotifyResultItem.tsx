@@ -11,7 +11,7 @@ interface SpotifyResultItemProps {
 
 const SpotifyResultItem: React.FC<SpotifyResultItemProps> = ({ track, isSelected, onSelect }) => {
     // Get smallest image for list view
-    const imageUrl = track.album.images.length > 0
+    const imageUrl = track?.album?.images?.length > 0
         ? track.album.images[track.album.images.length - 1].url
         : ''; // Fallback placeholder could be added
 
@@ -26,8 +26,12 @@ const SpotifyResultItem: React.FC<SpotifyResultItemProps> = ({ track, isSelected
         >
             {/* Album Art */}
             <div className="relative w-12 h-12 rounded overflow-hidden bg-[#2a2a2a]">
-                {imageUrl && (
-                    <img src={imageUrl} alt={track.album.name} className="w-full h-full object-cover" />
+                {imageUrl ? (
+                    <img src={imageUrl} alt={track?.album?.name || 'Album'} className="w-full h-full object-cover" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-[#2a2a2a] text-gray-500 text-xs">
+                        No Img
+                    </div>
                 )}
                 {/* Play Overlay Icon */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -40,17 +44,17 @@ const SpotifyResultItem: React.FC<SpotifyResultItemProps> = ({ track, isSelected
             {/* Info - Grid column that can shrink */}
             <div className="flex flex-col min-w-0">
                 <span className={`text-sm font-semibold truncate ${isSelected ? 'text-[#1db954]' : 'text-white'}`}>
-                    {track.name}
+                    {track?.name || 'Unknown Track'}
                 </span>
                 <span className="text-xs text-gray-400 truncate">
-                    {track.artists.map(a => a.name).join(', ')}
+                    {track?.artists?.map(a => a.name).join(', ') || 'Unknown Artist'}
                 </span>
             </div>
 
             {/* Metadata - Grid column that won't shrink */}
             <div className="flex items-center gap-3 text-xs text-gray-500">
-                <span className="hidden sm:block truncate max-w-[100px]">{track.album.name}</span>
-                <span className="whitespace-nowrap">{SpotifyService.formatDuration(track.duration_ms)}</span>
+                <span className="hidden sm:block truncate max-w-[100px]">{track?.album?.name || 'Unknown Album'}</span>
+                <span className="whitespace-nowrap">{SpotifyService.formatDuration(track?.duration_ms || 0)}</span>
             </div>
         </motion.div>
     );

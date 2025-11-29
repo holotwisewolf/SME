@@ -1,11 +1,3 @@
-/**
- * SpotifyResultList Component
- * 
- * Displays search results from Spotify API in a dropdown list.
- * Supports tracks, albums, and artists with different rendering for each type.
- * Includes track preview playback, dropdown menus, and modal interactions.
- */
-
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -16,11 +8,13 @@ import { TrackPreviewAudio } from './TrackPreviewAudio';
 import { ResultMenuDropdown } from './ResultMenuDropdown';
 import { TrackDetailModal } from './TrackDetailModal';
 import { PlaylistSelectCard } from './PlaylistSelectCard';
-import { ArtistPopupCard } from './ArtistPopupCard';
+import { ArtistDetailModal } from './ArtistDetailModal';
+import { AlbumDetailModal } from './AlbumDetailModal';
 import { useTrackPreview } from '../hooks/useTrackPreview';
 import { useArtistPopup } from '../hooks/useArtistPopup';
 import { addToFavourites } from '../services/playlist_services';
-import type { ArtistFullDetail } from '../contracts/artist_contract';
+import { getAlbumDetails } from '../services/spotify_services';
+import type { ArtistFullDetail } from '../type/artist_type';
 import type { SpotifyTrack, SpotifyAlbum, SpotifyArtist } from '../type/spotify_types';
 
 type SearchType = 'Tracks' | 'Albums' | 'Artists';
@@ -29,7 +23,6 @@ interface SpotifyResultListProps {
     results: any[];
     type: SearchType;
     selectedIndex: number;
-    onSelect: (item: any) => void;
     isLoading: boolean;
     isOpen?: boolean; // Controls visibility - when false, results are hidden
     onClose?: () => void;
@@ -40,7 +33,6 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
     results,
     type,
     selectedIndex,
-    onSelect,
     isLoading,
     isOpen = true, // Default to true for backward compatibility
     onClose,
@@ -59,10 +51,13 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
     const { isOpen: isArtistPopupOpen, selectedArtist, openPopup: openArtistPopup, closePopup: closeArtistPopup } = useArtistPopup();
 
     // Playlist selection modal state
-    const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id: string; name: string } | null>(null);
+    const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id?: string; name: string; trackIds?: string[] } | null>(null);
 
     // Track detail modal state
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
+
+    // Album detail modal state
+    const [selectedAlbum, setSelectedAlbum] = useState<SpotifyAlbum | null>(null);
 
     // Active menu state for controlled dropdowns
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -82,9 +77,32 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
         setPlaylistModalTrack({ id: trackId, name: trackName });
     };
 
+    // Handler: Import all album tracks to playlist
+    const handleImportAlbumToPlaylist = async (albumId: string, albumName: string) => {
+        try {
+            const albumDetails = await getAlbumDetails(albumId);
+            const tracks = albumDetails?.tracks?.items || [];
+            const trackIds = tracks.map((t: any) => t.id);
+
+            if (trackIds.length > 0) {
+                setPlaylistModalTrack({
+                    name: albumName,
+                    trackIds: trackIds
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching album tracks:', error);
+        }
+    };
+
     // Handler: Open track detail modal
     const handleTrackClick = (track: SpotifyTrack) => {
         setSelectedTrack(track);
+    };
+
+    // Handler: Open album detail modal
+    const handleAlbumClick = (album: SpotifyAlbum) => {
+        setSelectedAlbum(album);
     };
 
     // Handler: Open artist details popup when artist is clicked
@@ -182,6 +200,7 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                                                                 onToggle={(isOpen) => setActiveMenuId(isOpen ? track.id : null)}
                                                                 onAddToFavourites={handleAddToFavourites}
                                                                 onAddToPlaylist={(trackId) => handleAddToPlaylist(trackId, track.name)}
+                                                                type="track"
                                                             />
                                                         </div>
                                                     </TrackPreviewAudio>
@@ -189,25 +208,52 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                                                 /* Render Albums */
                                             } else if (type === 'Albums') {
                                                 return (
-                                                    <SpotifyAlbumItem
-                                                        key={item.id}
-                                                        album={item as SpotifyAlbum}
-                                                        isSelected={isSelected}
-                                                        onSelect={onSelect}
-                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex-1">
+                                                            <SpotifyAlbumItem
+                                                                key={item.id}
+                                                                album={item as SpotifyAlbum}
+                                                                isSelected={isSelected}
+                                                                onSelect={() => handleAlbumClick(item as SpotifyAlbum)}
+                                                            />
+                                                        </div>
+                                                        <ResultMenuDropdown
+                                                            trackId={item.id} // Reusing trackId prop for ID
+                                                            trackName={item.name}
+                                                            spotifyUrl={(item as SpotifyAlbum).external_urls.spotify}
+                                                            isOpen={activeMenuId === item.id}
+                                                            onToggle={(isOpen) => setActiveMenuId(isOpen ? item.id : null)}
+                                                            onAddToFavourites={(id) => handleAddToFavourites(id)} // TODO: Pass type 'album' when supported
+                                                            onImportToPlaylist={(id) => handleImportAlbumToPlaylist(id, item.name)}
+                                                            type="album"
+                                                        />
+                                                    </div>
                                                 );
                                                 /* Render Artists with click handler for popup */
                                             } else {
                                                 return (
-                                                    <div
-                                                        key={item.id}
-                                                        onClick={() => handleArtistClick(item as SpotifyArtist)}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        <SpotifyArtistItem
-                                                            artist={item as SpotifyArtist}
-                                                            isSelected={isSelected}
-                                                            onSelect={onSelect}
+                                                    <div className="flex items-center gap-2">
+                                                        <div
+                                                            key={item.id}
+                                                            onClick={() => handleArtistClick(item as SpotifyArtist)}
+                                                            className="flex-1 cursor-pointer"
+                                                        >
+                                                            <SpotifyArtistItem
+                                                                artist={item as SpotifyArtist}
+                                                                isSelected={isSelected}
+                                                                onSelect={() => handleArtistClick(item as SpotifyArtist)}
+                                                            />
+                                                        </div>
+                                                        <ResultMenuDropdown
+                                                            trackId={item.id}
+                                                            trackName={item.name}
+                                                            spotifyUrl={(item as SpotifyArtist).external_urls.spotify}
+                                                            isOpen={activeMenuId === item.id}
+                                                            onToggle={(isOpen) => setActiveMenuId(isOpen ? item.id : null)}
+                                                            onAddToFavourites={() => { }}
+                                                            onAddToPlaylist={() => { }}
+                                                            hideActions={true}
+                                                            type="artist"
                                                         />
                                                     </div>
                                                 );
@@ -235,7 +281,7 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
 
             {/* Artist Details Popup Modal */}
             {isArtistPopupOpen && selectedArtist && (
-                <ArtistPopupCard
+                <ArtistDetailModal
                     artist={selectedArtist}
                     onClose={closeArtistPopup}
                 />
@@ -251,10 +297,21 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 />
             )}
 
+            {/* Album Detail Modal */}
+            {selectedAlbum && (
+                <AlbumDetailModal
+                    album={selectedAlbum}
+                    onClose={() => setSelectedAlbum(null)}
+                    onAddToFavourites={(id) => handleAddToFavourites(id)} // TODO: Pass type 'album' when supported
+                    onImportToPlaylist={(album) => handleImportAlbumToPlaylist(album.id, album.name)}
+                />
+            )}
+
             {/* Playlist Selection Modal */}
             {playlistModalTrack && (
                 <PlaylistSelectCard
                     trackId={playlistModalTrack.id}
+                    trackIds={playlistModalTrack.trackIds}
                     trackName={playlistModalTrack.name}
                     onClose={() => setPlaylistModalTrack(null)}
                 />

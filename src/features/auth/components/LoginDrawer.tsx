@@ -4,7 +4,7 @@ import TextInput from "../../../components/ui/TextInput";
 import PasswordInput from "../../../components/ui/PasswordInput";
 import InputGroup from "../../../components/ui/InputGroup";
 import { useState } from "react";
-import Checkbox from "../../../components/ui/Checkbox";
+import Checkbox from "../../../components/ui/CheckboxIcon";
 import { AuthService } from "../services/auth_services";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 

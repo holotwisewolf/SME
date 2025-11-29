@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { Playlist, CreatePlaylistRequest } from '../contracts/playlist_contract';
-import { getUserPlaylists, createPlaylist, addTrackToPlaylist } from '../services/playlist_services';
+import type { Playlist, CreatePlaylistRequest } from '../../playlist/type/playlist_type';
+import { getUserPlaylists, createPlaylist, addTrackToPlaylist, addTracksToPlaylist } from '../services/playlist_services';
 
 interface PlaylistSelectCardProps {
-    trackId: string;
+    trackId?: string;
+    trackIds?: string[];
     trackName: string;
     onClose: () => void;
 }
@@ -13,6 +14,7 @@ interface PlaylistSelectCardProps {
  */
 export function PlaylistSelectCard({
     trackId,
+    trackIds,
     trackName,
     onClose
 }: PlaylistSelectCardProps) {
@@ -43,7 +45,13 @@ export function PlaylistSelectCard({
                 is_public: true
             };
             const newPlaylist = await createPlaylist(request);
-            await addTrackToPlaylist({ playlistId: newPlaylist.id, trackId });
+
+            if (trackIds && trackIds.length > 0) {
+                await addTracksToPlaylist({ playlistId: newPlaylist.id, trackIds });
+            } else if (trackId) {
+                await addTrackToPlaylist({ playlistId: newPlaylist.id, trackId });
+            }
+
             onClose();
         } catch (error) {
             console.error('Error creating playlist:', error);
@@ -55,7 +63,11 @@ export function PlaylistSelectCard({
     const handleSelectPlaylist = async (playlistId: string) => {
         setLoading(true);
         try {
-            await addTrackToPlaylist({ playlistId, trackId });
+            if (trackIds && trackIds.length > 0) {
+                await addTracksToPlaylist({ playlistId, trackIds });
+            } else if (trackId) {
+                await addTrackToPlaylist({ playlistId, trackId });
+            }
             onClose();
         } catch (error) {
             console.error('Error adding to playlist:', error);
