@@ -5,6 +5,8 @@ import { addToFavourites } from '../services/playlist_services';
 import { TrackDetailModal } from '../components/TrackDetailModal';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import type { SpotifyAlbum, SpotifyTrack } from '../type/spotify_types';
+// new import
+import { AlbumDetailModal } from '../components/AlbumDetailModal'; 
 
 interface AlbumTrack {
     id: string;
@@ -36,6 +38,9 @@ export function AlbumsFullPage() {
     // Modal states
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
     const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id: string; name: string } | null>(null);
+
+    // control Album Modal status
+    const [selectedAlbum, setSelectedAlbum] = useState<SpotifyAlbum | null>(null);
 
     useEffect(() => {
         loadAlbums();
@@ -126,6 +131,11 @@ export function AlbumsFullPage() {
         setSelectedTrack(fullTrack);
     };
 
+    // handle album click
+    const handleAlbumClick = (album: SpotifyAlbum) => {
+        setSelectedAlbum(album);
+    };
+
     const handleAddToFavourites = async (trackId: string) => {
         try {
             await addToFavourites(trackId);
@@ -168,11 +178,28 @@ export function AlbumsFullPage() {
                                 <div className="flex gap-4 p-4">
                                     {/* Left Side - Album Image & Details */}
                                     <div className="flex-shrink-0 w-48">
-                                        <img
-                                            src={album.images[0]?.url}
-                                            alt={album.name}
-                                            className="w-full aspect-square object-cover rounded-md mb-3"
-                                        />
+
+                                        {/* added onclick on the album img */}
+                                        <div
+                                            onClick={() => handleAlbumClick(album)}
+                                            className="cursor-pointer group relative"
+                                        >
+                                            <img
+                                                src={album.images[0]?.url}
+                                                alt={album.name}
+                                                className="w-full aspect-square object-cover rounded-md mb-3"
+                                            />
+                                            {/*notion logo YJ can modified*/} 
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="bg-black/60 rounded-full p-2">
+                                                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 5 8.268 7.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <h3 className="text-white font-semibold text-lg mb-1 line-clamp-2">
                                             {album.name}
                                         </h3>
@@ -237,6 +264,14 @@ export function AlbumsFullPage() {
                     onClose={() => setSelectedTrack(null)}
                     onAddToFavourites={handleAddToFavourites}
                     onAddToPlaylist={handleAddToPlaylist}
+                />
+            )}
+
+            {/* Album Detail Modal */}
+            {selectedAlbum && (
+                <AlbumDetailModal 
+                    album={selectedAlbum}
+                    onClose={() => setSelectedAlbum(null)}
                 />
             )}
 
