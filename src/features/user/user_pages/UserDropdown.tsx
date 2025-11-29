@@ -52,8 +52,16 @@ const UserDropdown: React.FC = () => {
                 )}
 
                 {/* Avatar (Non-clickable) */}
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#2a2a2a]">
-                    <UserProfileIcon className="w-12 h-12 text-[#D1D1D1]" />
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#2a2a2a] overflow-hidden">
+                    {profile?.avatar_url ? (
+                        <img
+                            src={profile.avatar_url}
+                            alt={profile.display_name || "User"}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <UserProfileIcon className="w-12 h-12 text-[#D1D1D1]" />
+                    )}
                 </div>
 
                 {/* Menu Trigger */}

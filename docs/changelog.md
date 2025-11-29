@@ -99,3 +99,16 @@
 
     - export type CommentUpdate = Database['public']['Tables']['comments']['Update'];
 
+### 2025-11-30(SF)
+
+### Porgress
+
+  - **src/features/spotify/components/AlbumDetailModal**
+    Create a new comment folder in `../src/spotify`
+    - export function AlbumDetailModal({ album, onClose }: AlbumDetailModalProps) {...}
+  
+  - **src/features/spotify/components/AlbumsFullPage.tsx**
+    added onclick on image,notion logo,import AlbumDetailModal
+    - Ctrl + F search /* added onclick on the album img */
+    - search /*notion logo YJ can modified*/
+    - search /* Album Detail Modal */

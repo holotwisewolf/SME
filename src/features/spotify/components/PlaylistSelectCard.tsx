@@ -40,7 +40,7 @@ export function PlaylistSelectCard({
         try {
             const request: CreatePlaylistRequest = {
                 name: newPlaylistName,
-                isPublic: true
+                is_public: true
             };
             const newPlaylist = await createPlaylist(request);
             await addTrackToPlaylist({ playlistId: newPlaylist.id, trackId });
@@ -120,7 +120,7 @@ export function PlaylistSelectCard({
                                     className="w-full text-left px-4 py-3 bg-[#282828] hover:bg-[#333333] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <div className="text-white font-medium">{playlist.name}</div>
-                                    <div className="text-xs text-gray-400">{playlist.trackCount} tracks</div>
+                                    <div className="text-xs text-gray-400">{playlist.track_count} tracks</div>
                                 </button>
                             ))
                         )}
