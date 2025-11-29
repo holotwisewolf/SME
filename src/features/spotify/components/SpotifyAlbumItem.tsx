@@ -10,7 +10,7 @@ interface SpotifyAlbumItemProps {
 
 const SpotifyAlbumItem: React.FC<SpotifyAlbumItemProps> = ({ album, isSelected, onSelect }) => {
     // Get smallest image for list view
-    const imageUrl = album.images.length > 0
+    const imageUrl = album?.images?.length > 0
         ? album.images[album.images.length - 1].url
         : '';
 
@@ -25,18 +25,22 @@ const SpotifyAlbumItem: React.FC<SpotifyAlbumItemProps> = ({ album, isSelected, 
         >
             {/* Album Art */}
             <div className="relative w-12 h-12 shrink-0 rounded overflow-hidden bg-[#2a2a2a]">
-                {imageUrl && (
-                    <img src={imageUrl} alt={album.name} className="w-full h-full object-cover" />
+                {imageUrl ? (
+                    <img src={imageUrl} alt={album?.name || 'Album'} className="w-full h-full object-cover" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-[#2a2a2a] text-gray-500 text-xs">
+                        No Img
+                    </div>
                 )}
             </div>
 
             {/* Info */}
             <div className="flex flex-col overflow-hidden">
                 <span className={`text-sm font-semibold truncate ${isSelected ? 'text-[#1db954]' : 'text-white'}`}>
-                    {album.name}
+                    {album?.name || 'Unknown Album'}
                 </span>
                 <span className="text-xs text-gray-400 truncate">
-                    {album.artists.map(a => a.name).join(', ')} • {album.release_date.split('-')[0]}
+                    {album?.artists?.map(a => a.name).join(', ') || 'Unknown Artist'} • {album?.release_date?.split('-')[0] || 'Unknown Year'}
                 </span>
             </div>
         </motion.div>

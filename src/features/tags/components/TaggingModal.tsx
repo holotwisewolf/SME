@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 // Import service functions for database operations
 import { getAllTags, createTag, assignTagToItem, removeTagFromItem, getItemTags } from '../services/tag_services';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
 // Manually define the Tag interface to ensure type safety locally
 interface Tag {
@@ -134,7 +135,9 @@ const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemNa
         {/* Scrollable Tag List */}
         <div className="space-y-2 max-h-60 overflow-y-auto">
           {loading ? (
-            <p className="text-gray-500 text-center">Loading...</p>
+            <div className="flex justify-center p-4">
+              <LoadingSpinner />
+            </div>
           ) : (
             availableTags.map(tag => {
               // Check if this specific tag is selected
