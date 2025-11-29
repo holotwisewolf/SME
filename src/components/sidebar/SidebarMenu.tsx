@@ -33,7 +33,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isExpanded, menuItems }) => {
                 setExpandedMenu(activeItem.label);
             }
         }
-    }, [isExpanded, activePath, menuItems]);
+    }, [isExpanded]);
 
     const itemVariants = {
         expanded: { paddingLeft: '0.75rem', justifyContent: 'flex-start' },

@@ -1,25 +1,26 @@
 import { supabase } from '../../../lib/supabaseClient';
-
-type ItemType = 'track' | 'album' | 'playlist';
+import type { ItemType } from '../../../types/global';
 
 /**
  * Add an item to favourites
  */
-export async function addToFavourites(itemId: string, itemType: ItemType = 'track'): Promise<void> {
+export async function addToFavourites(itemId: string, itemType: ItemType): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Check if already exists to avoid duplicate error if not using upsert with unique constraint
-    const isFav = await checkIsFavourite(itemId, itemType);
-    if (isFav) return;
-
     const { error } = await supabase
         .from('favorites')
-        .insert({
-            user_id: user.id,
-            item_id: itemId,
-            item_type: itemType
-        });
+        .upsert(
+            {
+                user_id: user.id,
+                item_id: itemId,
+                item_type: itemType
+            },
+            {
+                onConflict: 'user_id,item_id,item_type',
+                ignoreDuplicates: true
+            }
+        );
 
     if (error) throw error;
 }
@@ -27,7 +28,7 @@ export async function addToFavourites(itemId: string, itemType: ItemType = 'trac
 /**
  * Remove an item from favourites
  */
-export async function removeFromFavourites(itemId: string, itemType: ItemType = 'track'): Promise<void> {
+export async function removeFromFavourites(itemId: string, itemType: ItemType): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
@@ -44,7 +45,7 @@ export async function removeFromFavourites(itemId: string, itemType: ItemType = 
 /**
  * Check if an item is in favourites
  */
-export async function checkIsFavourite(itemId: string, itemType: ItemType = 'track'): Promise<boolean> {
+export async function checkIsFavourite(itemId: string, itemType: ItemType): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
