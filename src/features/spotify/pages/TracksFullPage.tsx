@@ -8,41 +8,66 @@ import { TrackDetailModal } from '../components/TrackDetailModal';
 import { useTrackPreview } from '../hooks/useTrackPreview';
 import { addToFavourites } from '../services/playlist_services';
 import type { SpotifyTrack } from '../type/spotify_types';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
 
 export function TracksFullPage() {
     const [searchParams] = useSearchParams();
     const artistId = searchParams.get('artistId');
+    const artistName = searchParams.get('artistName');
     const search = searchParams.get('search');
+
     const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [total, setTotal] = useState(0);
+
     const { playPreview, stopPreview } = useTrackPreview();
     const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id: string; name: string } | null>(null);
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
     useEffect(() => {
-        loadTracks();
-    }, [artistId, search]);
+        loadTracks(true);
+    }, [artistId, artistName, search]);
 
-    const loadTracks = async () => {
-        setLoading(true);
+    const loadTracks = async (reset = false) => {
+        if (reset) {
+            setLoading(true);
+            setTracks([]);
+        } else {
+            setLoadingMore(true);
+        }
+
         try {
-            // If artistId is provided, filter by artist
-            // If search is provided, use search query
             let query = 'top tracks';
-            if (artistId) {
-                query = `artist:${artistId}`;
+            if (artistName) {
+                query = `artist:"${artistName}"`;
             } else if (search) {
                 query = search;
             }
 
-            const results = await searchTracks(query, 50);
-            setTracks(results);
+            const limit = 50;
+            const offset = reset ? 0 : tracks.length;
+
+            const results = await searchTracks(query, limit, offset);
+
+            if (reset) {
+                setTracks(results.items);
+            } else {
+                setTracks(prev => [...prev, ...results.items]);
+            }
+            setTotal(results.total);
         } catch (error) {
             console.error('Error loading tracks:', error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
+    };
+
+    const handleLoadMore = () => {
+        loadTracks(false);
     };
 
     const handleAddToFavourites = async (trackId: string) => {
@@ -64,7 +89,7 @@ export function TracksFullPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#121212]">
-                <div className="text-white text-xl">Loading tracks...</div>
+                <LoadingSpinner />
             </div>
         );
     }
@@ -73,13 +98,13 @@ export function TracksFullPage() {
         <div className="min-h-screen bg-[#121212] p-8">
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-4xl font-bold text-white mb-8">
-                    {artistId ? 'Artist Tracks' : (search ? `Results for "${search}"` : 'All Tracks')}
+                    {tracks.length} Tracks for '{artistName || search || 'All Tracks'}'
                 </h1>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {tracks.map((track) => (
                         <TrackPreviewAudio
-                            key={track.id}
+                            key={`${track.id}-${tracks.indexOf(track)}`} // Ensure unique key if duplicates exist
                             trackId={track.id}
                             previewUrl={track.preview_url ?? undefined}
                             onPlayPreview={playPreview}
@@ -109,6 +134,7 @@ export function TracksFullPage() {
                                         onToggle={(isOpen) => setActiveMenuId(isOpen ? track.id : null)}
                                         onAddToFavourites={handleAddToFavourites}
                                         onAddToPlaylist={(trackId) => handleAddToPlaylist(trackId, track.name)}
+                                        orientation="horizontal"
                                     />
                                 </div>
                             </div>
@@ -119,6 +145,24 @@ export function TracksFullPage() {
                 {tracks.length === 0 && (
                     <div className="text-center text-gray-500 py-12">
                         No tracks found
+                    </div>
+                )}
+
+                {/* Load More Button */}
+                {tracks.length < total && tracks.length > 0 && (
+                    <div className="flex justify-center mt-12 mb-8">
+                        {loadingMore ? (
+                            <div className="flex flex-col items-center gap-2">
+                                <AnimatedLoadingDots color="#ffffff" size={40} />
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleLoadMore}
+                                className="px-8 py-3 bg-white/5 border border-white/10 text-white font-medium rounded-full hover:bg-white/10 hover:scale-105 transition-all backdrop-blur-sm"
+                            >
+                                Load More
+                            </button>
+                        )}
                     </div>
                 )}
             </div>

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPlaylist } from '../../spotify/services/playlist_services';
 
+import Checkbox from '../../../components/ui/CheckboxIcon';
+
 interface CreatePlaylistModalProps {
     onClose: () => void;
     onCreated: () => void;
@@ -88,15 +90,12 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ onClos
                             />
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                id="isPublic"
+                        <div className="flex items-center gap-2 pt-2">
+                            <Checkbox
                                 checked={isPublic}
-                                onChange={(e) => setIsPublic(e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-600 text-[#1DB954] focus:ring-[#1DB954] bg-[#2a2a2a]"
+                                onChange={setIsPublic}
+                                label="Public Playlist"
                             />
-                            <label htmlFor="isPublic" className="text-sm text-gray-300">Public Playlist</label>
                         </div>
 
                         <div className="flex justify-end gap-3 mt-6">

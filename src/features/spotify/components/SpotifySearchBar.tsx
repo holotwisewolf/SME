@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SpotifyService } from '../services/spotify_services.ts';
-import SpotifyResultList from './SpotifyResultList.tsx';
-import LoadingSpinner from '../../../components/ui/LoadingSpinner.tsx';
-import SearchButton from '../../../components/ui/SearchButton.tsx';
-import AnimatedDropdown from '../../../components/ui/AnimatedDropdown.tsx';
-import ClearButton from '../../../components/ui/ClearButton.tsx';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { SpotifyService } from '../services/spotify_services';
+import SpotifyResultList from './SpotifyResultList';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import SearchButton from '../../../components/ui/SearchButton';
+import AnimatedDropdown from '../../../components/ui/AnimatedDropdown';
+import ClearButton from '../../../components/ui/ClearButton';
 
 const SpotifySearchBar: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchType, setSearchType] = useState<'Tracks' | 'Albums' | 'Artists'>('Tracks');
   const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<any[]>([]);
@@ -15,14 +18,35 @@ const SpotifySearchBar: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Ref to track previous search type and path
+  const prevSearchType = useRef(searchType);
+  const prevPathname = useRef(location.pathname);
+
   // Debounce Search
   useEffect(() => {
+    const isFullPage = ['/tracksfullpage', '/albumsfullpage', '/artistsfullpage'].includes(location.pathname);
+    const typeChanged = prevSearchType.current !== searchType;
+    const pathChanged = prevPathname.current !== location.pathname;
+
+    // Update refs
+    prevSearchType.current = searchType;
+    prevPathname.current = location.pathname;
+
+    // If path changed, don't trigger search/dropdown logic
+    if (pathChanged) {
+      return;
+    }
+
+    const shouldOpen = !isFullPage || !typeChanged;
+
     const timeoutId = setTimeout(async () => {
       if (searchText.trim()) {
         setLoading(true);
-        setIsOpen(true);
+        if (shouldOpen) {
+          setIsOpen(true);
+        }
         try {
-          let data = [];
+          let data: any = {};
           if (searchType === 'Tracks') {
             data = await SpotifyService.searchTracks(searchText, 5);
           } else if (searchType === 'Albums') {
@@ -30,7 +54,7 @@ const SpotifySearchBar: React.FC = () => {
           } else if (searchType === 'Artists') {
             data = await SpotifyService.searchArtists(searchText, 5);
           }
-          setResults(data || []);
+          setResults(data.items || []);
         } catch (error) {
           console.error("Spotify search failed", error);
           setResults([]);
@@ -43,7 +67,7 @@ const SpotifySearchBar: React.FC = () => {
       }
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchText, searchType]);
+  }, [searchText, searchType, location.pathname]);
 
   // Click Outside
   useEffect(() => {
@@ -92,6 +116,27 @@ const SpotifySearchBar: React.FC = () => {
     setIsOpen(false);
   };
 
+  const handleTypeChange = (value: string) => {
+    const newType = value as 'Tracks' | 'Albums' | 'Artists';
+    setSearchType(newType);
+    setIsOpen(false);
+
+    // Auto-navigation logic
+    const currentPath = location.pathname;
+    const fullPages = ['/tracksfullpage', '/albumsfullpage', '/artistsfullpage'];
+
+    if (fullPages.includes(currentPath)) {
+      let targetPath = '';
+      if (newType === 'Tracks') targetPath = '/tracksfullpage';
+      else if (newType === 'Albums') targetPath = '/albumsfullpage';
+      else if (newType === 'Artists') targetPath = '/artistsfullpage';
+
+      if (targetPath && targetPath !== currentPath) {
+        navigate(`${targetPath}?search=${encodeURIComponent(searchText)}`);
+      }
+    }
+  };
+
   return (
     <div ref={containerRef} className="flex-1 max-w-[600px] min-w-[200px]">
       <div className="relative flex items-center w-full h-12">
@@ -115,29 +160,21 @@ const SpotifySearchBar: React.FC = () => {
           className="w-full h-full bg-[#555555] text-white placeholder-gray-300 rounded-full pl-12 pr-36 border border-white focus:outline-none focus:ring-1 focus:ring-white transition"
         />
 
-        {/* --- ADDED onClick HERE --- */}
-        <div 
-            className="absolute right-1.5 top-1 bottom-1"
-            onClick={(e) => {
-                // Stop propagation so it doesn't trigger parent clicks logic 
-                // and explicitly close the result list
-                e.stopPropagation();
-                setIsOpen(false);
-            }}
+        <div
+          className="absolute right-1.5 top-1 bottom-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(false);
+          }}
         >
-          <AnimatedDropdown 
-            options={["Tracks", "Artists", "Albums"]} 
-            value={searchType} 
-            onChange={(value) => { 
-                setSearchType(value as any); 
-                // setIsOpen(false) is redundant here because of the useEffect, 
-                // but good for immediate feedback
-                setIsOpen(false); 
-            }} 
+          <AnimatedDropdown
+            options={["Tracks", "Artists", "Albums"]}
+            value={searchType}
+            onChange={handleTypeChange}
           />
         </div>
 
-        <SpotifyResultList results={results} type={searchType as any} selectedIndex={selectedIndex} onSelect={handleSelect} isLoading={loading} isOpen={isOpen} onClose={() => setIsOpen(false)} searchText={searchText} />
+        <SpotifyResultList results={results} type={searchType as any} selectedIndex={selectedIndex} isLoading={loading} isOpen={isOpen} onClose={() => setIsOpen(false)} searchText={searchText} />
       </div>
     </div>
   );

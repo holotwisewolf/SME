@@ -30,9 +30,9 @@ const Checkbox: React.FC<AnimatedCheckboxProps> = ({
 
     return (
         <label
-            className={`flex items-start space-x-3 cursor-pointer group select-none ${className}`}
+            className={`flex ${description ? 'items-start' : 'items-center'} space-x-3 cursor-pointer group select-none ${className}`}
         >
-            <div className="relative w-6 h-6 flex-shrink-0 mt-0.5">
+            <div className={`relative w-6 h-6 flex-shrink-0 ${description ? 'mt-0.5' : ''}`}>
                 {/* Hidden native checkbox */}
                 <input
                     type="checkbox"

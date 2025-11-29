@@ -9,9 +9,9 @@ import Header from "./components/header/Header";
 import PageWrapper from "./components/shared/PageWrapper";
 
 // Pages
-import LibraryPlaylists from "./features/library/library_pages/LibraryPlaylists";
-import LibraryTracks from "./features/library/library_pages/LibraryTracks";
-import LibraryAlbums from "./features/library/library_pages/LibraryAlbums";
+import LibraryPlaylists from "./pages/library/LibraryPlaylists";
+import LibraryTracks from "./pages/library/LibraryTracks";
+import LibraryAlbums from "./pages/library/LibraryAlbums";
 import Songs from "./pages/Songs";
 import Info from "./pages/Info";
 import SignUpPage from "./features/auth/pages/SignUp";
