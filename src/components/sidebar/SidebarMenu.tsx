@@ -24,6 +24,14 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isExpanded, menuItems }) => {
     React.useEffect(() => {
         if (!isExpanded) {
             setExpandedMenu(null);
+        } else {
+            // Auto-expand if active path is a subitem
+            const activeItem = menuItems.find(item =>
+                item.subItems?.some(sub => sub.path === activePath)
+            );
+            if (activeItem) {
+                setExpandedMenu(activeItem.label);
+            }
         }
     }, [isExpanded]);
 

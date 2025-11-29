@@ -20,7 +20,7 @@ export type Database = {
           created_at: string
           id: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           metadata: Json | null
           user_id: string
         }
@@ -29,7 +29,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           metadata?: Json | null
           user_id: string
         }
@@ -38,7 +38,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_id?: string
-          item_type?: Database["public"]["Enums"]["item_type"]
+          item_type?: Database["public"]["Enums"]["item_type_enum"]
           metadata?: Json | null
           user_id?: string
         }
@@ -58,7 +58,7 @@ export type Database = {
           created_at: string
           id: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           parent_comment_id: string | null
           updated_at: string
           user_id: string
@@ -68,7 +68,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           parent_comment_id?: string | null
           updated_at?: string
           user_id: string
@@ -78,7 +78,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_id?: string
-          item_type?: Database["public"]["Enums"]["item_type"]
+          item_type?: Database["public"]["Enums"]["item_type_enum"]
           parent_comment_id?: string | null
           updated_at?: string
           user_id?: string
@@ -105,21 +105,21 @@ export type Database = {
           created_at: string
           id: string
           item_id: string
-          item_type: string
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           item_id: string
-          item_type: string
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           item_id?: string
-          item_type?: string
+          item_type?: Database["public"]["Enums"]["item_type_enum"]
           user_id?: string
         }
         Relationships: []
@@ -132,7 +132,7 @@ export type Database = {
           favorite_count: number
           id: string
           item_id: string
-          item_type: string
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           rating_count: number
           rating_sum: number
           tag_count: number
@@ -145,7 +145,7 @@ export type Database = {
           favorite_count?: number
           id?: string
           item_id: string
-          item_type: string
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           rating_count?: number
           rating_sum?: number
           tag_count?: number
@@ -158,7 +158,7 @@ export type Database = {
           favorite_count?: number
           id?: string
           item_id?: string
-          item_type?: string
+          item_type?: Database["public"]["Enums"]["item_type_enum"]
           rating_count?: number
           rating_sum?: number
           tag_count?: number
@@ -171,7 +171,7 @@ export type Database = {
           created_at: string
           id: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           tag_id: string
           user_id: string
         }
@@ -179,7 +179,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           tag_id: string
           user_id: string
         }
@@ -187,7 +187,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_id?: string
-          item_type?: Database["public"]["Enums"]["item_type"]
+          item_type?: Database["public"]["Enums"]["item_type_enum"]
           tag_id?: string
           user_id?: string
         }
@@ -389,7 +389,7 @@ export type Database = {
           created_at: string
           id: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           rating: number
           updated_at: string
           user_id: string
@@ -398,7 +398,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_id: string
-          item_type: Database["public"]["Enums"]["item_type"]
+          item_type: Database["public"]["Enums"]["item_type_enum"]
           rating: number
           updated_at?: string
           user_id: string
@@ -407,7 +407,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_id?: string
-          item_type?: Database["public"]["Enums"]["item_type"]
+          item_type?: Database["public"]["Enums"]["item_type_enum"]
           rating?: number
           updated_at?: string
           user_id?: string
@@ -532,7 +532,7 @@ export type Database = {
           activity_breakdown: Json | null
           activity_count: number | null
           item_id: string | null
-          item_type: Database["public"]["Enums"]["item_type"] | null
+          item_type: Database["public"]["Enums"]["item_type_enum"] | null
           last_activity_at: string | null
         }
         Relationships: []
@@ -552,7 +552,7 @@ export type Database = {
     }
     Enums: {
       activity_type: "rating" | "comment" | "tag" | "favorite"
-      item_type: "track" | "album" | "playlist"
+      item_type_enum: "track" | "album" | "playlist"
       tag_type: "premade" | "custom"
     }
     CompositeTypes: {
@@ -682,7 +682,7 @@ export const Constants = {
   public: {
     Enums: {
       activity_type: ["rating", "comment", "tag", "favorite"],
-      item_type: ["track", "album", "playlist"],
+      item_type_enum: ["track", "album", "playlist"],
       tag_type: ["premade", "custom"],
     },
   },

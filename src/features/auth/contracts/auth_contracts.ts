@@ -6,6 +6,7 @@ export interface IAuthService {
     verifyEmail(token: string, email: string): Promise<any>;
     updateProfile(userId: string, updates: any): Promise<any>;
     uploadAvatar(file: File, userId: string): Promise<string | null>;
+    deleteAvatar(avatarUrl: string): Promise<void>;
     getProfile(userId: string): Promise<any>;
     updatePassword(password: string): Promise<void>;
     updateUsername(username: string): Promise<any>;

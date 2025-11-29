@@ -7,7 +7,7 @@ import AnimatedDropdown from '../../../components/ui/AnimatedDropdown.tsx';
 import ClearButton from '../../../components/ui/ClearButton.tsx';
 
 const SpotifySearchBar: React.FC = () => {
-  const [searchType, setSearchType] = useState('Tracks');
+  const [searchType, setSearchType] = useState<'Tracks' | 'Albums' | 'Artists'>('Tracks');
   const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,7 +45,7 @@ const SpotifySearchBar: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, [searchText, searchType]);
 
-  // Click Outside - FIXED: Empty dependency array to avoid stale closures
+  // Click Outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -54,7 +54,7 @@ const SpotifySearchBar: React.FC = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []); // Empty array - listener only added once
+  }, []);
 
   // Keyboard Navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -115,11 +115,29 @@ const SpotifySearchBar: React.FC = () => {
           className="w-full h-full bg-[#555555] text-white placeholder-gray-300 rounded-full pl-12 pr-36 border border-white focus:outline-none focus:ring-1 focus:ring-white transition"
         />
 
-        <div className="absolute right-1.5 top-1 bottom-1">
-          <AnimatedDropdown options={["Tracks", "Artists", "Albums"]} value={searchType} onChange={(value) => { setSearchType(value); setIsOpen(false); }} />
+        {/* --- ADDED onClick HERE --- */}
+        <div 
+            className="absolute right-1.5 top-1 bottom-1"
+            onClick={(e) => {
+                // Stop propagation so it doesn't trigger parent clicks logic 
+                // and explicitly close the result list
+                e.stopPropagation();
+                setIsOpen(false);
+            }}
+        >
+          <AnimatedDropdown 
+            options={["Tracks", "Artists", "Albums"]} 
+            value={searchType} 
+            onChange={(value) => { 
+                setSearchType(value as any); 
+                // setIsOpen(false) is redundant here because of the useEffect, 
+                // but good for immediate feedback
+                setIsOpen(false); 
+            }} 
+          />
         </div>
 
-        <SpotifyResultList results={results} type={searchType as any} selectedIndex={selectedIndex} onSelect={handleSelect} isLoading={loading} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <SpotifyResultList results={results} type={searchType as any} selectedIndex={selectedIndex} onSelect={handleSelect} isLoading={loading} isOpen={isOpen} onClose={() => setIsOpen(false)} searchText={searchText} />
       </div>
     </div>
   );
