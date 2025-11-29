@@ -31,20 +31,28 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
   };
 
   const handleFavourite = async () => {
-    // Optimistic update
-    const previousState = isFavourite;
-    setIsFavourite(!previousState);
+    // 1. Get the target state
+    const willBeFavourite = !isFavourite;
+
+    // 2. Optimistic Update
+    setIsFavourite(willBeFavourite);
 
     try {
-      if (previousState) {
-        await removeFromFavourites(playlist.id, 'playlist');
+      if (!willBeFavourite) {
+        // Target is NOT a favorite -> REMOVE
+        await removeFromFavourites(playlist.id, "playlist");
       } else {
-        await addToFavourites(playlist.id, 'playlist');
+        // Target IS a favorite -> ADD
+        await addToFavourites(playlist.id, "playlist");
       }
     } catch (error) {
       console.error('Error toggling favourite:', error);
-      // Revert state on error
-      setIsFavourite(previousState);
+
+      // 3. Revert state on error (revert to the *original* state)
+      setIsFavourite(!willBeFavourite);
+
+      // Optional: Show error to user
+      alert('Failed to update favorite status.');
     }
   };
 
