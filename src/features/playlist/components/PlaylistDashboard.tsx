@@ -5,8 +5,8 @@ import AscendingButton from '../../../components/ui/AscendingButton';
 import DescendingButton from '../../../components/ui/DescendingButton';
 import FilterButton from '../../../components/ui/FilterButton';
 import { getUserPlaylists } from '../../spotify/services/playlist_services';
-import type { Playlist } from '../../spotify/contracts/playlist_contract';
-import { CreatePlaylistModal } from '../../library/components/CreatePlaylistModal';
+import type { Tables } from '../../../types/supabase';
+import { CreatePlaylistModal } from './CreatePlaylistModal';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
 interface PlaylistDashboardProps {
@@ -17,7 +17,7 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   const isLibrary = source === "library";
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isFilterActive, setIsFilterActive] = useState(false);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [playlists, setPlaylists] = useState<Tables<'playlists'>[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -40,9 +40,9 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
 
   const sortedPlaylists = [...playlists].sort((a, b) => {
     if (sortOrder === 'asc') {
-      return a.name.localeCompare(b.name);
+      return a.title.localeCompare(b.title);
     } else {
-      return b.name.localeCompare(a.name);
+      return b.title.localeCompare(a.title);
     }
   });
 

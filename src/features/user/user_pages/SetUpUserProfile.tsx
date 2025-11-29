@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import TextInput from "../../../components/ui/TextInput";
-import Checkbox from "../../../components/ui/Checkbox";
+import Checkbox from "../../../components/ui/CheckboxIcon";
 import DefUserAvatar from "../../../components/ui/DefUserAvatar";
 import EditIcon from "../../../components/ui/EditIcon";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";

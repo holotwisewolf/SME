@@ -10,7 +10,7 @@ interface SpotifyArtistItemProps {
 
 const SpotifyArtistItem: React.FC<SpotifyArtistItemProps> = ({ artist, isSelected, onSelect }) => {
     // Get smallest image for list view
-    const imageUrl = artist.images.length > 0
+    const imageUrl = artist?.images?.length > 0
         ? artist.images[artist.images.length - 1].url
         : '';
 
@@ -25,18 +25,22 @@ const SpotifyArtistItem: React.FC<SpotifyArtistItemProps> = ({ artist, isSelecte
         >
             {/* Artist Image (Circle) */}
             <div className="relative w-12 h-12 shrink-0 rounded-full overflow-hidden bg-[#2a2a2a]">
-                {imageUrl && (
-                    <img src={imageUrl} alt={artist.name} className="w-full h-full object-cover" />
+                {imageUrl ? (
+                    <img src={imageUrl} alt={artist?.name || 'Artist'} className="w-full h-full object-cover" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-[#2a2a2a] text-gray-500 text-xs">
+                        No Img
+                    </div>
                 )}
             </div>
 
             {/* Info */}
             <div className="flex flex-col overflow-hidden">
                 <span className={`text-sm font-semibold truncate ${isSelected ? 'text-[#1db954]' : 'text-white'}`}>
-                    {artist.name}
+                    {artist?.name || 'Unknown Artist'}
                 </span>
                 <span className="text-xs text-gray-400 truncate capitalize">
-                    {artist.genres.slice(0, 2).join(', ') || 'Artist'}
+                    {artist?.genres?.slice(0, 2).join(', ') || 'Artist'}
                 </span>
             </div>
         </motion.div>

@@ -1,9 +1,9 @@
 import React from 'react';
 import PlaylistCard from './PlaylistCard';
-import type { Playlist } from '../../spotify/contracts/playlist_contract';
+import type { Tables } from '../../../types/supabase';
 
 interface PlaylistGridProps {
-    playlists: Playlist[];
+    playlists: Tables<'playlists'>[];
     onDelete?: () => void;
 }
 

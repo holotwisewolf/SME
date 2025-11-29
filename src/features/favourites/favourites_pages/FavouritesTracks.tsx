@@ -4,6 +4,7 @@ import { getMultipleTracks } from '../../spotify/services/spotify_services';
 import type { SpotifyTrack } from '../../spotify/type/spotify_types';
 import { TrackDetailModal } from '../../spotify/components/TrackDetailModal';
 import { PlaylistSelectCard } from '../../spotify/components/PlaylistSelectCard';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
 const FavouritesTracks: React.FC = () => {
     const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
@@ -49,7 +50,9 @@ const FavouritesTracks: React.FC = () => {
             <h1 className="text-3xl font-bold text-white mb-8">Liked Songs</h1>
 
             {loading ? (
-                <div className="text-white">Loading...</div>
+                <div className="flex justify-center items-center h-64">
+                    <LoadingSpinner />
+                </div>
             ) : (
                 <>
                     {tracks.length === 0 ? (

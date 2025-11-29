@@ -5,39 +5,56 @@ import type { ISpotifyService } from '../contracts/spotify_contracts';
 // Search Functions
 // ============================================
 
-export async function searchTracks(query: string, limit: number = 10) {
+export async function searchTracks(query: string, limit: number = 10, offset: number = 0) {
   const data = await spotifyFetch(
-    `search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`
+    `search?q=${encodeURIComponent(query)}&type=track&limit=${limit}&offset=${offset}`
   )
-  // FIX: ensure return is ALWAYS an array
-  return data?.tracks?.items ?? [];
+  return {
+    items: data?.tracks?.items ?? [],
+    total: data?.tracks?.total ?? 0
+  };
 }
 
-export async function searchAlbums(query: string, limit: number = 10) {
+export async function searchAlbums(query: string, limit: number = 10, offset: number = 0) {
   const data = await spotifyFetch(
-    `search?q=${encodeURIComponent(query)}&type=album&limit=${limit}`
+    `search?q=${encodeURIComponent(query)}&type=album&limit=${limit}&offset=${offset}`
   )
-  return data?.albums?.items ?? [];
+  return {
+    items: data?.albums?.items ?? [],
+    total: data?.albums?.total ?? 0
+  };
 }
 
-export async function searchArtists(query: string, limit: number = 10) {
+export async function searchArtists(query: string, limit: number = 10, offset: number = 0) {
   const data = await spotifyFetch(
-    `search?q=${encodeURIComponent(query)}&type=artist&limit=${limit}`
+    `search?q=${encodeURIComponent(query)}&type=artist&limit=${limit}&offset=${offset}`
   )
-  return data?.artists?.items ?? [];
+  return {
+    items: data?.artists?.items ?? [],
+    total: data?.artists?.total ?? 0
+  };
 }
 
 /**
  * Universal search across tracks, albums, and artists
  */
-export async function searchAll(query: string, limit: number = 10) {
+export async function searchAll(query: string, limit: number = 10, offset: number = 0) {
   const data = await spotifyFetch(
-    `search?q=${encodeURIComponent(query)}&type=track,album,artist&limit=${limit}`
+    `search?q=${encodeURIComponent(query)}&type=track,album,artist&limit=${limit}&offset=${offset}`
   )
   return {
-    tracks: data?.tracks?.items ?? [],
-    albums: data?.albums?.items ?? [],
-    artists: data?.artists?.items ?? [],
+    tracks: {
+      items: data?.tracks?.items ?? [],
+      total: data?.tracks?.total ?? 0
+    },
+    albums: {
+      items: data?.albums?.items ?? [],
+      total: data?.albums?.total ?? 0
+    },
+    artists: {
+      items: data?.artists?.items ?? [],
+      total: data?.artists?.total ?? 0
+    },
   }
 }
 

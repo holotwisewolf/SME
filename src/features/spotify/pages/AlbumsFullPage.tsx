@@ -5,8 +5,11 @@ import { addToFavourites } from '../services/playlist_services';
 import { TrackDetailModal } from '../components/TrackDetailModal';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import type { SpotifyAlbum, SpotifyTrack } from '../type/spotify_types';
-// new import
-import { AlbumDetailModal } from '../components/AlbumDetailModal'; 
+import { AlbumDetailModal } from '../components/AlbumDetailModal';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import ViewIcon from '../../../components/ui/ViewIcon';
+import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
+import { ResultMenuDropdown } from '../components/ResultMenuDropdown';
 
 interface AlbumTrack {
     id: string;
@@ -29,57 +32,78 @@ interface AlbumWithTracks {
 export function AlbumsFullPage() {
     const [searchParams] = useSearchParams();
     const artistId = searchParams.get('artistId');
+    const artistName = searchParams.get('artistName');
     const albumId = searchParams.get('albumId');
     const search = searchParams.get('search');
+
     const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
     const [albumsWithTracks, setAlbumsWithTracks] = useState<Map<string, AlbumWithTracks>>(new Map());
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [total, setTotal] = useState(0);
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
     // Modal states
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
-    const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id: string; name: string } | null>(null);
+    const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id?: string; name: string; trackIds?: string[] } | null>(null);
 
     // control Album Modal status
     const [selectedAlbum, setSelectedAlbum] = useState<SpotifyAlbum | null>(null);
 
     useEffect(() => {
-        loadAlbums();
-    }, [artistId, albumId, search]);
+        loadAlbums(true);
+    }, [artistId, artistName, albumId, search]);
 
-    const loadAlbums = async () => {
-        setLoading(true);
+    const loadAlbums = async (reset = false) => {
+        if (reset) {
+            setLoading(true);
+            setAlbums([]);
+        } else {
+            setLoadingMore(true);
+        }
+
         try {
             let results: SpotifyAlbum[] = [];
+            let totalCount = 0;
+            const offset = reset ? 0 : albums.length;
 
             if (albumId) {
                 // Fetch specific album
                 const album = await getAlbumDetails(albumId);
                 results = [album];
-            } else if (artistId) {
-                // Fetch artist albums
-                const query = `artist:${artistId}`;
-                results = await searchAlbums(query, 50);
-            } else if (search) {
-                // Fetch search results
-                results = await searchAlbums(search, 50);
+                totalCount = 1;
             } else {
-                // Fetch top albums
-                results = await searchAlbums('top albums', 50);
+                let query = 'top albums';
+                if (artistName) {
+                    query = `artist:"${artistName}"`;
+                } else if (artistId) {
+                    query = `artist:${artistId}`;
+                } else if (search) {
+                    query = search;
+                }
+
+                const data = await searchAlbums(query, 10, offset);
+                results = data.items;
+                totalCount = data.total;
             }
 
-            setAlbums(results);
+            if (reset) {
+                setAlbums(results);
+            } else {
+                setAlbums(prev => [...prev, ...results]);
+            }
+            setTotal(totalCount);
 
             // Load tracks for all albums
-            const tracksMap = new Map<string, AlbumWithTracks>();
-            for (const album of results.slice(0, 20)) { // Limit to first 20 to avoid too many requests
+            // Only load tracks for NEW albums to save requests
+            const tracksMap = new Map<string, AlbumWithTracks>(reset ? [] : albumsWithTracks);
+
+            for (const album of results.slice(0, 20)) { // Limit to first 20 of the batch
                 try {
-                    // If we already fetched details (case: albumId), we might already have tracks?
-                    // getAlbumDetails returns tracks too.
-                    // But searchAlbums results don't have tracks.
+                    if (tracksMap.has(album.id)) continue;
 
                     let albumData;
                     if (albumId && album.id === albumId) {
-                        // We already have the full album data from getAlbumDetails
                         albumData = album;
                     } else {
                         albumData = await getAlbumDetails(album.id);
@@ -109,7 +133,12 @@ export function AlbumsFullPage() {
             console.error('Error loading albums:', error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
+    };
+
+    const handleLoadMore = () => {
+        loadAlbums(false);
     };
 
     const handleTrackClick = (track: AlbumTrack, album: SpotifyAlbum) => {
@@ -136,9 +165,9 @@ export function AlbumsFullPage() {
         setSelectedAlbum(album);
     };
 
-    const handleAddToFavourites = async (trackId: string) => {
+    const handleAddToFavourites = async (id: string, type: 'track' | 'album' = 'track') => {
         try {
-            await addToFavourites(trackId);
+            await addToFavourites(id, type);
             // Optional: Show success toast
         } catch (error) {
             console.error('Error adding to favourites:', error);
@@ -151,10 +180,21 @@ export function AlbumsFullPage() {
         }
     };
 
+    const handleImportAlbumToPlaylist = (album: SpotifyAlbum) => {
+        const albumData = albumsWithTracks.get(album.id);
+        if (albumData && albumData.tracks.length > 0) {
+            const trackIds = albumData.tracks.map(t => t.id);
+            setPlaylistModalTrack({
+                name: album.name,
+                trackIds: trackIds
+            });
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#121212]">
-                <div className="text-white text-xl">Loading albums...</div>
+                <LoadingSpinner />
             </div>
         );
     }
@@ -163,7 +203,7 @@ export function AlbumsFullPage() {
         <div className="min-h-screen bg-[#121212] p-8">
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-4xl font-bold text-white mb-8">
-                    {albumId ? 'Album Details' : (artistId ? 'Artist Albums' : (search ? `Results for "${search}"` : 'All Albums'))}
+                    {albums.length} Albums for '{artistName || (albumId ? 'Album Details' : (search || 'All Albums'))}'
                 </h1>
 
                 <div className="space-y-4">
@@ -172,12 +212,12 @@ export function AlbumsFullPage() {
 
                         return (
                             <div
-                                key={album.id}
+                                key={`${album.id}-${albums.indexOf(album)}`}
                                 className="bg-[#1f1f1f] rounded-lg overflow-hidden hover:bg-[#282828] transition-colors"
                             >
                                 <div className="flex gap-4 p-4">
                                     {/* Left Side - Album Image & Details */}
-                                    <div className="flex-shrink-0 w-48">
+                                    <div className="flex-shrink-0 w-48 flex flex-col">
 
                                         {/* added onclick on the album img */}
                                         <div
@@ -189,24 +229,51 @@ export function AlbumsFullPage() {
                                                 alt={album.name}
                                                 className="w-full aspect-square object-cover rounded-md mb-3"
                                             />
-                                            {/*notion logo YJ can modified*/} 
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <div className="bg-black/60 rounded-full p-2">
-                                                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 5 8.268 7.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            {/*notion logo YJ can modified*/}
+                                            <ViewIcon />
+                                        </div>
+
+                                        {/* Album Actions - Refactored Layout */}
+                                        <div className="flex items-start justify-between mb-1">
+                                            <h3 className="text-white font-semibold text-lg line-clamp-2 flex-1 mr-2">
+                                                {album.name}
+                                            </h3>
+
+                                            <div className="flex items-center gap-1 flex-shrink-0">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleAddToFavourites(album.id, 'album');
+                                                    }}
+                                                    className="p-1.5 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/10"
+                                                    title="Add to Favourites"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                                     </svg>
+                                                </button>
+
+                                                <div onClick={(e) => e.stopPropagation()}>
+                                                    <ResultMenuDropdown
+                                                        trackId={album.id}
+                                                        spotifyUrl={album.external_urls.spotify}
+                                                        isOpen={activeMenuId === album.id}
+                                                        onToggle={(isOpen) => setActiveMenuId(isOpen ? album.id : null)}
+                                                        onAddToFavourites={(id) => handleAddToFavourites(id, 'album')}
+                                                        onImportToPlaylist={() => handleImportAlbumToPlaylist(album)}
+                                                        type="album"
+                                                        hideActions={false}
+                                                        showFavourites={false}
+                                                        placement="right-start"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <h3 className="text-white font-semibold text-lg mb-1 line-clamp-2">
-                                            {album.name}
-                                        </h3>
                                         <p className="text-gray-400 text-sm mb-1">
                                             {album.artists.map(a => a.name).join(', ')}
                                         </p>
-                                        <p className="text-gray-500 text-xs">
+                                        <p className="text-gray-500 text-xs mb-4">
                                             {album.release_date?.split('-')[0]} • {album.total_tracks} tracks
                                         </p>
                                     </div>
@@ -239,7 +306,7 @@ export function AlbumsFullPage() {
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-                                                    Loading tracks...
+                                                    <LoadingSpinner className="w-6 h-6" />
                                                 </div>
                                             )}
                                         </div>
@@ -255,6 +322,24 @@ export function AlbumsFullPage() {
                         No albums found
                     </div>
                 )}
+
+                {/* Load More Button */}
+                {albums.length < total && albums.length > 0 && !albumId && (
+                    <div className="flex justify-center mt-12 mb-8">
+                        {loadingMore ? (
+                            <div className="flex flex-col items-center gap-2">
+                                <AnimatedLoadingDots color="#ffffff" size={40} />
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleLoadMore}
+                                className="px-8 py-3 bg-white/5 border border-white/10 text-white font-medium rounded-full hover:bg-white/10 hover:scale-105 transition-all backdrop-blur-sm"
+                            >
+                                Load More
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Track Detail Modal */}
@@ -262,16 +347,18 @@ export function AlbumsFullPage() {
                 <TrackDetailModal
                     track={selectedTrack}
                     onClose={() => setSelectedTrack(null)}
-                    onAddToFavourites={handleAddToFavourites}
+                    onAddToFavourites={(id) => handleAddToFavourites(id, 'track')}
                     onAddToPlaylist={handleAddToPlaylist}
                 />
             )}
 
             {/* Album Detail Modal */}
             {selectedAlbum && (
-                <AlbumDetailModal 
+                <AlbumDetailModal
                     album={selectedAlbum}
                     onClose={() => setSelectedAlbum(null)}
+                    onAddToFavourites={(id) => handleAddToFavourites(id, 'album')}
+                    onImportToPlaylist={handleImportAlbumToPlaylist}
                 />
             )}
 
@@ -279,6 +366,7 @@ export function AlbumsFullPage() {
             {playlistModalTrack && (
                 <PlaylistSelectCard
                     trackId={playlistModalTrack.id}
+                    trackIds={playlistModalTrack.trackIds}
                     trackName={playlistModalTrack.name}
                     onClose={() => setPlaylistModalTrack(null)}
                 />

@@ -1,44 +1,75 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchArtists, getArtistDetails } from '../services/spotify_services';
-import { ArtistPopupCard } from '../components/ArtistPopupCard';
+import { ArtistDetailModal } from '../components/ArtistDetailModal';
 import { useArtistPopup } from '../hooks/useArtistPopup';
 import type { SpotifyArtist } from '../type/spotify_types';
-import type { ArtistFullDetail } from '../contracts/artist_contract';
+import type { ArtistFullDetail } from '../type/artist_type';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
 
 export function ArtistsFullPage() {
     const [searchParams] = useSearchParams();
     const artistId = searchParams.get('artistId');
     const search = searchParams.get('search');
+
     const [artists, setArtists] = useState<SpotifyArtist[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [total, setTotal] = useState(0);
+
     const { isOpen, selectedArtist, openPopup, closePopup } = useArtistPopup();
 
     useEffect(() => {
-        loadArtists();
+        loadArtists(true);
     }, [artistId, search]);
 
-    const loadArtists = async () => {
-        setLoading(true);
+    const loadArtists = async (reset = false) => {
+        if (reset) {
+            setLoading(true);
+            setArtists([]);
+        } else {
+            setLoadingMore(true);
+        }
+
         try {
+            let results: SpotifyArtist[] = [];
+            let totalCount = 0;
+            const offset = reset ? 0 : artists.length;
+
             if (artistId) {
                 // Fetch specific artist
                 const artist = await getArtistDetails(artistId);
-                setArtists([artist]);
-            } else if (search) {
-                // Fetch search results
-                const results = await searchArtists(search, 50);
+                results = [artist];
+                totalCount = 1;
+            } else {
+                // Fetch search results or top artists
+                let query = 'top artists';
+                if (search) {
+                    query = search;
+                }
+
+                const data = await searchArtists(query, 50, offset);
+                results = data.items;
+                totalCount = data.total;
+            }
+
+            if (reset) {
                 setArtists(results);
             } else {
-                // Fetch top artists
-                const results = await searchArtists('top artists', 50);
-                setArtists(results);
+                setArtists(prev => [...prev, ...results]);
             }
+            setTotal(totalCount);
         } catch (error) {
             console.error('Error loading artists:', error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
+    };
+
+    const handleLoadMore = () => {
+        loadArtists(false);
     };
 
     const handleArtistClick = (artist: SpotifyArtist) => {
@@ -56,7 +87,7 @@ export function ArtistsFullPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#121212]">
-                <div className="text-white text-xl">Loading artists...</div>
+                <LoadingSpinner />
             </div>
         );
     }
@@ -65,13 +96,13 @@ export function ArtistsFullPage() {
         <div className="min-h-screen bg-[#121212] p-8">
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-4xl font-bold text-white mb-8">
-                    {artistId ? 'Artist Details' : (search ? `Results for "${search}"` : 'All Artists')}
+                    {artists.length} Artists for '{artistId ? artists[0]?.name : (search || 'All Artists')}'
                 </h1>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {artists.map((artist) => (
                         <div
-                            key={artist.id}
+                            key={`${artist.id}-${artists.indexOf(artist)}`}
                             onClick={() => handleArtistClick(artist)}
                             className="bg-[#1f1f1f] rounded-lg p-4 hover:bg-[#282828] transition-colors cursor-pointer group"
                         >
@@ -97,10 +128,28 @@ export function ArtistsFullPage() {
                         No artists found
                     </div>
                 )}
+
+                {/* Load More Button */}
+                {artists.length < total && artists.length > 0 && !artistId && (
+                    <div className="flex justify-center mt-12 mb-8">
+                        {loadingMore ? (
+                            <div className="flex flex-col items-center gap-2">
+                                <AnimatedLoadingDots color="#ffffff" size={40} />
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleLoadMore}
+                                className="px-8 py-3 bg-white/5 border border-white/10 text-white font-medium rounded-full hover:bg-white/10 hover:scale-105 transition-all backdrop-blur-sm"
+                            >
+                                Load More
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {isOpen && selectedArtist && (
-                <ArtistPopupCard
+                <ArtistDetailModal
                     artist={selectedArtist}
                     onClose={closePopup}
                 />

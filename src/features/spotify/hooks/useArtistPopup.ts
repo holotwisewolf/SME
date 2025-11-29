@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { ArtistFullDetail } from '../contracts/artist_contract';
+import type { ArtistFullDetail } from '../type/artist_type';
 
 /**
  * Hook for managing artist popup state
