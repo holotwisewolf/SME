@@ -14,6 +14,7 @@ import SpotifyAlbumItem from './SpotifyAlbumItem';
 import SpotifyArtistItem from './SpotifyArtistItem';
 import { TrackPreviewAudio } from './TrackPreviewAudio';
 import { ResultMenuDropdown } from './ResultMenuDropdown';
+import { TrackDetailModal } from './TrackDetailModal';
 import { PlaylistSelectCard } from './PlaylistSelectCard';
 import { ArtistPopupCard } from './ArtistPopupCard';
 import { useTrackPreview } from '../hooks/useTrackPreview';
@@ -32,6 +33,7 @@ interface SpotifyResultListProps {
     isLoading: boolean;
     isOpen?: boolean; // Controls visibility - when false, results are hidden
     onClose?: () => void;
+    searchText?: string;
 }
 
 const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
@@ -41,7 +43,8 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
     onSelect,
     isLoading,
     isOpen = true, // Default to true for backward compatibility
-    onClose
+    onClose,
+    searchText = ''
 }) => {
     // Navigation hook for "View Full Page" button
     const navigate = useNavigate();
@@ -58,6 +61,12 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
     // Playlist selection modal state
     const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id: string; name: string } | null>(null);
 
+    // Track detail modal state
+    const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
+
+    // Active menu state for controlled dropdowns
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
     // Handler: Add track to user's favourites
     const handleAddToFavourites = async (trackId: string) => {
         try {
@@ -71,6 +80,11 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
     // Handler: Open playlist selection modal for a track
     const handleAddToPlaylist = (trackId: string, trackName: string) => {
         setPlaylistModalTrack({ id: trackId, name: trackName });
+    };
+
+    // Handler: Open track detail modal
+    const handleTrackClick = (track: SpotifyTrack) => {
+        setSelectedTrack(track);
     };
 
     // Handler: Open artist details popup when artist is clicked
@@ -88,12 +102,13 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
 
     // Handler: Navigate to full page view based on search type
     const handleViewFullPage = () => {
+        const searchParam = searchText ? `?search=${encodeURIComponent(searchText)}` : '';
         if (type === 'Tracks') {
-            navigate('/tracksfullpage');
+            navigate(`/tracksfullpage${searchParam}`);
         } else if (type === 'Albums') {
-            navigate('/albumsfullpage');
+            navigate(`/albumsfullpage${searchParam}`);
         } else if (type === 'Artists') {
-            navigate('/artistsfullpage');
+            navigate(`/artistsfullpage${searchParam}`);
         }
         onClose?.();
     };
@@ -156,12 +171,15 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                                                                 <SpotifyResultItem
                                                                     track={track}
                                                                     isSelected={isSelected}
-                                                                    onSelect={onSelect}
+                                                                    onSelect={() => handleTrackClick(track)}
                                                                 />
                                                             </div>
                                                             <ResultMenuDropdown
                                                                 trackId={track.id}
                                                                 trackName={track.name}
+                                                                spotifyUrl={track.external_urls.spotify}
+                                                                isOpen={activeMenuId === track.id}
+                                                                onToggle={(isOpen) => setActiveMenuId(isOpen ? track.id : null)}
                                                                 onAddToFavourites={handleAddToFavourites}
                                                                 onAddToPlaylist={(trackId) => handleAddToPlaylist(trackId, track.name)}
                                                             />
@@ -220,6 +238,16 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 <ArtistPopupCard
                     artist={selectedArtist}
                     onClose={closeArtistPopup}
+                />
+            )}
+
+            {/* Track Detail Modal */}
+            {selectedTrack && (
+                <TrackDetailModal
+                    track={selectedTrack}
+                    onClose={() => setSelectedTrack(null)}
+                    onAddToFavourites={handleAddToFavourites}
+                    onAddToPlaylist={(trackId) => handleAddToPlaylist(trackId, selectedTrack.name)}
                 />
             )}
 

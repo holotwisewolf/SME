@@ -17,7 +17,10 @@ export interface SpotifyArtist {
 export interface SpotifyAlbum {
     id: string;
     name: string;
-    artists: { name: string }[];
+    artists: {
+        id: string;
+        name: string;
+    }[];
     images: SpotifyImage[];
     release_date: string;
     total_tracks: number;
@@ -28,8 +31,12 @@ export interface SpotifyAlbum {
 export interface SpotifyTrack {
     id: string;
     name: string;
-    artists: { name: string }[];
+    artists: {
+        id: string;
+        name: string;
+    }[];
     album: {
+        id: string;
         name: string;
         images: SpotifyImage[];
     };

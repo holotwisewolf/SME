@@ -1,24 +1,39 @@
 import { useState, useEffect } from 'react';
-import { searchArtists } from '../services/spotify_services';
+import { useSearchParams } from 'react-router-dom';
+import { searchArtists, getArtistDetails } from '../services/spotify_services';
 import { ArtistPopupCard } from '../components/ArtistPopupCard';
 import { useArtistPopup } from '../hooks/useArtistPopup';
 import type { SpotifyArtist } from '../type/spotify_types';
 import type { ArtistFullDetail } from '../contracts/artist_contract';
 
 export function ArtistsFullPage() {
+    const [searchParams] = useSearchParams();
+    const artistId = searchParams.get('artistId');
+    const search = searchParams.get('search');
     const [artists, setArtists] = useState<SpotifyArtist[]>([]);
     const [loading, setLoading] = useState(true);
     const { isOpen, selectedArtist, openPopup, closePopup } = useArtistPopup();
 
     useEffect(() => {
         loadArtists();
-    }, []);
+    }, [artistId, search]);
 
     const loadArtists = async () => {
         setLoading(true);
         try {
-            const results = await searchArtists('top artists', 50);
-            setArtists(results);
+            if (artistId) {
+                // Fetch specific artist
+                const artist = await getArtistDetails(artistId);
+                setArtists([artist]);
+            } else if (search) {
+                // Fetch search results
+                const results = await searchArtists(search, 50);
+                setArtists(results);
+            } else {
+                // Fetch top artists
+                const results = await searchArtists('top artists', 50);
+                setArtists(results);
+            }
         } catch (error) {
             console.error('Error loading artists:', error);
         } finally {
@@ -49,7 +64,9 @@ export function ArtistsFullPage() {
     return (
         <div className="min-h-screen bg-[#121212] p-8">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-4xl font-bold text-white mb-8">All Artists</h1>
+                <h1 className="text-4xl font-bold text-white mb-8">
+                    {artistId ? 'Artist Details' : (search ? `Results for "${search}"` : 'All Artists')}
+                </h1>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {artists.map((artist) => (

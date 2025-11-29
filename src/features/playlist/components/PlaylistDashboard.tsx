@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, LayoutGroup } from 'framer-motion';
 import PlaylistGrid from './PlaylistGrid';
 import AscendingButton from '../../../components/ui/AscendingButton';
 import DescendingButton from '../../../components/ui/DescendingButton';
 import FilterButton from '../../../components/ui/FilterButton';
+import { getUserPlaylists } from '../../spotify/services/playlist_services';
+import type { Playlist } from '../../spotify/contracts/playlist_contract';
+import { CreatePlaylistModal } from '../../library/components/CreatePlaylistModal';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
 interface PlaylistDashboardProps {
   source: "library" | "favourites";
@@ -13,6 +17,34 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   const isLibrary = source === "library";
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isFilterActive, setIsFilterActive] = useState(false);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const loadPlaylists = async () => {
+    setLoading(true);
+    try {
+      // TODO: Handle 'favourites' source differently when implemented
+      const data = await getUserPlaylists();
+      setPlaylists(data);
+    } catch (error) {
+      console.error('Error loading playlists:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPlaylists();
+  }, [source]);
+
+  const sortedPlaylists = [...playlists].sort((a, b) => {
+    if (sortOrder === 'asc') {
+      return a.name.localeCompare(b.name);
+    } else {
+      return b.name.localeCompare(a.name);
+    }
+  });
 
   return (
     <div className="flex flex-col h-full px-6 relative pb-32">
@@ -72,16 +104,34 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
         </div>
       </div>
 
+
+
       {/* Playlist Grid */}
-      <PlaylistGrid source={source} />
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner className="w-10 h-10 text-[grey]" />
+        </div>
+      ) : (
+        <PlaylistGrid playlists={sortedPlaylists} onDelete={loadPlaylists} />
+      )}
 
       {/* Only Library shows "Add new" */}
       {isLibrary && (
         <div className="absolute bottom-8 right-8 z-50">
-          <button className="bg-[#1a1a1a] text-[#BAFFB5] text-sm font-medium rounded-full px-12 py-4 shadow-lg hover:bg-[#252525] transition">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-[#1a1a1a] text-[#BAFFB5] text-sm font-medium rounded-full px-12 py-4 shadow-lg hover:bg-[#252525] transition"
+          >
             Add new
           </button>
         </div>
+      )}
+
+      {showCreateModal && (
+        <CreatePlaylistModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={loadPlaylists}
+        />
       )}
 
     </div>

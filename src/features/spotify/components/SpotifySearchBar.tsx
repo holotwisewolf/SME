@@ -119,7 +119,7 @@ const SpotifySearchBar: React.FC = () => {
           <AnimatedDropdown options={["Tracks", "Artists", "Albums"]} value={searchType} onChange={(value) => { setSearchType(value); setIsOpen(false); }} />
         </div>
 
-        <SpotifyResultList results={results} type={searchType as any} selectedIndex={selectedIndex} onSelect={handleSelect} isLoading={loading} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <SpotifyResultList results={results} type={searchType as any} selectedIndex={selectedIndex} onSelect={handleSelect} isLoading={loading} isOpen={isOpen} onClose={() => setIsOpen(false)} searchText={searchText} />
       </div>
     </div>
   );

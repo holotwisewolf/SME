@@ -8,7 +8,7 @@ interface PageWrapperProps {
 const PageWrapper: React.FC<PageWrapperProps> = ({ children }) => {
     return (
         <motion.div
-            className="h-full overflow-y-auto scrollbar-hide"
+            className="h-full overflow-y-auto"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
