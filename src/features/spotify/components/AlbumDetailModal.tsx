@@ -8,7 +8,7 @@ interface AlbumDetailModalProps {
 
 export function AlbumDetailModal({ album, onClose }: AlbumDetailModalProps) {
     
-    // 防止点击内容区域关闭弹窗
+    // avoid closing when clicking inside the modal
     const handleContentClick = (e: React.MouseEvent) => {
         e.stopPropagation();
     };
