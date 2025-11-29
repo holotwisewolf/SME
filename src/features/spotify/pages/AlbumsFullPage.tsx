@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchAlbums, getAlbumDetails } from '../services/spotify_services';
-import type { SpotifyAlbum } from '../type/spotify_types';
+import { addToFavourites } from '../services/playlist_services';
+import { TrackDetailModal } from '../components/TrackDetailModal';
+import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
+import type { SpotifyAlbum, SpotifyTrack } from '../type/spotify_types';
 
 interface AlbumTrack {
     id: string;
@@ -24,26 +27,59 @@ interface AlbumWithTracks {
 export function AlbumsFullPage() {
     const [searchParams] = useSearchParams();
     const artistId = searchParams.get('artistId');
+    const albumId = searchParams.get('albumId');
+    const search = searchParams.get('search');
     const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
     const [albumsWithTracks, setAlbumsWithTracks] = useState<Map<string, AlbumWithTracks>>(new Map());
     const [loading, setLoading] = useState(true);
 
+    // Modal states
+    const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
+    const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id: string; name: string } | null>(null);
+
     useEffect(() => {
         loadAlbums();
-    }, [artistId]);
+    }, [artistId, albumId, search]);
 
     const loadAlbums = async () => {
         setLoading(true);
         try {
-            const query = artistId ? `artist:${artistId}` : 'top albums';
-            const results = await searchAlbums(query, 50);
+            let results: SpotifyAlbum[] = [];
+
+            if (albumId) {
+                // Fetch specific album
+                const album = await getAlbumDetails(albumId);
+                results = [album];
+            } else if (artistId) {
+                // Fetch artist albums
+                const query = `artist:${artistId}`;
+                results = await searchAlbums(query, 50);
+            } else if (search) {
+                // Fetch search results
+                results = await searchAlbums(search, 50);
+            } else {
+                // Fetch top albums
+                results = await searchAlbums('top albums', 50);
+            }
+
             setAlbums(results);
 
             // Load tracks for all albums
             const tracksMap = new Map<string, AlbumWithTracks>();
             for (const album of results.slice(0, 20)) { // Limit to first 20 to avoid too many requests
                 try {
-                    const albumData = await getAlbumDetails(album.id);
+                    // If we already fetched details (case: albumId), we might already have tracks?
+                    // getAlbumDetails returns tracks too.
+                    // But searchAlbums results don't have tracks.
+
+                    let albumData;
+                    if (albumId && album.id === albumId) {
+                        // We already have the full album data from getAlbumDetails
+                        albumData = album;
+                    } else {
+                        albumData = await getAlbumDetails(album.id);
+                    }
+
                     tracksMap.set(album.id, {
                         id: albumData.id,
                         name: albumData.name,
@@ -54,7 +90,7 @@ export function AlbumsFullPage() {
                         tracks: albumData.tracks.items.map((track: any, index: number) => ({
                             id: track.id,
                             name: track.name,
-                            trackNumber: index + 1,
+                            trackNumber: track.track_number || index + 1,
                             duration: track.duration_ms,
                             previewUrl: track.preview_url
                         }))
@@ -71,6 +107,40 @@ export function AlbumsFullPage() {
         }
     };
 
+    const handleTrackClick = (track: AlbumTrack, album: SpotifyAlbum) => {
+        // Construct a full SpotifyTrack object from the partial data
+        const fullTrack: SpotifyTrack = {
+            id: track.id,
+            name: track.name,
+            artists: album.artists, // Use album artists as fallback since track artists aren't in AlbumTrack
+            album: {
+                id: album.id,
+                name: album.name,
+                images: album.images
+            },
+            duration_ms: track.duration,
+            preview_url: track.previewUrl || null,
+            external_urls: { spotify: `https://open.spotify.com/track/${track.id}` },
+            uri: `spotify:track:${track.id}`
+        };
+        setSelectedTrack(fullTrack);
+    };
+
+    const handleAddToFavourites = async (trackId: string) => {
+        try {
+            await addToFavourites(trackId);
+            // Optional: Show success toast
+        } catch (error) {
+            console.error('Error adding to favourites:', error);
+        }
+    };
+
+    const handleAddToPlaylist = (trackId: string) => {
+        if (selectedTrack) {
+            setPlaylistModalTrack({ id: trackId, name: selectedTrack.name });
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#121212]">
@@ -83,7 +153,7 @@ export function AlbumsFullPage() {
         <div className="min-h-screen bg-[#121212] p-8">
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-4xl font-bold text-white mb-8">
-                    {artistId ? 'Artist Albums' : 'All Albums'}
+                    {albumId ? 'Album Details' : (artistId ? 'Artist Albums' : (search ? `Results for "${search}"` : 'All Albums'))}
                 </h1>
 
                 <div className="space-y-4">
@@ -122,17 +192,18 @@ export function AlbumsFullPage() {
                                                     {albumWithTracks.tracks.map((track) => (
                                                         <div
                                                             key={track.id}
-                                                            className="flex justify-between items-center px-3 py-2 hover:bg-[#282828] rounded transition-colors group"
+                                                            onClick={() => handleTrackClick(track, album)}
+                                                            className="flex justify-between items-center px-3 py-2 hover:bg-[#383838] rounded transition-colors group cursor-pointer"
                                                         >
                                                             <div className="flex-1 min-w-0 flex items-center gap-3">
-                                                                <span className="text-gray-500 text-sm w-6 text-right flex-shrink-0">
+                                                                <span className="text-gray-500 text-sm w-6 text-right flex-shrink-0 group-hover:text-white transition-colors">
                                                                     {track.trackNumber}
                                                                 </span>
-                                                                <span className="text-white text-sm truncate">
+                                                                <span className="text-white text-sm truncate font-medium">
                                                                     {track.name}
                                                                 </span>
                                                             </div>
-                                                            <span className="text-gray-500 text-xs flex-shrink-0 ml-4">
+                                                            <span className="text-gray-500 text-xs flex-shrink-0 ml-4 group-hover:text-gray-300 transition-colors">
                                                                 {Math.floor(track.duration / 60000)}:
                                                                 {String(Math.floor((track.duration % 60000) / 1000)).padStart(2, '0')}
                                                             </span>
@@ -158,6 +229,25 @@ export function AlbumsFullPage() {
                     </div>
                 )}
             </div>
+
+            {/* Track Detail Modal */}
+            {selectedTrack && (
+                <TrackDetailModal
+                    track={selectedTrack}
+                    onClose={() => setSelectedTrack(null)}
+                    onAddToFavourites={handleAddToFavourites}
+                    onAddToPlaylist={handleAddToPlaylist}
+                />
+            )}
+
+            {/* Playlist Selection Modal */}
+            {playlistModalTrack && (
+                <PlaylistSelectCard
+                    trackId={playlistModalTrack.id}
+                    trackName={playlistModalTrack.name}
+                    onClose={() => setPlaylistModalTrack(null)}
+                />
+            )}
         </div>
     );
 }

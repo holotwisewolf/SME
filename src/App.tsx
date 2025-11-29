@@ -12,9 +12,6 @@ import PageWrapper from "./components/shared/PageWrapper";
 import LibraryPlaylists from "./features/library/library_pages/LibraryPlaylists";
 import LibraryTracks from "./features/library/library_pages/LibraryTracks";
 import LibraryAlbums from "./features/library/library_pages/LibraryAlbums";
-import FavouritesPlaylists from "./features/favourites/favourites_pages/FavouritesPlaylists";
-import FavouritesTracks from "./features/favourites/favourites_pages/FavouritesTracks";
-import FavouritesAlbums from "./features/favourites/favourites_pages/FavouritesAlbums";
 import Songs from "./pages/Songs";
 import Info from "./pages/Info";
 import SignUpPage from "./features/auth/pages/SignUp";
@@ -26,6 +23,7 @@ import UserSettings from "./features/user/user_pages/UserSettings";
 import { TracksFullPage } from "./features/spotify/pages/TracksFullPage";
 import { AlbumsFullPage } from "./features/spotify/pages/AlbumsFullPage";
 import { ArtistsFullPage } from "./features/spotify/pages/ArtistsFullPage";
+import FavouritesTracks from "./features/favourites/favourites_pages/FavouritesTracks";
 
 function App() {
   const location = useLocation();
@@ -99,7 +97,7 @@ function App() {
                   path="playlists"
                   element={
                     <PageWrapper>
-                      <FavouritesPlaylists />
+                      Test
                     </PageWrapper>
                   }
                 />
@@ -115,7 +113,7 @@ function App() {
                   path="albums"
                   element={
                     <PageWrapper>
-                      <FavouritesAlbums />
+                      Test
                     </PageWrapper>
                   }
                 />
