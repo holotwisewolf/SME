@@ -6,15 +6,20 @@ import { TrackDetailModal } from '../../spotify/components/TrackDetailModal';
 import { PlaylistSelectCard } from '../../spotify/components/PlaylistSelectCard';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
+import { useLogin } from '../../auth/components/LoginProvider';
+
 const FavouritesTracks: React.FC = () => {
+    const { isLoading: isAuthLoading } = useLogin();
     const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
     const [showPlaylistSelect, setShowPlaylistSelect] = useState(false);
 
     useEffect(() => {
-        loadFavourites();
-    }, []);
+        if (!isAuthLoading) {
+            loadFavourites();
+        }
+    }, [isAuthLoading]);
 
     const loadFavourites = async () => {
         setLoading(true);
