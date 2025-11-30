@@ -89,7 +89,7 @@ export function TracksFullPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#121212]">
-                <LoadingSpinner />
+                <LoadingSpinner className="w-12 h-12" />
             </div>
         );
     }

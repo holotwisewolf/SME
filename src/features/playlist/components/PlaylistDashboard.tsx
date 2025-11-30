@@ -9,11 +9,14 @@ import type { Tables } from '../../../types/supabase';
 import { CreatePlaylistModal } from './CreatePlaylistModal';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
+import { useLogin } from '../../auth/components/LoginProvider';
+
 interface PlaylistDashboardProps {
   source: "library" | "favourites";
 }
 
 const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
+  const { isLoading: isAuthLoading } = useLogin();
   const isLibrary = source === "library";
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isFilterActive, setIsFilterActive] = useState(false);
@@ -35,8 +38,10 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   };
 
   useEffect(() => {
-    loadPlaylists();
-  }, [source]);
+    if (!isAuthLoading) {
+      loadPlaylists();
+    }
+  }, [source, isAuthLoading]);
 
   const sortedPlaylists = [...playlists].sort((a, b) => {
     if (sortOrder === 'asc') {

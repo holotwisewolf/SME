@@ -12,6 +12,7 @@ interface LoginContextType {
     profile: any | null;
     setProfile: (profile: any) => void;
     refreshProfile: () => Promise<void>;
+    isLoading: boolean;
 }
 
 const LoginContext = createContext<LoginContextType | null>(null);
@@ -20,6 +21,7 @@ export const LoginProvider = ({ children }: { children: React.ReactNode }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<any | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const fetchProfile = async (userId: string) => {
         try {
@@ -37,38 +39,55 @@ export const LoginProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     useEffect(() => {
-        // Check active session on mount
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            const currentUser = session?.user ?? null;
-            setUser(currentUser);
-            if (currentUser) {
-                fetchProfile(currentUser.id);
-            } else {
-                setProfile(null);
+        let mounted = true;
+
+        const initializeAuth = async () => {
+            try {
+                // Check active session
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (!session) {
+                    console.log("No session found, signing in anonymously...");
+                    const { error } = await supabase.auth.signInAnonymously();
+                    if (error) {
+                        console.error("Anonymous sign-in failed:", error);
+                    }
+                }
+            } catch (error) {
+                console.error("Auth initialization error:", error);
+            } finally {
+                if (mounted) setIsLoading(false);
             }
-        });
+        };
+
+        initializeAuth();
 
         // Listen for changes
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             const currentUser = session?.user ?? null;
-            setUser(currentUser);
-            if (currentUser) {
-                fetchProfile(currentUser.id);
-            } else {
-                setProfile(null);
+            if (mounted) {
+                setUser(currentUser);
+                if (currentUser) {
+                    fetchProfile(currentUser.id);
+                } else {
+                    setProfile(null);
+                }
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     const openLogin = () => setIsOpen(true);
     const closeLogin = () => setIsOpen(false);
 
     return (
-        <LoginContext.Provider value={{ isOpen, openLogin, closeLogin, user, profile, setProfile, refreshProfile }}>
+        <LoginContext.Provider value={{ isOpen, openLogin, closeLogin, user, profile, setProfile, refreshProfile, isLoading }}>
             {children}
         </LoginContext.Provider>
     );
