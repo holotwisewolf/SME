@@ -314,64 +314,27 @@ export async function addPlaylistComment(playlistId: string, content: string): P
 }
 
 /**
- * Update playlist title
+ * Get user's rating for a playlist
  */
-export async function updatePlaylistTitle(playlistId: string, newTitle: string): Promise<void> {
-    const { error } = await supabase
-        .from('playlists')
-        .update({ title: newTitle })
-        .eq('id', playlistId);
-
-    if (error) throw error;
-}
-
-/**
- * Update playlist public status
- */
-export async function updatePlaylistPublicStatus(playlistId: string, isPublic: boolean): Promise<void> {
-    const { error } = await supabase
-        .from('playlists')
-        .update({ is_public: isPublic })
-        .eq('id', playlistId);
-
-    if (error) throw error;
-}
-
-/**
- * Remove a track from a playlist
- */
-export async function removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<void> {
-    const { error } = await supabase
-        .from('playlist_items')
-        .delete()
-        .eq('playlist_id', playlistId)
-        .eq('spotify_track_id', trackId);
-
-    if (error) throw error;
-}
-
-/**
- * Update playlist rating
- */
-export async function updatePlaylistRating(playlistId: string, rating: number): Promise<void> {
+export async function getUserPlaylistRating(playlistId: string): Promise<number | null> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
+    if (!user) return null;
 
-    // Upsert rating
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('ratings')
-        .upsert({
-            item_id: playlistId,
-            item_type: 'playlist',
-            user_id: user.id,
-            rating: rating
-        }, { onConflict: 'item_id, item_type, user_id' });
+        .select('rating')
+        .eq('item_id', playlistId)
+        .eq('item_type', 'playlist')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
     if (error) throw error;
+
+    return data ? data.rating : null;
 }
 
 /**
- * Delete playlist rating
+ * Delete a playlist rating
  */
 export async function deletePlaylistRating(playlistId: string): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
@@ -385,26 +348,6 @@ export async function deletePlaylistRating(playlistId: string): Promise<void> {
         .eq('user_id', user.id);
 
     if (error) throw error;
-}
-
-/**
- * Get user's rating for a playlist
- */
-export async function getUserPlaylistRating(playlistId: string): Promise<number | null> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data, error } = await supabase
-        .from('ratings')
-        .select('rating')
-        .eq('item_id', playlistId)
-        .eq('item_type', 'playlist')
-        .eq('user_id', user.id)
-        .maybeSingle(); // Changed from single() to maybeSingle()
-
-    if (error) throw error; // No need to check for PGRST116 anymore
-
-    return data ? data.rating : null;
 }
 
 /**
@@ -511,6 +454,74 @@ export async function removePlaylistTag(playlistId: string, tag: string): Promis
         .eq('item_id', playlistId)
         .eq('item_type', 'playlist')
         .eq('tag_id', tagData.id);
+
+    if (error) throw error;
+}
+
+/**
+ * Update playlist title
+ */
+export async function updatePlaylistTitle(playlistId: string, newTitle: string): Promise<void> {
+    const { error } = await supabase
+        .from('playlists')
+        .update({ title: newTitle })
+        .eq('id', playlistId);
+
+    if (error) throw error;
+}
+
+/**
+ * Update playlist rating
+ */
+export async function updatePlaylistRating(playlistId: string, rating: number): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { error } = await supabase
+        .from('ratings')
+        .upsert({
+            item_id: playlistId,
+            item_type: 'playlist',
+            user_id: user.id,
+            rating: rating
+        }, { onConflict: 'item_id, item_type, user_id' });
+
+    if (error) throw error;
+}
+
+/**
+ * Update playlist public status
+ */
+export async function updatePlaylistPublicStatus(playlistId: string, isPublic: boolean): Promise<void> {
+    const { error } = await supabase
+        .from('playlists')
+        .update({ is_public: isPublic })
+        .eq('id', playlistId);
+
+    if (error) throw error;
+}
+
+/**
+ * Update playlist color
+ */
+export async function updatePlaylistColor(playlistId: string, color: string): Promise<void> {
+    const { error } = await supabase
+        .from('playlists')
+        .update({ color: color })
+        .eq('id', playlistId);
+
+    if (error) throw error;
+}
+
+/**
+ * Remove track from playlist
+ */
+export async function removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<void> {
+    const { error } = await supabase
+        .from('playlist_items')
+        .delete()
+        .eq('playlist_id', playlistId)
+        .eq('spotify_track_id', trackId);
 
     if (error) throw error;
 }
