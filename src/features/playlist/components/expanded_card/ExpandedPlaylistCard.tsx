@@ -11,7 +11,8 @@ import {
     removeTrackFromPlaylist,
     reorderPlaylistTracks,
     updatePlaylistPublicStatus,
-    getUserPlaylistRating
+    getUserPlaylistRating,
+    deletePlaylist
 } from '../../services/playlist_services';
 import { getProfile } from '../../../auth/services/auth_services';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
@@ -27,11 +28,12 @@ interface ExpandedPlaylistCardProps {
     onClose?: () => void;
     onTitleChange?: (newTitle: string) => void;
     currentTitle?: string;
+    onDeletePlaylist?: () => void;
 }
 
 type ActiveTab = 'tracks' | 'comments' | 'settings';
 
-export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle }) => {
+export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist }) => {
     const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -179,6 +181,26 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         alert('Copy playlist feature coming soon!');
     };
 
+    const handleDeletePlaylist = async () => {
+        if (window.confirm('Are you sure you want to delete this playlist? This action cannot be undone.')) {
+            try {
+                // Perform the deletion
+                await deletePlaylist(playlist.id);
+
+                // Call the parent's onDelete handler if provided (to refresh the list)
+                if (onDeletePlaylist) {
+                    onDeletePlaylist();
+                }
+                if (onClose) {
+                    onClose();
+                }
+            } catch (error) {
+                console.error('Error deleting playlist:', error);
+                alert('Failed to delete playlist');
+            }
+        }
+    };
+
     const handleTrackClick = (track: any) => {
         setSelectedTrack(track);
     };
@@ -276,6 +298,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                                 setIsEditingEnabled={setIsEditingEnabled}
                                 isPublic={isPublic}
                                 onPublicStatusChange={handlePublicStatusChange}
+                                onDelete={handleDeletePlaylist}
                             />
                         )}
                     </div>

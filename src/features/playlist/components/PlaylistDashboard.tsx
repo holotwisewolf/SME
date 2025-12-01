@@ -122,7 +122,7 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
 
       {/* Only Library shows "Add new" */}
       {isLibrary && (
-        <div className="absolute bottom-8 right-8 z-50">
+        <div className="fixed bottom-8 right-8 z-50">
           <button
             onClick={() => setShowCreateModal(true)}
             className="bg-[#1a1a1a] text-[#BAFFB5] text-sm font-medium rounded-full px-12 py-4 shadow-lg hover:bg-[#252525] transition"
