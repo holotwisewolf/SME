@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
-import CommentDebugger from '../components/comment_debugger';
+
+// 👇 1. UPDATE THIS PATH to where you saved your "PlaylistTest.tsx"
+import PlaylistTest from '../components/PlaylistTest'; 
+
+// 👇 2. UPDATE THIS PATH to where you saved your "CommentDebugger.tsx"
+import CommentDebugger from '../components/comment_debugger'; 
 
 const TestingGround: React.FC = () => {
     const [session, setSession] = useState<any>(null);
@@ -25,8 +30,8 @@ const TestingGround: React.FC = () => {
                 <h1 className="text-4xl font-bold text-white mb-2">Dev Zone</h1>
                 <p className="text-gray-400">Independent environment for testing backend services.</p>
 
-                {/* Env Var Debugger */}
-                <div className="mt-4 p-4 bg-gray-900 rounded-lg border border-gray-800 inline-block text-left">
+                {/* --- Env Var Debugger --- */}
+                <div className="mt-4 p-4 bg-gray-900 rounded-lg border border-gray-800 inline-block text-left shadow-lg">
                     <h3 className="text-gray-500 text-xs font-bold uppercase mb-2">Environment Check</h3>
                     <div className="flex flex-col gap-2 text-sm font-mono">
                         {/* URL Check */}
@@ -37,19 +42,6 @@ const TestingGround: React.FC = () => {
                                     {import.meta.env.VITE_SUPABASE_URL ? "Present" : "Missing"}
                                 </span>
                             </div>
-                            {import.meta.env.VITE_SUPABASE_URL && (
-                                <div className="text-xs pl-4 border-l border-gray-700">
-                                    <span className="text-gray-500">Format: </span>
-                                    {(() => {
-                                        try {
-                                            new URL(import.meta.env.VITE_SUPABASE_URL);
-                                            return <span className="text-green-400">Valid URL</span>;
-                                        } catch {
-                                            return <span className="text-red-500">Invalid URL</span>;
-                                        }
-                                    })()}
-                                </div>
-                            )}
                         </div>
 
                         {/* Key Check */}
@@ -60,22 +52,12 @@ const TestingGround: React.FC = () => {
                                     {import.meta.env.VITE_SUPABASE_ANON_KEY ? "Present" : "Missing"}
                                 </span>
                             </div>
-                            {import.meta.env.VITE_SUPABASE_ANON_KEY && (
-                                <div className="text-xs pl-4 border-l border-gray-700">
-                                    <span className="text-gray-500">Length: </span>
-                                    {import.meta.env.VITE_SUPABASE_ANON_KEY.length >= 20 ? (
-                                        <span className="text-green-400">OK ({import.meta.env.VITE_SUPABASE_ANON_KEY.length} chars)</span>
-                                    ) : (
-                                        <span className="text-red-500">Too Short ({import.meta.env.VITE_SUPABASE_ANON_KEY.length} chars)</span>
-                                    )}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Auth Debugger */}
-                <div className="mt-4 ml-4 p-4 bg-gray-900 rounded-lg border border-gray-800 inline-block text-left align-top">
+                {/* --- Auth Debugger --- */}
+                <div className="mt-4 ml-4 p-4 bg-gray-900 rounded-lg border border-gray-800 inline-block text-left align-top shadow-lg">
                     <h3 className="text-gray-500 text-xs font-bold uppercase mb-2">Auth Status</h3>
                     <div className="flex flex-col gap-1 text-sm font-mono">
                         <div className="flex justify-between gap-8">
@@ -94,11 +76,36 @@ const TestingGround: React.FC = () => {
                 </div>
             </div>
 
-            <div className="mt-12 text-gray-600 text-sm w-full max-w-2xl">
-                <div className="mt-12 border-t border-gray-800 pt-8">
-                    Testing Module: Comment Services (CRUD + Realtime)
+            {/* --- MAIN TESTING AREA --- */}
+            <div className="mt-8 w-full max-w-4xl space-y-12 pb-20">
+                
+                {/* 1. PLAYLIST TEST (Fixing the 400 Error) */}
+                <div className="border border-gray-800 p-6 rounded-xl bg-[#1a1a1a]">
+                    <div className="flex items-center gap-3 mb-4 border-b border-gray-700 pb-2">
+                         <div className="bg-green-900 text-green-300 text-xs font-bold px-2 py-1 rounded">PRIORITY</div>
+                         <h2 className="text-xl font-bold text-[#FFD1D1]">1. Playlist & Favourites Test</h2>
+                    </div>
+                    <p className="text-gray-400 text-sm mb-6">
+                        Use the <strong>"Force String ID"</strong> checkbox here to verify the fix for the 400 Bad Request error.
+                    </p>
+                    
+                    {/* Render your component here */}
+                    <PlaylistTest />
+                </div>
+
+                {/* 2. COMMENTS DEBUGGER */}
+                <div className="border border-gray-800 p-6 rounded-xl bg-[#1a1a1a]">
+                    <div className="flex items-center gap-3 mb-4 border-b border-gray-700 pb-2">
+                         <h2 className="text-xl font-bold text-blue-400">2. Comment Services</h2>
+                    </div>
+                    <p className="text-gray-400 text-sm mb-6">
+                        Testing CRUD operations and real-time listeners.
+                    </p>
+                    
+                    {/* Render your component here */}
                     <CommentDebugger />
                 </div>
+
             </div>
         </div>
     )

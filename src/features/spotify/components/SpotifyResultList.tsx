@@ -12,7 +12,7 @@ import { ArtistDetailModal } from './ArtistDetailModal';
 import { AlbumDetailModal } from './AlbumDetailModal';
 import { useTrackPreview } from '../hooks/useTrackPreview';
 import { useArtistPopup } from '../hooks/useArtistPopup';
-import { addToFavourites } from '../services/playlist_services';
+import { addToFavourites } from '../../playlist/services/playlist_services';
 import { getAlbumDetails } from '../services/spotify_services';
 import type { ArtistFullDetail } from '../type/artist_type';
 import type { SpotifyTrack, SpotifyAlbum, SpotifyArtist } from '../type/spotify_types';

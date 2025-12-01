@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchAlbums, getAlbumDetails } from '../services/spotify_services';
-import { addToFavourites } from '../services/playlist_services';
+import { addToFavourites } from '../../playlist/services/playlist_services';
 import { TrackDetailModal } from '../components/TrackDetailModal';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import type { SpotifyAlbum, SpotifyTrack } from '../type/spotify_types';
@@ -194,7 +194,7 @@ export function AlbumsFullPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#121212]">
-                <LoadingSpinner />
+                <LoadingSpinner className="w-12 h-12" />
             </div>
         );
     }
@@ -215,7 +215,7 @@ export function AlbumsFullPage() {
                                 key={`${album.id}-${albums.indexOf(album)}`}
                                 className="bg-[#1f1f1f] rounded-lg overflow-hidden hover:bg-[#282828] transition-colors"
                             >
-                                <div className="flex gap-4 p-4">
+                                <div className="flex gap-4 p-4 pb-0">
                                     {/* Left Side - Album Image & Details */}
                                     <div className="flex-shrink-0 w-48 flex flex-col">
 
@@ -229,7 +229,6 @@ export function AlbumsFullPage() {
                                                 alt={album.name}
                                                 className="w-full aspect-square object-cover rounded-md mb-3"
                                             />
-                                            {/*notion logo YJ can modified*/}
                                             <ViewIcon />
                                         </div>
 
