@@ -94,24 +94,31 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
             {/* Sub-items */}
             <AnimatePresence>
-                {hasSubItems && isExpanded && isMenuExpanded && (
-                    <motion.ul
-                        // animate maxHeight instead of height
-                        initial={{ maxHeight: 0, opacity: 0 }}
-                        animate={{ maxHeight: 200, opacity: 1 }} // Lowered to 200px for tighter timing
-                        exit={{ maxHeight: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }} // Explicit timing helps here
-                        className="overflow-hidden pl-4 mt-2 space-y-1"
-                    >
-                        {item.subItems!.map((subItem) => (
-                            <SidebarSubItem
-                                key={subItem.label}
-                                subItem={subItem}
-                                activePath={activePath}
-                            />
-                        ))}
-                    </motion.ul>
-                )}
+                {hasSubItems && (
+                    (isExpanded && isMenuExpanded) || (!isExpanded && isSubItemActive)
+                ) && (
+                        <motion.ul
+                            initial={{ maxHeight: 0, opacity: 0 }}
+                            animate={{ maxHeight: 200, opacity: 1 }}
+                            exit={{ maxHeight: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className={`overflow-hidden mt-2 space-y-1 ${!isExpanded ? 'pl-0 flex flex-col items-center' : 'pl-4'}`}
+                        >
+                            {item.subItems!.map((subItem) => {
+                                // If collapsed, only show the active sub-item
+                                if (!isExpanded && subItem.path !== activePath) return null;
+
+                                return (
+                                    <SidebarSubItem
+                                        key={subItem.label}
+                                        subItem={subItem}
+                                        activePath={activePath}
+                                        isCollapsed={!isExpanded}
+                                    />
+                                );
+                            })}
+                        </motion.ul>
+                    )}
             </AnimatePresence>
 
             {/* Tooltip for collapsed state */}

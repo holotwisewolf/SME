@@ -20,6 +20,7 @@ import { PlaylistTracks } from './PlaylistTracks';
 import { PlaylistComments } from './PlaylistComments';
 import { PlaylistSettings } from './PlaylistSettings';
 import ExpandButton from '../../../../components/ui/ExpandButton';
+import { PlaylistTrackDetailModal } from './PlaylistTrackDetailModal';
 
 interface ExpandedPlaylistCardProps {
     playlist: Tables<'playlists'>;
@@ -48,6 +49,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [newComment, setNewComment] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
     const [isEditingEnabled, setIsEditingEnabled] = useState(false);
+    const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
 
     // Image URL logic
     const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
@@ -172,6 +174,10 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         alert('Copy playlist feature coming soon!');
     };
 
+    const handleTrackClick = (track: any) => {
+        setSelectedTrack(track);
+    };
+
     if (loading) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
@@ -216,7 +222,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                     onRatingUpdate={handleRatingUpdate}
                 />
 
-                {/* ... Right Column ... */}
+                {/* Right Column */}
                 <div className="w-full md:w-[65%] p-6 flex flex-col bg-[#1e1e1e] overflow-hidden">
                     {/* Tab Navigation */}
                     <div className="flex items-center gap-2 mb-6 bg-black/20 p-1 rounded-full w-max flex-shrink-0">
@@ -242,6 +248,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                                 isEditingEnabled={isEditingEnabled}
                                 onRemoveTrack={handleRemoveTrack}
                                 onReorderTracks={handleReorderTracks}
+                                onTrackClick={handleTrackClick}
                             />
                         )}
 
@@ -269,6 +276,14 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                     </div>
                 </div>
             </div>
+
+            {/* Track Detail Modal */}
+            {selectedTrack && (
+                <PlaylistTrackDetailModal
+                    track={selectedTrack}
+                    onClose={() => setSelectedTrack(null)}
+                />
+            )}
         </div>
     );
 };
