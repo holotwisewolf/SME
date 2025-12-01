@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import type { Tables } from '../../../types/supabase';
 import FavButton from '../../../components/ui/FavButton';
 import ExpandButton from '../../../components/ui/ExpandButton';
+import CollapseVerticalButton from '../../../components/ui/CollapseVerticalButton';
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../favourites/services/favourites_services';
+import { getPlaylistPreviewTracks } from '../services/playlist_services';
 
 import { supabase } from '../../../lib/supabaseClient';
 import { AddTrackModal } from './AddTrackModal';
@@ -17,8 +19,10 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
     const [isFavourite, setIsFavourite] = useState(false);
     const [showAddTrackModal, setShowAddTrackModal] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isInlineExpanded, setIsInlineExpanded] = useState(false);
     const [imgError, setImgError] = useState(false);
     const [title, setTitle] = useState(playlist.title);
+    const [previewTracks, setPreviewTracks] = useState<any[]>([]);
 
     // Construct public URL for playlist image (assumes file name is playlist.id)
     const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
@@ -30,6 +34,19 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
     useEffect(() => {
         setTitle(playlist.title);
     }, [playlist.title]);
+
+    useEffect(() => {
+        const loadPreviewTracks = async () => {
+            try {
+                // Fetch up to 20 tracks for the scrollable preview
+                const tracks = await getPlaylistPreviewTracks(playlist.id, 20);
+                setPreviewTracks(tracks);
+            } catch (error) {
+                console.error('Error loading preview tracks:', error);
+            }
+        };
+        loadPreviewTracks();
+    }, [playlist.id]);
 
     const handleFavourite = async () => {
         // 1. Get the target state
@@ -59,7 +76,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
 
     return (
         <>
-            <div className="bg-[#131313]/80 p-4 rounded-xl flex flex-col h-80 shadow-md relative">
+            <div className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 ${isInlineExpanded ? 'h-[28rem]' : 'h-80'}`}>
                 {/* Header */}
                 <div className="flex justify-between items-start mb-4 px-1">
                     <h3 className="font-medium text-[#E0E0E0] text-lg line-clamp-2 leading-tight">{title}</h3>
@@ -77,11 +94,10 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
                     </div>
                 </div>
 
-                {/* Content Area - Darker Placeholders */}
-                <div className="space-y-3 flex-1">
-                    {/* The image shows a large dark rectangle placeholder or multiple small ones */}
-                    {/* Option A: One large placeholder like 'Chill Vibes' / 'Workout Hits' */}
-                    <div className="bg-[#292929] rounded-2xl h-32 w-full overflow-hidden relative">
+                {/* Content Area */}
+                <div className="space-y-3 flex-1 flex flex-col min-h-0">
+                    {/* Playlist Image */}
+                    <div className="bg-[#292929] rounded-2xl h-32 w-full shrink-0 overflow-hidden relative">
                         {!imgError ? (
                             <img
                                 src={playlistImgUrl}
@@ -100,20 +116,102 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
                         )}
                     </div>
 
-                    {/* If you have tracks, map them here, otherwise show the placeholder above */}
-                    <div className="text-xs text-gray-500 px-1">
-                        {playlist.track_count || 0} tracks
+                    {/* Track Preview Area */}
+                    <div className="flex-1 min-h-0 overflow-hidden relative">
+                        {isInlineExpanded ? (
+                            // Expanded: Scrollable List
+                            <div className="h-full overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                                {previewTracks.length > 0 ? (
+                                    previewTracks.map((track) => (
+                                        <div key={track.id} className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-white/5 transition-colors group/track">
+                                            <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
+                                                {track.album?.images?.[0]?.url ? (
+                                                    <img src={track.album.images[0].url} alt={track.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-sm text-gray-200 font-medium truncate group-hover/track:text-white transition-colors">{track.name}</div>
+                                                <div className="text-xs text-gray-500 truncate">{track.artists?.[0]?.name}</div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-xs text-gray-500 text-center py-4 italic">
+                                        {playlist.track_count === 0 ? "No tracks yet" : "Loading tracks..."}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            // Collapsed: First Track Only
+                            <div className="pt-1">
+                                {previewTracks.length > 0 ? (
+                                    <div className="flex items-center gap-3 p-1.5 rounded-lg bg-white/5">
+                                        <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
+                                            {previewTracks[0].album?.images?.[0]?.url ? (
+                                                <img src={previewTracks[0].album.images[0].url} alt={previewTracks[0].name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-sm text-gray-200 font-medium truncate">{previewTracks[0].name}</div>
+                                            <div className="text-xs text-gray-500 truncate">{previewTracks[0].artists?.[0]?.name}</div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-gray-500 px-1">
+                                        {playlist.track_count || 0} tracks
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Footer - "Add new" text */}
-                <div className="mt-auto pt-4 flex justify-center">
-                    <button
-                        onClick={() => setShowAddTrackModal(true)}
-                        className="text-[#D1D1D1] text-sm font-medium hover:text-white transition"
-                    >
-                        Add new
-                    </button>
+                {/* Footer */}
+                <div className="mt-4 pt-2 border-t border-white/5 flex flex-col items-center gap-2 shrink-0">
+                    {isInlineExpanded ? (
+                        <>
+                            <div
+                                onClick={() => setShowAddTrackModal(true)}
+                                className="w-full bg-[#282828] hover:bg-[#333] transition-colors rounded-md py-1.5 px-3 flex items-center gap-2 cursor-pointer group/search"
+                            >
+                                <svg className="w-4 h-4 text-gray-500 group-hover/search:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <span className="text-xs text-gray-400 group-hover/search:text-gray-200">Search for songs...</span>
+                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsInlineExpanded(false);
+                                }}
+                                className="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1 py-1"
+                            >
+                                <CollapseVerticalButton onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsInlineExpanded(false);
+                                }} />
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => setIsInlineExpanded(true)}
+                            className="text-[#D1D1D1] text-sm font-medium hover:text-white transition py-1"
+                        >
+                            View more
+                        </button>
+                    )}
                 </div>
             </div>
 
