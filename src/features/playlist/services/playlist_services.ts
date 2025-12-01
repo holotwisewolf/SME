@@ -56,27 +56,27 @@ export async function createPlaylist(request: CreatePlaylistRequest): Promise<Ta
  * Add a track to a playlist
  */
 export async function addTrackToPlaylist(request: { playlistId: string; trackId: string }): Promise<void> {
-    // 1. Check if track already exists in playlist
+    // 1. Check if track already exists in playlist (Use maybeSingle to avoid 406 error)
     const { data: existing } = await supabase
         .from('playlist_items')
         .select('id')
         .eq('playlist_id', request.playlistId)
         .eq('spotify_track_id', request.trackId)
-        .single();
+        .maybeSingle();
 
     if (existing) {
         console.log('Track already in playlist');
         return;
     }
 
-    // 2. Get current max position
+    // 2. Get current max position (Use maybeSingle for empty playlists)
     const { data: maxPosData } = await supabase
         .from('playlist_items')
         .select('position')
         .eq('playlist_id', request.playlistId)
         .order('position', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
     const nextPosition = (maxPosData?.position || 0) + 1;
 
@@ -95,16 +95,15 @@ export async function addTrackToPlaylist(request: { playlistId: string; trackId:
 /**
  * Add multiple tracks to a playlist
  */
-
 export async function addTracksToPlaylist(request: { playlistId: string; trackIds: string[] }): Promise<void> {
-    // 1. Get current max position
+    // 1. Get current max position (Use maybeSingle)
     const { data: maxPosData } = await supabase
         .from('playlist_items')
         .select('position')
         .eq('playlist_id', request.playlistId)
         .order('position', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
     const nextPosition = (maxPosData?.position || 0) + 1;
 
@@ -378,9 +377,9 @@ export async function getUserPlaylistRating(playlistId: string): Promise<number 
         .eq('item_id', playlistId)
         .eq('item_type', 'playlist')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Changed from single() to maybeSingle()
 
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned"
+    if (error) throw error; // No need to check for PGRST116 anymore
 
     return data ? data.rating : null;
 }
@@ -426,13 +425,13 @@ export async function addPlaylistTag(playlistId: string, tag: string): Promise<v
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // 1. Check if tag exists
+    // 1. Check if tag exists (Use maybeSingle)
     let tagId: string;
     const { data: existingTag } = await supabase
         .from('tags')
         .select('id')
         .eq('name', tag)
-        .single();
+        .maybeSingle();
 
     if (existingTag) {
         tagId = existingTag.id;
@@ -473,12 +472,12 @@ export async function addPlaylistTag(playlistId: string, tag: string): Promise<v
  * Remove a tag from a playlist
  */
 export async function removePlaylistTag(playlistId: string, tag: string): Promise<void> {
-    // 1. Get tag ID
+    // 1. Get tag ID (Use maybeSingle)
     const { data: tagData } = await supabase
         .from('tags')
         .select('id')
         .eq('name', tag)
-        .single();
+        .maybeSingle();
 
     if (!tagData) return; // Tag doesn't exist, nothing to remove
 

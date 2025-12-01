@@ -90,6 +90,9 @@ export async function deleteRating(ratingId: string): Promise<void> {
 /**
  * Get a user's rating for an item.
  */
+/**
+ * Get a user's rating for an item.
+ */
 export async function getPersonalRating(
     userId: string,
     itemId: string,
@@ -101,9 +104,11 @@ export async function getPersonalRating(
         .eq('user_id', userId)
         .eq('item_id', itemId)
         .eq('item_type', itemType)
-        .single();
+        .maybeSingle(); // <--- CHANGED from .single() to .maybeSingle()
 
-    if (error?.code === 'PGRST116') return null;
+    // .maybeSingle() returns null data automatically if not found, 
+    // so we don't need to check for PGRST116 anymore.
+
     if (error) {
         console.error('Error fetching personal rating:', error);
         throw new Error(`Failed to fetch personal rating: ${error.message}`);
