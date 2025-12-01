@@ -9,9 +9,6 @@ interface PlaylistSelectCardProps {
     onClose: () => void;
 }
 
-/**
- * Modal for creating or selecting playlists
- */
 export function PlaylistSelectCard({
     trackId,
     trackIds,
@@ -77,8 +74,13 @@ export function PlaylistSelectCard({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-[#1f1f1f] rounded-lg p-6 w-96 max-w-full mx-4">
+        // Backdrop with blur effect
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+            {/* UPDATED CARD STYLES:
+                - w-[400px]: This sets the width to exactly 400px, matching the other modal.
+                - bg-[#1f1f1f]/95: Slightly transparent background.
+            */}
+            <div className="relative w-[400px] max-w-full bg-[#1f1f1f]/95 rounded-lg shadow-2xl border border-[#333] p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold text-white">Add to Playlist</h2>
                     <button
@@ -101,7 +103,7 @@ export function PlaylistSelectCard({
                             type="text"
                             value={newPlaylistName}
                             onChange={(e) => setNewPlaylistName(e.target.value)}
-                            className="flex-1 bg-[#282828] text-white px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#f8baba]"
+                            className="flex-1 bg-[#282828] text-white px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#f8baba] border border-transparent focus:border-[#f8baba]/50"
                             placeholder="Playlist name"
                         />
                         <button
@@ -120,7 +122,7 @@ export function PlaylistSelectCard({
                 {/* Existing Playlists */}
                 <div>
                     <h3 className="text-sm font-medium text-gray-300 mb-2">Choose Existing Playlist</h3>
-                    <div className="max-h-64 overflow-y-auto space-y-2">
+                    <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
                         {playlists.length === 0 ? (
                             <p className="text-sm text-gray-500 text-center py-4">No playlists found</p>
                         ) : (
@@ -129,7 +131,7 @@ export function PlaylistSelectCard({
                                     key={playlist.id}
                                     onClick={() => handleSelectPlaylist(playlist.id)}
                                     disabled={loading}
-                                    className="w-full text-left px-4 py-3 bg-[#282828] hover:bg-[#333333] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full text-left px-4 py-3 bg-[#282828] hover:bg-[#333333] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-transparent hover:border-[#ffffff]/10"
                                 >
                                     <div className="text-white font-medium">{playlist.title}</div>
                                     <div className="text-xs text-gray-400">{playlist.track_count} tracks</div>
