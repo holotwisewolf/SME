@@ -38,7 +38,7 @@ const SortableTrackItem: React.FC<SortableTrackItemProps> = ({ item, index, isEd
             <div className="flex items-center gap-3 overflow-hidden flex-1">
                 {isEditingEnabled ? (
                     <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-white/10 rounded">
-                        <MoveOrderIcon className="w-5 h-5 text-gray-400" />
+                        <MoveOrderIcon className="w-5 h-5" color="#9ca3af" />
                     </div>
                 ) : (
                     <span className="text-gray-500 w-6 text-center text-sm">{index + 1}</span>
@@ -55,7 +55,7 @@ const SortableTrackItem: React.FC<SortableTrackItemProps> = ({ item, index, isEd
                 </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 w-[120px] justify-end">
                 <span className="text-gray-500 text-xs font-mono">
                     {item.details ? SpotifyService.formatDuration(item.details.duration_ms) : '--:--'}
                 </span>
@@ -63,10 +63,10 @@ const SortableTrackItem: React.FC<SortableTrackItemProps> = ({ item, index, isEd
                 {isEditingEnabled && (
                     <button
                         onClick={() => onRemoveTrack(item.spotify_track_id)}
-                        className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-full transition-colors"
+                        className="p-1.5 text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-full transition-colors"
                         title="Remove from playlist"
                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
@@ -100,7 +100,9 @@ export const PlaylistTracks: React.FC<PlaylistTracksProps> = ({ tracks, isEditin
         <div className="flex flex-col h-full">
             <div className="flex items-center justify-between text-gray-400 text-sm border-b border-white/5 pb-2 mb-2 flex-shrink-0">
                 <span className="pl-2"># Title</span>
-                <span className="pr-12">Duration {isEditingEnabled && ' / Actions'}</span>
+                <div className="w-[120px] flex justify-end pr-2">
+                    <span>Duration {isEditingEnabled && ' / Actions'}</span>
+                </div>
             </div>
             <div className="overflow-y-auto flex-1 pr-2 space-y-1">
                 {tracks.length > 0 ? (

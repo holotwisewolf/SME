@@ -75,7 +75,7 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
 
                 {/* --- Preferences (Editing Mode) --- */}
                 <div>
-                    <h3 className="text-white font-medium mb-2">Preferences</h3>
+                    <h3 className="text-white font-medium mb-2">Edit</h3>
                     <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
                         <span className="text-gray-300 text-sm">Enable Editing Mode</span>
                         <button
@@ -89,7 +89,7 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
 
                 {/* --- Playlist Privacy (Public Toggle moved to the right) --- */}
                 <div>
-                    <h3 className="text-white font-medium mb-2">Playlist Privacy</h3>
+                    <h3 className="text-white font-medium mb-2">Privacy</h3>
                     <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
                         {/* Label is on the left */}
                         <span className="text-gray-300 text-sm">Public Playlist</span>

@@ -34,7 +34,7 @@ const ExpandButton: React.FC<ExpandButtonProps> = ({
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-      </svg>
+        < /svg>
     </button>
   );
 };

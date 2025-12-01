@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import EditIcon from '../../../../components/ui/EditIcon';
-
-import { updatePlaylistRating } from '../../services/playlist_services';
+import { updatePlaylistRating, uploadPlaylistImage, addPlaylistTag, removePlaylistTag } from '../../services/playlist_services';
 
 interface PlaylistHeaderProps {
     playlistId: string;
@@ -27,7 +26,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     imgError,
     setImgError,
     ratingData,
-    tags,
+    tags: initialTags,
     isEditingTitle,
     setIsEditingTitle,
     playlistTitle,
@@ -36,14 +35,83 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     isEditingEnabled,
     onRatingUpdate
 }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [tags, setTags] = useState<string[]>(initialTags);
+    const [newTag, setNewTag] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+
+    // Sync local tags with prop tags when prop changes (e.g. on load)
+    React.useEffect(() => {
+        setTags(initialTags);
+    }, [initialTags]);
+
     const handleRate = async (rating: number) => {
-        if (!isEditingEnabled) return; // Only allow rating if editing is enabled
+        if (!isEditingEnabled) return;
 
         try {
             await updatePlaylistRating(playlistId, rating);
             onRatingUpdate();
         } catch (error) {
             console.error('Error updating rating:', error);
+        }
+    };
+
+    const handleImageClick = () => {
+        if (isEditingEnabled && fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            await uploadPlaylistImage(playlistId, file);
+            // Force reload image by appending timestamp or just let parent handle it?
+            // Since public URL might be cached, we might need to handle cache busting.
+            // For now, we assume the parent or a refresh will show it.
+            // We can try to update the img src manually if needed, but let's stick to simple flow.
+            window.location.reload(); // Simple way to refresh for now, or trigger parent reload
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Failed to upload image');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleAddTag = async (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && newTag.trim()) {
+            const tagToAdd = newTag.trim();
+            if (tags.includes(tagToAdd)) {
+                setNewTag('');
+                return;
+            }
+
+            try {
+                // Optimistic update
+                setTags([...tags, tagToAdd]);
+                setNewTag('');
+                await addPlaylistTag(playlistId, tagToAdd);
+            } catch (error) {
+                console.error('Error adding tag:', error);
+                setTags(tags); // Revert
+            }
+        }
+    };
+
+    const handleRemoveTag = async (tagToRemove: string) => {
+        if (!isEditingEnabled) return;
+
+        try {
+            // Optimistic update
+            setTags(tags.filter(t => t !== tagToRemove));
+            await removePlaylistTag(playlistId, tagToRemove);
+        } catch (error) {
+            console.error('Error removing tag:', error);
+            setTags(tags); // Revert
         }
     };
 
@@ -59,12 +127,12 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                         onBlur={handleTitleUpdate}
                         onKeyDown={(e) => e.key === 'Enter' && handleTitleUpdate()}
                         autoFocus
-                        className="text-2xl font-bold text-white bg-transparent border-b border-white/20 focus:outline-none focus:border-[#1DB954] w-full mb-1"
+                        className="text-2xl font-bold text-white bg-transparent border-b border-white/20 focus:outline-none focus:border-[#696969] w-full mb-1"
                     />
                 ) : (
                     <h2
                         onClick={() => isEditingEnabled && setIsEditingTitle(true)}
-                        className={`text-2xl font-bold text-white leading-tight mb-1 transition-all ${isEditingEnabled ? 'cursor-pointer hover:text-[#1DB954] hover:drop-shadow-[0_0_8px_rgba(29,185,84,0.5)]' : ''}`}
+                        className={`text-2xl font-bold text-white leading-tight mb-1 transition-all ${isEditingEnabled ? 'cursor-pointer hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : ''}`}
                         title={isEditingEnabled ? "Click to edit" : ""}
                     >
                         {playlistTitle}
@@ -74,12 +142,23 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
             </div>
 
             {/* Image (4:3 Aspect Ratio) */}
-            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-[#2a2a2a] shadow-lg relative group">
+            <div
+                className={`w-full aspect-[4/3] rounded-xl overflow-hidden bg-[#2a2a2a] shadow-lg relative group ${isEditingEnabled ? 'cursor-pointer' : ''}`}
+                onClick={handleImageClick}
+            >
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                />
+
                 {!imgError ? (
                     <img
-                        src={playlistImgUrl}
+                        src={`${playlistImgUrl}?t=${Date.now()}`} // Cache busting
                         alt={playlistTitle}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className={`w-full h-full object-cover transition-transform duration-500 ${isEditingEnabled ? 'group-hover:scale-105' : ''}`}
                         onError={() => setImgError(true)}
                     />
                 ) : (
@@ -89,12 +168,21 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                         </svg>
                     </div>
                 )}
+
                 {/* Edit Overlay */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                    <div className="bg-black/60 p-3 rounded-full hover:bg-black/80 transition-colors">
-                        <EditIcon className="w-6 h-6 text-white" />
+                {isEditingEnabled && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="bg-black/60 p-3 rounded-full hover:bg-black/80 transition-colors">
+                            <EditIcon className="w-6 h-6 text-white" />
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {isUploading && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    </div>
+                )}
             </div>
 
             {/* Rating */}
@@ -110,7 +198,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                     className={`focus:outline-none transition-transform ${isEditingEnabled ? 'hover:scale-110 cursor-pointer' : 'cursor-default'}`}
                                 >
                                     <svg
-                                        className={`w-5 h-5 ${star <= Math.round(ratingData.average) ? 'text-[#1DB954] fill-[#1DB954]' : 'text-gray-600'}`}
+                                        className={`w-5 h-5 ${star <= Math.round(ratingData.average) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
                                         strokeWidth={2}
@@ -135,7 +223,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                         className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
                                     >
                                         <svg
-                                            className="w-5 h-5 text-gray-600 hover:text-[#1DB954]"
+                                            className="w-5 h-5 text-gray-600 hover:text-yellow-400"
                                             viewBox="0 0 24 24"
                                             stroke="currentColor"
                                             strokeWidth={2}
@@ -158,16 +246,36 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                         tags.map((tag, index) => (
                             <span
                                 key={index}
-                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors"
+                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors flex items-center gap-1 group"
                             >
                                 #{tag}
+                                {isEditingEnabled && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
+                                        className="ml-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        ×
+                                    </button>
+                                )}
                             </span>
                         ))
                     ) : (
                         <span className="text-gray-500 text-xs italic">No tags</span>
+                    )}
+
+                    {isEditingEnabled && (
+                        <input
+                            type="text"
+                            value={newTag}
+                            onChange={(e) => setNewTag(e.target.value)}
+                            onKeyDown={handleAddTag}
+                            placeholder="+ Add tag"
+                            className="px-3 py-1.5 bg-transparent border border-white/10 rounded-full text-xs text-white placeholder-gray-600 focus:outline-none focus:border-white/30 w-24 transition-all focus:w-32"
+                        />
                     )}
                 </div>
             </div>
         </div>
     );
 };
+
