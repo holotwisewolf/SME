@@ -101,7 +101,7 @@ export const PlaylistTracks: React.FC<PlaylistTracksProps> = ({ tracks, isEditin
             <div className="flex items-center justify-between text-gray-400 text-sm border-b border-white/5 pb-2 mb-2 flex-shrink-0">
                 <span className="pl-2"># Title</span>
                 <div className="w-[120px] flex justify-end pr-2">
-                    <span>Duration {isEditingEnabled && ' / Actions'}</span>
+                    <span>Duration</span>
                 </div>
             </div>
             <div className="overflow-y-auto flex-1 pr-2 space-y-1">

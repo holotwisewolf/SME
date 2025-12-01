@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import EditIcon from '../../../../components/ui/EditIcon';
-import { updatePlaylistRating, uploadPlaylistImage, addPlaylistTag, removePlaylistTag } from '../../services/playlist_services';
+import { updatePlaylistRating, uploadPlaylistImage, addPlaylistTag, removePlaylistTag, deletePlaylistRating, getPlaylistRating } from '../../services/playlist_services';
 
 interface PlaylistHeaderProps {
     playlistId: string;
@@ -9,6 +9,7 @@ interface PlaylistHeaderProps {
     imgError: boolean;
     setImgError: (error: boolean) => void;
     ratingData: { average: number; count: number };
+    userRating: number | null;
     tags: string[];
     isEditingTitle: boolean;
     setIsEditingTitle: (isEditing: boolean) => void;
@@ -26,6 +27,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     imgError,
     setImgError,
     ratingData,
+    userRating,
     tags: initialTags,
     isEditingTitle,
     setIsEditingTitle,
@@ -49,7 +51,13 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
         if (!isEditingEnabled) return;
 
         try {
-            await updatePlaylistRating(playlistId, rating);
+            if (userRating === rating) {
+                // Toggle off (delete rating)
+                await deletePlaylistRating(playlistId);
+            } else {
+                // Update or create rating
+                await updatePlaylistRating(playlistId, rating);
+            }
             onRatingUpdate();
         } catch (error) {
             console.error('Error updating rating:', error);
@@ -69,11 +77,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
         setIsUploading(true);
         try {
             await uploadPlaylistImage(playlistId, file);
-            // Force reload image by appending timestamp or just let parent handle it?
-            // Since public URL might be cached, we might need to handle cache busting.
-            // For now, we assume the parent or a refresh will show it.
-            // We can try to update the img src manually if needed, but let's stick to simple flow.
-            window.location.reload(); // Simple way to refresh for now, or trigger parent reload
+            window.location.reload(); // Simple way to refresh for now
         } catch (error) {
             console.error('Error uploading image:', error);
             alert('Failed to upload image');
@@ -120,15 +124,25 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
             {/* Title & Creator */}
             <div>
                 {isEditingTitle ? (
-                    <input
-                        type="text"
-                        value={playlistTitle}
-                        onChange={(e) => setPlaylistTitle(e.target.value)}
-                        onBlur={handleTitleUpdate}
-                        onKeyDown={(e) => e.key === 'Enter' && handleTitleUpdate()}
-                        autoFocus
-                        className="text-2xl font-bold text-white bg-transparent border-b border-white/20 focus:outline-none focus:border-[#696969] w-full mb-1"
-                    />
+                    <div className="flex items-center gap-2 mb-1">
+                        <input
+                            type="text"
+                            value={playlistTitle}
+                            onChange={(e) => setPlaylistTitle(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleTitleUpdate()}
+                            autoFocus
+                            className="text-2xl font-bold text-white bg-transparent border-b border-white/20 focus:outline-none focus:border-[#696969] w-full"
+                        />
+                        <button
+                            onClick={handleTitleUpdate}
+                            className="p-1 hover:bg-white/10 rounded-full text-[#1DB954] transition-colors"
+                            title="Confirm title"
+                        >
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
+                    </div>
                 ) : (
                     <h2
                         onClick={() => isEditingEnabled && setIsEditingTitle(true)}
@@ -198,7 +212,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                     className={`focus:outline-none transition-transform ${isEditingEnabled ? 'hover:scale-110 cursor-pointer' : 'cursor-default'}`}
                                 >
                                     <svg
-                                        className={`w-5 h-5 ${star <= Math.round(ratingData.average) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
+                                        className={`w-5 h-5 ${star <= (userRating || Math.round(ratingData.average)) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
                                         strokeWidth={2}
@@ -207,7 +221,9 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                     </svg>
                                 </button>
                             ))}
-                            <span className="text-white font-bold ml-2">{ratingData.average.toFixed(1)}/5</span>
+                            <span className="text-white font-bold ml-2">
+                                {Number.isInteger(ratingData.average) ? ratingData.average : ratingData.average.toFixed(1)}/5
+                            </span>
                         </div>
                         <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Rated by {ratingData.count} users</span>
                     </>
@@ -223,7 +239,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                         className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
                                     >
                                         <svg
-                                            className="w-5 h-5 text-gray-600 hover:text-yellow-400"
+                                            className={`w-5 h-5 ${star <= (userRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600 hover:text-yellow-400'}`}
                                             viewBox="0 0 24 24"
                                             stroke="currentColor"
                                             strokeWidth={2}
@@ -240,7 +256,19 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
 
             {/* Tags Container (Flexible Wrap) */}
             <div className="flex-1">
-                <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Tags</h3>
+                <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>
+                    {isEditingEnabled && (
+                        <input
+                            type="text"
+                            value={newTag}
+                            onChange={(e) => setNewTag(e.target.value)}
+                            onKeyDown={handleAddTag}
+                            placeholder="+ Add"
+                            className="px-2 py-0.5 bg-transparent border-b border-white/10 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-white/30 w-20 transition-all focus:w-28"
+                        />
+                    )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                     {tags.length > 0 ? (
                         tags.map((tag, index) => (
@@ -262,20 +290,8 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                     ) : (
                         <span className="text-gray-500 text-xs italic">No tags</span>
                     )}
-
-                    {isEditingEnabled && (
-                        <input
-                            type="text"
-                            value={newTag}
-                            onChange={(e) => setNewTag(e.target.value)}
-                            onKeyDown={handleAddTag}
-                            placeholder="+ Add tag"
-                            className="px-3 py-1.5 bg-transparent border border-white/10 rounded-full text-xs text-white placeholder-gray-600 focus:outline-none focus:border-white/30 w-24 transition-all focus:w-32"
-                        />
-                    )}
                 </div>
             </div>
         </div>
     );
 };
-
