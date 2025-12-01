@@ -10,8 +10,8 @@ export async function submitPersonalRating(
     userId: string,
     itemId: string,
     itemType: ItemType,
-    ratingValue: number,
-    isPublic: boolean
+    ratingValue: number
+    // Removed isPublic argument
 ): Promise<Rating[]> {
     const { data, error } = await supabase
         .from('ratings')
@@ -21,7 +21,7 @@ export async function submitPersonalRating(
                 item_id: itemId,
                 item_type: itemType,
                 rating: ratingValue,
-                is_public: isPublic,
+                // Visibility is handled by RLS policies checking profiles.is_public_profile
             },
             {
                 onConflict: 'user_id,item_id,item_type',
@@ -90,9 +90,6 @@ export async function deleteRating(ratingId: string): Promise<void> {
 /**
  * Get a user's rating for an item.
  */
-/**
- * Get a user's rating for an item.
- */
 export async function getPersonalRating(
     userId: string,
     itemId: string,
@@ -104,49 +101,13 @@ export async function getPersonalRating(
         .eq('user_id', userId)
         .eq('item_id', itemId)
         .eq('item_type', itemType)
-        .maybeSingle(); // <--- CHANGED from .single() to .maybeSingle()
-
-    // .maybeSingle() returns null data automatically if not found, 
-    // so we don't need to check for PGRST116 anymore.
+        .maybeSingle(); 
 
     if (error) {
         console.error('Error fetching personal rating:', error);
         throw new Error(`Failed to fetch personal rating: ${error.message}`);
     }
 
-    return data;
-}
-
-/**
- * Toggle visibility of a rating.
- */
-export async function toggleRatingPrivacy(ratingId: string): Promise<Rating[]> {
-    const { data: current, error: fetchErr } = await supabase
-        .from('ratings')
-        .select('is_public')
-        .eq('id', ratingId)
-        .single();
-
-    if (fetchErr || !current) {
-        console.error('Error fetching rating for privacy toggle:', fetchErr);
-        throw new Error(`Failed: ${fetchErr?.message || 'Rating not found'}`);
-    }
-
-    const { data, error } = await supabase
-        .from('ratings')
-        .update({
-            is_public: !current.is_public,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', ratingId)
-        .select();
-
-    if (error) {
-        console.error('Error toggling privacy:', error);
-        throw new Error(`Failed to toggle privacy: ${error.message}`);
-    }
-
-    if (!data?.length) throw new Error(`Rating with ID ${ratingId} not found.`);
     return data;
 }
 
@@ -214,7 +175,7 @@ export const RatingService: IRatingService = {
     updateRating,
     deleteRating,
     getPersonalRating,
-    toggleRatingPrivacy,
+    // Removed toggleRatingPrivacy
     getRatingHistory,
     subscribeToRatingUpdates
 };
