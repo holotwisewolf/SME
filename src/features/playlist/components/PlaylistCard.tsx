@@ -8,7 +8,7 @@ import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../f
 
 import { supabase } from '../../../lib/supabaseClient';
 import { AddTrackModal } from './AddTrackModal';
-import { ExpandedPlaylistCard } from './ExpandedPlaylistCard';
+import { ExpandedPlaylistCard } from './expanded_card/ExpandedPlaylistCard';
 
 interface PlaylistCardProps {
   playlist: Tables<'playlists'>;

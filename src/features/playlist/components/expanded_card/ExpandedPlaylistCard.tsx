@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { Tables } from '../../../types/supabase';
-import { supabase } from '../../../lib/supabaseClient';
+import type { Tables } from '../../../../types/supabase';
+import { supabase } from '../../../../lib/supabaseClient';
 import {
     fetchPlaylistTracksWithDetails,
     getPlaylistTags,
@@ -10,13 +10,13 @@ import {
     updatePlaylistTitle,
     removeTrackFromPlaylist,
     reorderPlaylistTracks
-} from '../services/playlist_services';
-import { getProfile } from '../../auth/services/auth_services';
-import LoadingSpinner from '../../../components/ui/LoadingSpinner';
-import { PlaylistHeader } from './expanded_card/PlaylistHeader';
-import { PlaylistTracks } from './expanded_card/PlaylistTracks';
-import { PlaylistComments } from './expanded_card/PlaylistComments';
-import { PlaylistSettings } from './expanded_card/PlaylistSettings';
+} from '../../services/playlist_services';
+import { getProfile } from '../../../auth/services/auth_services';
+import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
+import { PlaylistHeader } from './PlaylistHeader';
+import { PlaylistTracks } from './PlaylistTracks';
+import { PlaylistComments } from './PlaylistComments';
+import { PlaylistSettings } from './PlaylistSettings';
 
 interface ExpandedPlaylistCardProps {
     playlist: Tables<'playlists'>;
@@ -164,7 +164,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     }
 
     return (
-        <div className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative max-h-[90vh]">
+        <div className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative max-h-[515px]">
             {/* Close Button */}
             <button
                 onClick={onClose}
