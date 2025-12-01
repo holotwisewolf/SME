@@ -11,7 +11,20 @@ interface PlaylistSettingsProps {
     isPublic: boolean;
     onPublicStatusChange: (isPublic: boolean) => void;
     onDelete?: () => void;
+    color?: string;
+    onColorChange: (color: string) => void;
 }
+
+const PRESET_COLORS = [
+    '#1DB954', // Spotify Green
+    '#3B82F6', // Blue
+    '#8B5CF6', // Purple
+    '#EC4899', // Pink
+    '#EF4444', // Red
+    '#F97316', // Orange
+    '#EAB308', // Yellow
+    '#14B8A6', // Teal
+];
 
 export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
     playlistId,
@@ -21,7 +34,9 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
     setIsEditingEnabled,
     isPublic,
     onPublicStatusChange,
-    onDelete
+    onDelete,
+    color,
+    onColorChange
 }) => {
     const handlePublicToggle = async () => {
         try {
@@ -72,6 +87,25 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                             </svg>
                         </button>
+                    </div>
+                </div>
+
+                {/* --- Appearance --- */}
+                <div>
+                    <h3 className="text-white font-medium mb-2">Appearance</h3>
+                    <div className="p-3 bg-white/5 rounded-lg">
+                        <span className="text-gray-300 text-sm block mb-3">Playlist Color</span>
+                        <div className="flex flex-wrap gap-2">
+                            {PRESET_COLORS.map((presetColor) => (
+                                <button
+                                    key={presetColor}
+                                    onClick={() => onColorChange(presetColor)}
+                                    className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ${color === presetColor ? 'ring-2 ring-white scale-110' : ''}`}
+                                    style={{ backgroundColor: presetColor }}
+                                    title={presetColor}
+                                />
+                            ))}
+                        </div>
                     </div>
                 </div>
 

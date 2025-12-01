@@ -119,6 +119,32 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
         }
     };
 
+    const [tempRating, setTempRating] = useState<string>(userRating?.toString() || '');
+
+    // Sync tempRating with userRating
+    React.useEffect(() => {
+        setTempRating(userRating?.toString() || '');
+    }, [userRating]);
+
+    const handleNumericRate = async (rating: number) => {
+        if (!isEditingEnabled) return;
+        try {
+            await updatePlaylistRating(playlistId, rating);
+            onRatingUpdate();
+        } catch (error) {
+            console.error('Error updating rating:', error);
+        }
+    };
+
+    const handleNumericSubmit = () => {
+        const val = parseFloat(tempRating);
+        if (!isNaN(val) && val >= 0 && val <= 5) {
+            handleNumericRate(val);
+        } else {
+            setTempRating(userRating?.toString() || ''); // Revert if invalid
+        }
+    };
+
     return (
         <div className="w-full md:w-[35%] p-6 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
             {/* Title & Creator */}
@@ -221,9 +247,26 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                     </svg>
                                 </button>
                             ))}
-                            <span className="text-white font-bold ml-2">
-                                {Number.isInteger(ratingData.average) ? ratingData.average : ratingData.average.toFixed(1)}/5
-                            </span>
+                            {isEditingEnabled ? (
+                                <div className="flex items-center gap-2 ml-2">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="5"
+                                        step="0.1"
+                                        value={tempRating}
+                                        onChange={(e) => setTempRating(e.target.value)}
+                                        onBlur={handleNumericSubmit}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleNumericSubmit()}
+                                        className="w-14 px-1 py-0.5 bg-white/10 border border-white/20 rounded text-sm text-white focus:outline-none focus:border-[#1DB954] text-center"
+                                    />
+                                    <span className="text-gray-400 text-sm">/ 5</span>
+                                </div>
+                            ) : (
+                                <span className="text-white font-bold ml-2">
+                                    {Number.isInteger(ratingData.average) ? ratingData.average : ratingData.average.toFixed(1)}/5
+                                </span>
+                            )}
                         </div>
                         <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Rated by {ratingData.count} users</span>
                     </>
