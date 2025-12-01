@@ -211,16 +211,39 @@ export async function fetchPlaylistTracksWithDetails(playlistId: string): Promis
 }
 
 /**
+ * Get preview tracks for a playlist card
+ */
+export async function getPlaylistPreviewTracks(playlistId: string, limit: number = 20): Promise<any[]> {
+    // 1. Get limited track IDs
+    const { data: items, error } = await supabase
+        .from('playlist_items')
+        .select('spotify_track_id')
+        .eq('playlist_id', playlistId)
+        .order('position', { ascending: true })
+        .limit(limit);
+
+    if (error) throw error;
+    if (!items || items.length === 0) return [];
+
+    // 2. Fetch details from Spotify
+    const trackIds = items.map(item => item.spotify_track_id);
+    const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
+
+    const response = await getMultipleTracks(trackIds);
+    return response?.tracks || [];
+}
+
+/**
  * Get tags for a playlist
  */
 export async function getPlaylistTags(playlistId: string): Promise<string[]> {
     const { data, error } = await supabase
         .from('item_tags')
         .select(`
-tag_id,
-    tags(
-        name
-    )
+            tag_id,
+            tags(
+                name
+            )
         `)
         .eq('item_id', playlistId)
         .eq('item_type', 'playlist');
@@ -257,11 +280,11 @@ export async function getPlaylistComments(playlistId: string): Promise<any[]> {
     const { data, error } = await supabase
         .from('comments')
         .select(`
-    *,
-    profiles(
-        username,
-        avatar_url
-    )
+            *,
+            profiles(
+                username,
+                avatar_url
+            )
         `)
         .eq('item_id', playlistId)
         .eq('item_type', 'playlist')
