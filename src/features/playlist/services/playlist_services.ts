@@ -361,3 +361,97 @@ export async function reorderPlaylistTracks(tracks: { id: string; position: numb
 
     await Promise.all(updates);
 }
+
+/**
+ * Upload playlist image
+ */
+export async function uploadPlaylistImage(playlistId: string, file: File): Promise<string> {
+    const fileName = `${playlistId}`; // Overwrite existing image
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('playlists')
+        .upload(filePath, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('playlists')
+        .getPublicUrl(filePath);
+
+    return publicUrl;
+}
+
+/**
+ * Add a tag to a playlist
+ */
+export async function addPlaylistTag(playlistId: string, tag: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // 1. Check if tag exists
+    let tagId: string;
+    const { data: existingTag } = await supabase
+        .from('tags')
+        .select('id')
+        .eq('name', tag)
+        .single();
+
+    if (existingTag) {
+        tagId = existingTag.id;
+    } else {
+        // 2. Create new tag if not exists
+        const { data: newTag, error: createError } = await supabase
+            .from('tags')
+            .insert({
+                name: tag,
+                type: 'custom',
+                creator_id: user.id
+            })
+            .select('id')
+            .single();
+
+        if (createError) throw createError;
+        tagId = newTag.id;
+    }
+
+    // 3. Link tag to playlist
+    const { error } = await supabase
+        .from('item_tags')
+        .insert({
+            item_id: playlistId,
+            item_type: 'playlist',
+            tag_id: tagId,
+            user_id: user.id
+        });
+
+    if (error) {
+        // Ignore duplicate key error (if tag already added to this playlist)
+        if (error.code === '23505') return;
+        throw error;
+    }
+}
+
+/**
+ * Remove a tag from a playlist
+ */
+export async function removePlaylistTag(playlistId: string, tag: string): Promise<void> {
+    // 1. Get tag ID
+    const { data: tagData } = await supabase
+        .from('tags')
+        .select('id')
+        .eq('name', tag)
+        .single();
+
+    if (!tagData) return; // Tag doesn't exist, nothing to remove
+
+    // 2. Remove link
+    const { error } = await supabase
+        .from('item_tags')
+        .delete()
+        .eq('item_id', playlistId)
+        .eq('item_type', 'playlist')
+        .eq('tag_id', tagData.id);
+
+    if (error) throw error;
+}
