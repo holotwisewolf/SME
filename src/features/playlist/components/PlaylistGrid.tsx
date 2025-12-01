@@ -12,6 +12,7 @@ interface PlaylistGridProps {
 
 const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
     const [activeTrack, setActiveTrack] = useState<any>(null);
+    const [playlistUpdates, setPlaylistUpdates] = useState<Record<string, number>>({});
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -52,6 +53,13 @@ const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
         try {
             console.log(`Adding track ${trackId} from ${originPlaylistId} to ${targetPlaylistId}`);
             await addTrackToPlaylist({ playlistId: targetPlaylistId, trackId });
+
+            // Trigger update for the target playlist
+            setPlaylistUpdates(prev => ({
+                ...prev,
+                [targetPlaylistId]: Date.now()
+            }));
+
             // Optional: Show success toast or trigger refresh
         } catch (error) {
             console.error('Error moving track:', error);
@@ -73,6 +81,7 @@ const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
                                 key={playlist.id}
                                 playlist={playlist}
                                 onDelete={onDelete}
+                                lastUpdated={playlistUpdates[playlist.id]}
                             />
                         ))}
                     </div>

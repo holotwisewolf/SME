@@ -14,9 +14,10 @@ import { DraggableTrackRow } from './DraggableTrackRow';
 interface PlaylistCardProps {
     playlist: Tables<'playlists'>;
     onDelete?: () => void;
+    lastUpdated?: number;
 }
 
-const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
+const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpdated }) => {
     const [isFavourite, setIsFavourite] = useState(false);
     const [showAddTrackModal, setShowAddTrackModal] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -54,7 +55,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
             }
         };
         loadPreviewTracks();
-    }, [playlist.id]);
+    }, [playlist.id, lastUpdated]);
 
     const handleFavourite = async () => {
         // 1. Get the target state

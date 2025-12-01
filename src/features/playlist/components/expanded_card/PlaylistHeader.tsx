@@ -258,9 +258,10 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                         onChange={(e) => setTempRating(e.target.value)}
                                         onBlur={handleNumericSubmit}
                                         onKeyDown={(e) => e.key === 'Enter' && handleNumericSubmit()}
-                                        className="w-14 px-1 py-0.5 bg-white/10 border border-white/20 rounded text-sm text-white focus:outline-none focus:border-[#1DB954] text-center"
+                                        className="w-12 px-0 py-0.5 bg-transparent border-b border-white/20 text-sm text-white focus:outline-none focus:border-[#1DB954] text-center font-medium appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                        placeholder="-"
                                     />
-                                    <span className="text-gray-400 text-sm">/ 5</span>
+                                    <span className="text-gray-500 text-sm font-light">/ 5</span>
                                 </div>
                             ) : (
                                 <span className="text-white font-bold ml-2">
