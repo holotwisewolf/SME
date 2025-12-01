@@ -25,11 +25,13 @@ import { PlaylistTrackDetailModal } from './PlaylistTrackDetailModal';
 interface ExpandedPlaylistCardProps {
     playlist: Tables<'playlists'>;
     onClose?: () => void;
+    onTitleChange?: (newTitle: string) => void;
+    currentTitle?: string;
 }
 
 type ActiveTab = 'tracks' | 'comments' | 'settings';
 
-export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose }) => {
+export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle }) => {
     const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -41,7 +43,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [userRating, setUserRating] = useState<number | null>(null);
     const [comments, setComments] = useState<any[]>([]);
     const [creatorName, setCreatorName] = useState<string>('Unknown');
-    const [playlistTitle, setPlaylistTitle] = useState(playlist.title);
+    const [playlistTitle, setPlaylistTitle] = useState(currentTitle ?? playlist.title);
     const [isPublic, setIsPublic] = useState(playlist.is_public || false);
 
     // Interaction States
@@ -96,6 +98,9 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
 
         try {
             await updatePlaylistTitle(playlist.id, playlistTitle);
+            if (onTitleChange) {
+                onTitleChange(playlistTitle);
+            }
             // Success - no further action needed as local state is already updated
         } catch (error) {
             console.error('Error updating title:', error);
