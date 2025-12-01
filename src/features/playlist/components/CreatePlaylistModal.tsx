@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createPlaylist } from '../../spotify/services/playlist_services';
+import { createPlaylist } from '../services/playlist_services';
 
 import Checkbox from '../../../components/ui/CheckboxIcon';
 

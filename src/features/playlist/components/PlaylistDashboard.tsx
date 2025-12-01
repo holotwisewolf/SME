@@ -4,16 +4,19 @@ import PlaylistGrid from './PlaylistGrid';
 import AscendingButton from '../../../components/ui/AscendingButton';
 import DescendingButton from '../../../components/ui/DescendingButton';
 import FilterButton from '../../../components/ui/FilterButton';
-import { getUserPlaylists } from '../../spotify/services/playlist_services';
+import { getUserPlaylists } from '../services/playlist_services';
 import type { Tables } from '../../../types/supabase';
 import { CreatePlaylistModal } from './CreatePlaylistModal';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+
+import { useLogin } from '../../auth/components/LoginProvider';
 
 interface PlaylistDashboardProps {
   source: "library" | "favourites";
 }
 
 const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
+  const { isLoading: isAuthLoading } = useLogin();
   const isLibrary = source === "library";
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isFilterActive, setIsFilterActive] = useState(false);
@@ -35,8 +38,10 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   };
 
   useEffect(() => {
-    loadPlaylists();
-  }, [source]);
+    if (!isAuthLoading) {
+      loadPlaylists();
+    }
+  }, [source, isAuthLoading]);
 
   const sortedPlaylists = [...playlists].sort((a, b) => {
     if (sortOrder === 'asc') {
@@ -117,7 +122,7 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
 
       {/* Only Library shows "Add new" */}
       {isLibrary && (
-        <div className="absolute bottom-8 right-8 z-50">
+        <div className="fixed bottom-8 right-8 z-50">
           <button
             onClick={() => setShowCreateModal(true)}
             className="bg-[#1a1a1a] text-[#BAFFB5] text-sm font-medium rounded-full px-12 py-4 shadow-lg hover:bg-[#252525] transition"

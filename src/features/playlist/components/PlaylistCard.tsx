@@ -1,114 +1,243 @@
 import React, { useState, useEffect } from 'react';
 import type { Tables } from '../../../types/supabase';
 import FavButton from '../../../components/ui/FavButton';
-import TrashButton from '../../../components/ui/TrashButton'
 import ExpandButton from '../../../components/ui/ExpandButton';
-import { deletePlaylist } from '../../spotify/services/playlist_services';
+import CollapseVerticalButton from '../../../components/ui/CollapseVerticalButton';
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../favourites/services/favourites_services';
+import { getPlaylistPreviewTracks } from '../services/playlist_services';
+
+import { supabase } from '../../../lib/supabaseClient';
+import { AddTrackModal } from './AddTrackModal';
+import { ExpandedPlaylistCard } from './expanded_card/ExpandedPlaylistCard';
 
 interface PlaylistCardProps {
-  playlist: Tables<'playlists'>;
-  onDelete?: () => void;
+    playlist: Tables<'playlists'>;
+    onDelete?: () => void;
 }
 
 const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
-  const [isFavourite, setIsFavourite] = useState(false);
+    const [isFavourite, setIsFavourite] = useState(false);
+    const [showAddTrackModal, setShowAddTrackModal] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isInlineExpanded, setIsInlineExpanded] = useState(false);
+    const [imgError, setImgError] = useState(false);
+    const [title, setTitle] = useState(playlist.title);
+    const [previewTracks, setPreviewTracks] = useState<any[]>([]);
 
-  useEffect(() => {
-    checkIsFavourite(playlist.id, 'playlist').then(setIsFavourite);
-  }, [playlist.id]);
+    // Construct public URL for playlist image (assumes file name is playlist.id)
+    const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
 
-  const handleDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete "${playlist.title}"?`)) {
-      try {
-        await deletePlaylist(playlist.id);
-        if (onDelete) onDelete();
-      } catch (error) {
-        console.error('Error deleting playlist:', error);
-        alert('Failed to delete playlist');
-      }
-    }
-  };
+    useEffect(() => {
+        checkIsFavourite(playlist.id, 'playlist').then(setIsFavourite);
+    }, [playlist.id]);
 
-  const handleFavourite = async () => {
-    // 1. Get the target state
-    const willBeFavourite = !isFavourite;
+    useEffect(() => {
+        setTitle(playlist.title);
+    }, [playlist.title]);
 
-    // 2. Optimistic Update
-    setIsFavourite(willBeFavourite);
+    useEffect(() => {
+        const loadPreviewTracks = async () => {
+            try {
+                // Fetch up to 20 tracks for the scrollable preview
+                const tracks = await getPlaylistPreviewTracks(playlist.id, 20);
+                setPreviewTracks(tracks);
+            } catch (error) {
+                console.error('Error loading preview tracks:', error);
+            }
+        };
+        loadPreviewTracks();
+    }, [playlist.id]);
 
-    try {
-      if (!willBeFavourite) {
-        // Target is NOT a favorite -> REMOVE
-        await removeFromFavourites(playlist.id, "playlist");
-      } else {
-        // Target IS a favorite -> ADD
-        await addToFavourites(playlist.id, "playlist");
-      }
-    } catch (error) {
-      console.error('Error toggling favourite:', error);
+    const handleFavourite = async () => {
+        // 1. Get the target state
+        const willBeFavourite = !isFavourite;
 
-      // 3. Revert state on error (revert to the *original* state)
-      setIsFavourite(!willBeFavourite);
+        // 2. Optimistic Update
+        setIsFavourite(willBeFavourite);
 
-      // Optional: Show error to user
-      alert('Failed to update favorite status.');
-    }
-  };
+        try {
+            if (!willBeFavourite) {
+                // Target is NOT a favorite -> REMOVE
+                await removeFromFavourites(playlist.id, "playlist");
+            } else {
+                // Target IS a favorite -> ADD
+                await addToFavourites(playlist.id, "playlist");
+            }
+        } catch (error) {
+            console.error('Error toggling favourite:', error);
 
-  return (
-    <div className="bg-[#292929]/60 p-4 rounded-xl flex flex-col h-80 shadow-md relative">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4 px-1">
-        <h3 className="font-medium text-[#E0E0E0] text-lg line-clamp-2 leading-tight">{playlist.title}</h3>
-        <div className="flex space-x-3 text-[#FFD1D1]">
-          <div className="cursor-pointer">
-            <FavButton
-              isFavourite={isFavourite}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleFavourite();
-              }}
-            />
-          </div>
-          <div onClick={handleDelete} className="cursor-pointer">
-            <TrashButton />
-          </div>
-          <ExpandButton />
-        </div>
-      </div>
+            // 3. Revert state on error (revert to the *original* state)
+            setIsFavourite(!willBeFavourite);
 
-      {/* Content Area - Darker Placeholders */}
-      <div className="space-y-3 flex-1">
-        {/* The image shows a large dark rectangle placeholder or multiple small ones */}
-        {/* Option A: One large placeholder like 'Chill Vibes' / 'Workout Hits' */}
-        <div className="bg-[#292929] rounded-2xl h-32 w-full overflow-hidden relative">
-          {/* Since we don't have image_url in DB yet, we can use color or placeholder */}
-          {playlist.color ? (
-            <div className="w-full h-full" style={{ backgroundColor: playlist.color }} />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#333] to-[#1a1a1a] flex items-center justify-center text-gray-600">
-              <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-              </svg>
+            // Optional: Show error to user
+            alert('Failed to update favorite status.');
+        }
+    };
+
+    return (
+        <>
+            <div className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 ${isInlineExpanded ? 'h-[28rem]' : 'h-80'}`}>
+                {/* Header */}
+                <div className="flex justify-between items-start mb-4 px-1">
+                    <h3 className="font-medium text-[#E0E0E0] text-lg line-clamp-2 leading-tight">{title}</h3>
+                    <div className="flex space-x-3 text-[#FFD1D1]">
+                        <div className="cursor-pointer pt-1">
+                            <FavButton
+                                isFavourite={isFavourite}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleFavourite();
+                                }}
+                            />
+                        </div>
+                        <ExpandButton strokeColor="white" onClick={() => setIsExpanded(true)} />
+                    </div>
+                </div>
+
+                {/* Content Area */}
+                <div className="space-y-3 flex-1 flex flex-col min-h-0">
+                    {/* Playlist Image */}
+                    <div className="bg-[#292929] rounded-2xl h-32 w-full shrink-0 overflow-hidden relative">
+                        {!imgError ? (
+                            <img
+                                src={playlistImgUrl}
+                                alt={title}
+                                className="w-full h-full object-cover"
+                                onError={() => setImgError(true)}
+                            />
+                        ) : playlist.color ? (
+                            <div className="w-full h-full" style={{ backgroundColor: playlist.color }} />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[#333] to-[#1a1a1a] flex items-center justify-center text-gray-600">
+                                <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                </svg>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Track Preview Area */}
+                    <div className="flex-1 min-h-0 overflow-hidden relative">
+                        {isInlineExpanded ? (
+                            // Expanded: Scrollable List
+                            <div className="h-full overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                                {previewTracks.length > 0 ? (
+                                    previewTracks.map((track) => (
+                                        <div key={track.id} className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-white/5 transition-colors group/track">
+                                            <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
+                                                {track.album?.images?.[0]?.url ? (
+                                                    <img src={track.album.images[0].url} alt={track.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-sm text-gray-200 font-medium truncate group-hover/track:text-white transition-colors">{track.name}</div>
+                                                <div className="text-xs text-gray-500 truncate">{track.artists?.[0]?.name}</div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-xs text-gray-500 text-center py-4 italic">
+                                        {playlist.track_count === 0 ? "No tracks yet" : "Loading tracks..."}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            // Collapsed: First Track Only
+                            <div className="pt-1">
+                                {previewTracks.length > 0 ? (
+                                    <div className="flex items-center gap-3 p-1.5 rounded-lg bg-white/5">
+                                        <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
+                                            {previewTracks[0].album?.images?.[0]?.url ? (
+                                                <img src={previewTracks[0].album.images[0].url} alt={previewTracks[0].name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-sm text-gray-200 font-medium truncate">{previewTracks[0].name}</div>
+                                            <div className="text-xs text-gray-500 truncate">{previewTracks[0].artists?.[0]?.name}</div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-gray-500 px-1">
+                                        {playlist.track_count || 0} tracks
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="mt-4 pt-2 border-t border-white/5 flex flex-col items-center gap-2 shrink-0">
+                    {isInlineExpanded ? (
+                        <>
+                            <div
+                                onClick={() => setShowAddTrackModal(true)}
+                                className="w-full bg-[#282828] hover:bg-[#333] transition-colors rounded-md py-1.5 px-3 flex items-center gap-2 cursor-pointer group/search"
+                            >
+                                <svg className="w-4 h-4 text-gray-500 group-hover/search:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <span className="text-xs text-gray-400 group-hover/search:text-gray-200">Search for songs...</span>
+                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsInlineExpanded(false);
+                                }}
+                                className="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1 py-1"
+                            >
+                                <CollapseVerticalButton onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsInlineExpanded(false);
+                                }} />
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => setIsInlineExpanded(true)}
+                            className="text-[#D1D1D1] text-sm font-medium hover:text-white transition py-1"
+                        >
+                            View more
+                        </button>
+                    )}
+                </div>
             </div>
-          )}
-        </div>
 
-        {/* If you have tracks, map them here, otherwise show the placeholder above */}
-        <div className="text-xs text-gray-500 px-1">
-          {playlist.track_count || 0} tracks
-        </div>
-      </div>
+            {showAddTrackModal && (
+                <AddTrackModal
+                    playlistId={playlist.id}
+                    playlistName={title}
+                    onClose={() => setShowAddTrackModal(false)}
+                />
+            )}
 
-      {/* Footer - "Add new" text */}
-      <div className="mt-auto pt-4 flex justify-center">
-        <button className="text-[#D1D1D1] text-sm font-medium hover:text-white transition">
-          Add new
-        </button>
-      </div>
-    </div>
-  );
+            {isExpanded && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+                    <div className="w-full max-w-5xl">
+                        <ExpandedPlaylistCard
+                            playlist={playlist}
+                            onClose={() => setIsExpanded(false)}
+                            onTitleChange={setTitle}
+                            currentTitle={title}
+                            onDeletePlaylist={onDelete}
+                        />
+                    </div>
+                </div>
+            )}
+        </>
+    );
 };
 
 export default PlaylistCard;
