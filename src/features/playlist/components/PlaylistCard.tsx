@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Tables } from '../../../types/supabase';
 import FavButton from '../../../components/ui/FavButton';
-import TrashButton from '../../../components/ui/TrashButton'
 import ExpandButton from '../../../components/ui/ExpandButton';
-import { deletePlaylist } from '../services/playlist_services';
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../favourites/services/favourites_services';
 
 import { supabase } from '../../../lib/supabaseClient';
@@ -12,10 +10,9 @@ import { ExpandedPlaylistCard } from './expanded_card/ExpandedPlaylistCard';
 
 interface PlaylistCardProps {
     playlist: Tables<'playlists'>;
-    onDelete?: () => void;
 }
 
-const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
+const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
     const [isFavourite, setIsFavourite] = useState(false);
     const [showAddTrackModal, setShowAddTrackModal] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -27,18 +24,6 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
     useEffect(() => {
         checkIsFavourite(playlist.id, 'playlist').then(setIsFavourite);
     }, [playlist.id]);
-
-    const handleDelete = async () => {
-        if (window.confirm(`Are you sure you want to delete "${playlist.title}"?`)) {
-            try {
-                await deletePlaylist(playlist.id);
-                if (onDelete) onDelete();
-            } catch (error) {
-                console.error('Error deleting playlist:', error);
-                alert('Failed to delete playlist');
-            }
-        }
-    };
 
     const handleFavourite = async () => {
         // 1. Get the target state
@@ -81,9 +66,6 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
                                     handleFavourite();
                                 }}
                             />
-                        </div>
-                        <div onClick={handleDelete} className="cursor-pointer">
-                            <TrashButton />
                         </div>
                         <ExpandButton strokeColor="white" onClick={() => setIsExpanded(true)} />
                     </div>
