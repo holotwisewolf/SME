@@ -10,9 +10,10 @@ import { ExpandedPlaylistCard } from './expanded_card/ExpandedPlaylistCard';
 
 interface PlaylistCardProps {
     playlist: Tables<'playlists'>;
+    onDelete?: () => void;
 }
 
-const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
+const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
     const [isFavourite, setIsFavourite] = useState(false);
     const [showAddTrackModal, setShowAddTrackModal] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -132,6 +133,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
                             onClose={() => setIsExpanded(false)}
                             onTitleChange={setTitle}
                             currentTitle={title}
+                            onDeletePlaylist={onDelete}
                         />
                     </div>
                 </div>

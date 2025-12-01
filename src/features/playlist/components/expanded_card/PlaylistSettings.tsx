@@ -10,6 +10,7 @@ interface PlaylistSettingsProps {
     setIsEditingEnabled: (enabled: boolean) => void;
     isPublic: boolean;
     onPublicStatusChange: (isPublic: boolean) => void;
+    onDelete?: () => void;
 }
 
 export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
@@ -19,7 +20,8 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
     isEditingEnabled,
     setIsEditingEnabled,
     isPublic,
-    onPublicStatusChange
+    onPublicStatusChange,
+    onDelete
 }) => {
     const handlePublicToggle = async () => {
         try {
@@ -107,7 +109,10 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
                 {/* --- Danger Zone --- */}
                 <div>
                     <h3 className="text-white font-medium mb-2">Danger Zone</h3>
-                    <button className="px-4 py-2 border border-red-500/50 text-red-500 rounded-lg hover:bg-red-500/10 transition-colors text-sm w-full text-left">
+                    <button
+                        onClick={onDelete}
+                        className="px-4 py-2 border border-red-500/50 text-red-500 rounded-lg hover:bg-red-500/10 transition-colors text-sm w-full text-left"
+                    >
                         Delete Playlist
                     </button>
                 </div>
