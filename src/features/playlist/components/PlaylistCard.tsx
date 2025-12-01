@@ -17,6 +17,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
     const [showAddTrackModal, setShowAddTrackModal] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [imgError, setImgError] = useState(false);
+    const [title, setTitle] = useState(playlist.title);
 
     // Construct public URL for playlist image (assumes file name is playlist.id)
     const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
@@ -24,6 +25,10 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
     useEffect(() => {
         checkIsFavourite(playlist.id, 'playlist').then(setIsFavourite);
     }, [playlist.id]);
+
+    useEffect(() => {
+        setTitle(playlist.title);
+    }, [playlist.title]);
 
     const handleFavourite = async () => {
         // 1. Get the target state
@@ -56,7 +61,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
             <div className="bg-[#131313]/80 p-4 rounded-xl flex flex-col h-80 shadow-md relative">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-4 px-1">
-                    <h3 className="font-medium text-[#E0E0E0] text-lg line-clamp-2 leading-tight">{playlist.title}</h3>
+                    <h3 className="font-medium text-[#E0E0E0] text-lg line-clamp-2 leading-tight">{title}</h3>
                     <div className="flex space-x-3 text-[#FFD1D1]">
                         <div className="cursor-pointer">
                             <FavButton
@@ -79,7 +84,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
                         {!imgError ? (
                             <img
                                 src={playlistImgUrl}
-                                alt={playlist.title}
+                                alt={title}
                                 className="w-full h-full object-cover"
                                 onError={() => setImgError(true)}
                             />
@@ -114,7 +119,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
             {showAddTrackModal && (
                 <AddTrackModal
                     playlistId={playlist.id}
-                    playlistName={playlist.title}
+                    playlistName={title}
                     onClose={() => setShowAddTrackModal(false)}
                 />
             )}
@@ -125,6 +130,8 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
                         <ExpandedPlaylistCard
                             playlist={playlist}
                             onClose={() => setIsExpanded(false)}
+                            onTitleChange={setTitle}
+                            currentTitle={title}
                         />
                     </div>
                 </div>
