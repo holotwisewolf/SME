@@ -10,7 +10,8 @@ import {
     updatePlaylistTitle,
     removeTrackFromPlaylist,
     reorderPlaylistTracks,
-    updatePlaylistPublicStatus
+    updatePlaylistPublicStatus,
+    getUserPlaylistRating
 } from '../../services/playlist_services';
 import { getProfile } from '../../../auth/services/auth_services';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
@@ -18,6 +19,7 @@ import { PlaylistHeader } from './PlaylistHeader';
 import { PlaylistTracks } from './PlaylistTracks';
 import { PlaylistComments } from './PlaylistComments';
 import { PlaylistSettings } from './PlaylistSettings';
+import ExpandButton from '../../../../components/ui/ExpandButton';
 
 interface ExpandedPlaylistCardProps {
     playlist: Tables<'playlists'>;
@@ -35,6 +37,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [tracks, setTracks] = useState<any[]>([]);
     const [tags, setTags] = useState<string[]>([]);
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
+    const [userRating, setUserRating] = useState<number | null>(null);
     const [comments, setComments] = useState<any[]>([]);
     const [creatorName, setCreatorName] = useState<string>('Unknown');
     const [playlistTitle, setPlaylistTitle] = useState(playlist.title);
@@ -56,10 +59,11 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const loadData = async () => {
         setLoading(true);
         try {
-            const [tracksData, tagsData, ratingRes, commentsData, profileData] = await Promise.all([
+            const [tracksData, tagsData, ratingRes, userRatingRes, commentsData, profileData] = await Promise.all([
                 fetchPlaylistTracksWithDetails(playlist.id),
                 getPlaylistTags(playlist.id),
                 getPlaylistRating(playlist.id),
+                getUserPlaylistRating(playlist.id),
                 getPlaylistComments(playlist.id),
                 getProfile(playlist.user_id)
             ]);
@@ -67,6 +71,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             setTracks(tracksData);
             setTags(tagsData);
             setRatingData(ratingRes);
+            setUserRating(userRatingRes);
             setComments(commentsData);
             if (profileData) {
                 setCreatorName(profileData.username || profileData.display_name || 'Unknown');
@@ -80,28 +85,32 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
 
     const handleTitleUpdate = async () => {
         if (!playlistTitle.trim() || playlistTitle === playlist.title) {
-            // If title is empty or unchanged, just exit edit mode
-            // But if it's different from prop, we keep the local state
             setIsEditingTitle(false);
             return;
         }
 
+        // Optimistic update
+        setIsEditingTitle(false);
+
         try {
             await updatePlaylistTitle(playlist.id, playlistTitle);
-            setIsEditingTitle(false);
-            // Ideally we should refresh the playlist list in the parent, 
-            // but for now we rely on local state which is already updated.
+            // Success - no further action needed as local state is already updated
         } catch (error) {
             console.error('Error updating title:', error);
             alert('Failed to update title');
             // Revert on error
             setPlaylistTitle(playlist.title);
+            setIsEditingTitle(true); // Re-open edit mode so user can try again
         }
     };
 
     const handleRatingUpdate = async () => {
-        const ratingRes = await getPlaylistRating(playlist.id);
+        const [ratingRes, userRatingRes] = await Promise.all([
+            getPlaylistRating(playlist.id),
+            getUserPlaylistRating(playlist.id)
+        ]);
         setRatingData(ratingRes);
+        setUserRating(userRatingRes);
     };
 
     const handleRemoveTrack = async (trackId: string) => {
@@ -180,14 +189,13 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/80 rounded-full text-white/70 hover:text-white transition-colors"
-                >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                <div className="absolute top-4 right-4 z-10">
+                    <ExpandButton
+                        onClick={onClose}
+                        className="rotate-180 hover:bg-white/10 rounded-full p-1"
+                        strokeColor="#b3b3b3"
+                    />
+                </div>
 
                 {/* Left Column - Header */}
                 <PlaylistHeader
@@ -197,6 +205,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                     imgError={imgError}
                     setImgError={setImgError}
                     ratingData={ratingData}
+                    userRating={userRating}
                     tags={tags}
                     isEditingTitle={isEditingTitle}
                     setIsEditingTitle={setIsEditingTitle}
