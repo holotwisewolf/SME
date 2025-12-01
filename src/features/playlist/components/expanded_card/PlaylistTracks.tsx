@@ -1,4 +1,3 @@
-import React from 'react';
 import { SpotifyService } from '../../../spotify/services/spotify_services';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';

@@ -351,7 +351,7 @@ export async function updatePlaylistRating(playlistId: string, rating: number): 
 /**
  * Reorder playlist tracks
  */
-export async function reorderPlaylistTracks(playlistId: string, tracks: { id: string; position: number }[]): Promise<void> {
+export async function reorderPlaylistTracks(tracks: { id: string; position: number }[]): Promise<void> {
     const updates = tracks.map(track =>
         supabase
             .from('playlist_items')

@@ -147,7 +147,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                 id: track.id,
                 position: index + 1
             }));
-            await reorderPlaylistTracks(playlist.id, updates);
+            await reorderPlaylistTracks(updates);
         } catch (error) {
             console.error('Error reordering tracks:', error);
             // Revert on error (optional, but good practice)
@@ -164,7 +164,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     }
 
     return (
-        <div className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative h-[600px]">
+        <div className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative max-h-[90vh]">
             {/* Close Button */}
             <button
                 onClick={onClose}
@@ -223,29 +223,25 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                     )}
 
                     {activeTab === 'comments' && (
-                        <div className="h-full overflow-y-auto custom-scrollbar pr-2">
-                            <PlaylistComments
-                                comments={comments}
-                                newComment={newComment}
-                                setNewComment={setNewComment}
-                                handleAddComment={handleAddComment}
-                                commentLoading={commentLoading}
-                            />
-                        </div>
+                        <PlaylistComments
+                            comments={comments}
+                            newComment={newComment}
+                            setNewComment={setNewComment}
+                            handleAddComment={handleAddComment}
+                            commentLoading={commentLoading}
+                        />
                     )}
 
                     {activeTab === 'settings' && (
-                        <div className="h-full overflow-y-auto custom-scrollbar pr-2">
-                            <PlaylistSettings
-                                playlistId={playlist.id}
-                                handleExportToSpotify={handleExportToSpotify}
-                                handleCopyPlaylist={handleCopyPlaylist}
-                                isEditingEnabled={isEditingEnabled}
-                                setIsEditingEnabled={setIsEditingEnabled}
-                                isPublic={isPublic}
-                                onPublicStatusChange={handlePublicStatusChange}
-                            />
-                        </div>
+                        <PlaylistSettings
+                            playlistId={playlist.id}
+                            handleExportToSpotify={handleExportToSpotify}
+                            handleCopyPlaylist={handleCopyPlaylist}
+                            isEditingEnabled={isEditingEnabled}
+                            setIsEditingEnabled={setIsEditingEnabled}
+                            isPublic={isPublic}
+                            onPublicStatusChange={handlePublicStatusChange}
+                        />
                     )}
                 </div>
             </div>
