@@ -226,7 +226,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                     <ExpandButton
                         onClick={onClose}
                         className="rotate-180 hover:bg-white/10 rounded-full p-1"
-                        strokeColor="#b3b3b3"
+                        strokeColor="white"
                     />
                 </div>
 

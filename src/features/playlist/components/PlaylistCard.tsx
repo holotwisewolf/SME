@@ -64,7 +64,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
                 <div className="flex justify-between items-start mb-4 px-1">
                     <h3 className="font-medium text-[#E0E0E0] text-lg line-clamp-2 leading-tight">{title}</h3>
                     <div className="flex space-x-3 text-[#FFD1D1]">
-                        <div className="cursor-pointer">
+                        <div className="cursor-pointer pt-1">
                             <FavButton
                                 isFavourite={isFavourite}
                                 onClick={(e) => {
