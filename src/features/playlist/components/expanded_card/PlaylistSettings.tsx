@@ -11,7 +11,20 @@ interface PlaylistSettingsProps {
     isPublic: boolean;
     onPublicStatusChange: (isPublic: boolean) => void;
     onDelete?: () => void;
+    color?: string;
+    onColorChange: (color: string) => void;
 }
+
+const PRESET_COLORS = [
+    '#1DB954', // Spotify Green
+    '#3B82F6', // Blue
+    '#8B5CF6', // Purple
+    '#EC4899', // Pink
+    '#EF4444', // Red
+    '#F97316', // Orange
+    '#EAB308', // Yellow
+    '#14B8A6', // Teal
+];
 
 export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
     playlistId,
@@ -21,7 +34,9 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
     setIsEditingEnabled,
     isPublic,
     onPublicStatusChange,
-    onDelete
+    onDelete,
+    color,
+    onColorChange
 }) => {
     const handlePublicToggle = async () => {
         try {
@@ -35,10 +50,7 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
     };
 
     return (
-        // Added 'flex-1' to ensure it takes up maximum height available in the parent
-        // The inner div will handle the specific height and scrolling.
         <div className="flex-1 min-h-0">
-            {/* Set a fixed height (h-full) and enable vertical scrolling */}
             <div className="space-y-6 h-full overflow-y-auto pr-2">
 
                 {/* --- Actions --- */}
@@ -75,28 +87,42 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
                     </div>
                 </div>
 
-                {/* --- Preferences (Editing Mode) --- */}
+                {/* --- Edit --- */}
                 <div>
                     <h3 className="text-white font-medium mb-2">Edit</h3>
-                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                        <span className="text-gray-300 text-sm">Enable Editing Mode</span>
-                        <button
-                            onClick={() => setIsEditingEnabled(!isEditingEnabled)}
-                            className={`w-10 h-6 rounded-full relative transition-colors ${isEditingEnabled ? 'bg-[#1DB954]' : 'bg-gray-600'}`}
-                        >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isEditingEnabled ? 'right-1' : 'left-1'}`}></div>
-                        </button>
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <span className="text-gray-300 text-sm">Enable Editing Mode</span>
+                            <button
+                                onClick={() => setIsEditingEnabled(!isEditingEnabled)}
+                                className={`w-10 h-6 rounded-full relative transition-colors ${isEditingEnabled ? 'bg-[#1DB954]' : 'bg-gray-600'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isEditingEnabled ? 'right-1' : 'left-1'}`}></div>
+                            </button>
+                        </div>
+
+                        <div className="p-3 bg-white/5 rounded-lg">
+                            <span className="text-gray-300 text-sm block mb-3">Playlist Color</span>
+                            <div className="flex flex-wrap gap-2">
+                                {PRESET_COLORS.map((presetColor) => (
+                                    <button
+                                        key={presetColor}
+                                        onClick={() => onColorChange(presetColor)}
+                                        className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ${color === presetColor ? 'ring-2 ring-white scale-110' : ''}`}
+                                        style={{ backgroundColor: presetColor }}
+                                        title={presetColor}
+                                    />
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* --- Playlist Privacy (Public Toggle moved to the right) --- */}
+                {/* --- Privacy --- */}
                 <div>
                     <h3 className="text-white font-medium mb-2">Privacy</h3>
                     <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                        {/* Label is on the left */}
                         <span className="text-gray-300 text-sm">Public Playlist</span>
-
-                        {/* Toggle is on the right */}
                         <button
                             onClick={handlePublicToggle}
                             className={`w-10 h-6 rounded-full relative transition-colors ${isPublic ? 'bg-[#1DB954]' : 'bg-gray-600'}`}
@@ -116,6 +142,7 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
                         Delete Playlist
                     </button>
                 </div>
+
             </div>
         </div>
     );

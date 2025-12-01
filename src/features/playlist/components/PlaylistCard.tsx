@@ -5,27 +5,35 @@ import ExpandButton from '../../../components/ui/ExpandButton';
 import CollapseVerticalButton from '../../../components/ui/CollapseVerticalButton';
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../favourites/services/favourites_services';
 import { getPlaylistPreviewTracks } from '../services/playlist_services';
-
 import { supabase } from '../../../lib/supabaseClient';
 import { AddTrackModal } from './AddTrackModal';
 import { ExpandedPlaylistCard } from './expanded_card/ExpandedPlaylistCard';
+import { useDroppable } from '@dnd-kit/core';
+import { DraggableTrackRow } from './DraggableTrackRow';
 
 interface PlaylistCardProps {
     playlist: Tables<'playlists'>;
     onDelete?: () => void;
+    lastUpdated?: number;
 }
 
-const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
+const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpdated }) => {
     const [isFavourite, setIsFavourite] = useState(false);
     const [showAddTrackModal, setShowAddTrackModal] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isInlineExpanded, setIsInlineExpanded] = useState(false);
     const [imgError, setImgError] = useState(false);
     const [title, setTitle] = useState(playlist.title);
+    const [color, setColor] = useState(playlist.color);
     const [previewTracks, setPreviewTracks] = useState<any[]>([]);
 
     // Construct public URL for playlist image (assumes file name is playlist.id)
     const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
+
+    const { setNodeRef, isOver } = useDroppable({
+        id: playlist.id,
+        data: { playlist }
+    });
 
     useEffect(() => {
         checkIsFavourite(playlist.id, 'playlist').then(setIsFavourite);
@@ -33,7 +41,8 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
 
     useEffect(() => {
         setTitle(playlist.title);
-    }, [playlist.title]);
+        setColor(playlist.color);
+    }, [playlist.title, playlist.color]);
 
     useEffect(() => {
         const loadPreviewTracks = async () => {
@@ -46,7 +55,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
             }
         };
         loadPreviewTracks();
-    }, [playlist.id]);
+    }, [playlist.id, lastUpdated]);
 
     const handleFavourite = async () => {
         // 1. Get the target state
@@ -76,7 +85,10 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
 
     return (
         <>
-            <div className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 ${isInlineExpanded ? 'h-[28rem]' : 'h-80'}`}>
+            <div
+                ref={setNodeRef}
+                className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 ${isInlineExpanded ? 'h-[28rem]' : 'h-80'} ${isOver ? 'ring-2 ring-white/50 bg-[#2a2a2a] shadow-[0_0_15px_rgba(255,255,255,0.3)]' : ''}`}
+            >
                 {/* Header */}
                 <div className="flex justify-between items-start mb-4 px-1">
                     <h3 className="font-medium text-[#E0E0E0] text-lg line-clamp-2 leading-tight">{title}</h3>
@@ -105,8 +117,8 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
                                 className="w-full h-full object-cover"
                                 onError={() => setImgError(true)}
                             />
-                        ) : playlist.color ? (
-                            <div className="w-full h-full" style={{ backgroundColor: playlist.color }} />
+                        ) : color ? (
+                            <div className="w-full h-full" style={{ backgroundColor: color }} />
                         ) : (
                             <div className="w-full h-full bg-gradient-to-br from-[#333] to-[#1a1a1a] flex items-center justify-center text-gray-600">
                                 <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,23 +135,25 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
                             <div className="h-full overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
                                 {previewTracks.length > 0 ? (
                                     previewTracks.map((track) => (
-                                        <div key={track.id} className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-white/5 transition-colors group/track">
-                                            <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
-                                                {track.album?.images?.[0]?.url ? (
-                                                    <img src={track.album.images[0].url} alt={track.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                                                        </svg>
-                                                    </div>
-                                                )}
+                                        <DraggableTrackRow key={track.id} track={track} playlistId={playlist.id}>
+                                            <div className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-white/5 transition-colors group/track">
+                                                <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
+                                                    {track.album?.images?.[0]?.url ? (
+                                                        <img src={track.album.images[0].url} alt={track.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center">
+                                                            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm text-gray-200 font-medium truncate group-hover/track:text-white transition-colors">{track.name}</div>
+                                                    <div className="text-xs text-gray-500 truncate">{track.artists?.[0]?.name}</div>
+                                                </div>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm text-gray-200 font-medium truncate group-hover/track:text-white transition-colors">{track.name}</div>
-                                                <div className="text-xs text-gray-500 truncate">{track.artists?.[0]?.name}</div>
-                                            </div>
-                                        </div>
+                                        </DraggableTrackRow>
                                     ))
                                 ) : (
                                     <div className="text-xs text-gray-500 text-center py-4 italic">
@@ -151,23 +165,25 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
                             // Collapsed: First Track Only
                             <div className="pt-1">
                                 {previewTracks.length > 0 ? (
-                                    <div className="flex items-center gap-3 p-1.5 rounded-lg bg-white/5">
-                                        <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
-                                            {previewTracks[0].album?.images?.[0]?.url ? (
-                                                <img src={previewTracks[0].album.images[0].url} alt={previewTracks[0].name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                                                    </svg>
-                                                </div>
-                                            )}
+                                    <DraggableTrackRow track={previewTracks[0]} playlistId={playlist.id}>
+                                        <div className="flex items-center gap-3 p-1.5 rounded-lg bg-white/5">
+                                            <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
+                                                {previewTracks[0].album?.images?.[0]?.url ? (
+                                                    <img src={previewTracks[0].album.images[0].url} alt={previewTracks[0].name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-sm text-gray-200 font-medium truncate">{previewTracks[0].name}</div>
+                                                <div className="text-xs text-gray-500 truncate">{previewTracks[0].artists?.[0]?.name}</div>
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-sm text-gray-200 font-medium truncate">{previewTracks[0].name}</div>
-                                            <div className="text-xs text-gray-500 truncate">{previewTracks[0].artists?.[0]?.name}</div>
-                                        </div>
-                                    </div>
+                                    </DraggableTrackRow>
                                 ) : (
                                     <div className="text-xs text-gray-500 px-1">
                                         {playlist.track_count || 0} tracks
@@ -191,25 +207,22 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
                                 </svg>
                                 <span className="text-xs text-gray-400 group-hover/search:text-gray-200">Search for songs...</span>
                             </div>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsInlineExpanded(false);
-                                }}
-                                className="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1 py-1"
-                            >
-                                <CollapseVerticalButton onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsInlineExpanded(false);
-                                }} />
-                            </button>
+                            <div className="flex justify-center py-1">
+                                <CollapseVerticalButton
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsInlineExpanded(false);
+                                    }}
+                                    className="text-gray-500 hover:text-white transition-colors"
+                                />
+                            </div>
                         </>
                     ) : (
                         <button
                             onClick={() => setIsInlineExpanded(true)}
                             className="text-[#D1D1D1] text-sm font-medium hover:text-white transition py-1"
                         >
-                            View more
+                            {previewTracks.length > 0 || (playlist.track_count && playlist.track_count > 0) ? "View more" : "Add tracks"}
                         </button>
                     )}
                 </div>
@@ -232,6 +245,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete }) => {
                             onTitleChange={setTitle}
                             currentTitle={title}
                             onDeletePlaylist={onDelete}
+                            onColorChange={setColor}
                         />
                     </div>
                 </div>

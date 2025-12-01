@@ -12,7 +12,8 @@ import {
     reorderPlaylistTracks,
     updatePlaylistPublicStatus,
     getUserPlaylistRating,
-    deletePlaylist
+    deletePlaylist,
+    updatePlaylistColor
 } from '../../services/playlist_services';
 import { getProfile } from '../../../auth/services/auth_services';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
@@ -29,11 +30,12 @@ interface ExpandedPlaylistCardProps {
     onTitleChange?: (newTitle: string) => void;
     currentTitle?: string;
     onDeletePlaylist?: () => void;
+    onColorChange?: (newColor: string) => void;
 }
 
 type ActiveTab = 'tracks' | 'comments' | 'settings';
 
-export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist }) => {
+export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange }) => {
     const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -47,6 +49,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [creatorName, setCreatorName] = useState<string>('Unknown');
     const [playlistTitle, setPlaylistTitle] = useState(currentTitle ?? playlist.title);
     const [isPublic, setIsPublic] = useState(playlist.is_public || false);
+    const [playlistColor, setPlaylistColor] = useState<string | undefined>(playlist.color || undefined);
 
     // Interaction States
     const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -168,6 +171,24 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         } catch (error) {
             console.error('Error updating public status:', error);
             setIsPublic(!newStatus); // Revert
+        }
+    };
+
+    const handleColorChange = async (newColor: string) => {
+        // Optimistic update
+        const oldColor = playlistColor;
+        setPlaylistColor(newColor);
+        if (onColorChange) {
+            onColorChange(newColor);
+        }
+        try {
+            await updatePlaylistColor(playlist.id, newColor);
+        } catch (error) {
+            console.error('Error updating playlist color:', error);
+            setPlaylistColor(oldColor); // Revert
+            if (onColorChange && oldColor) {
+                onColorChange(oldColor);
+            }
         }
     };
 
@@ -299,6 +320,8 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                                 isPublic={isPublic}
                                 onPublicStatusChange={handlePublicStatusChange}
                                 onDelete={handleDeletePlaylist}
+                                color={playlistColor}
+                                onColorChange={handleColorChange}
                             />
                         )}
                     </div>
