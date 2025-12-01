@@ -6,7 +6,7 @@ import { ResultMenuDropdown } from '../components/ResultMenuDropdown';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import { TrackDetailModal } from '../components/TrackDetailModal';
 import { useTrackPreview } from '../hooks/useTrackPreview';
-import { addToFavourites } from '../services/playlist_services';
+import { addToFavourites } from '../../playlist/services/playlist_services';
 import type { SpotifyTrack } from '../type/spotify_types';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';

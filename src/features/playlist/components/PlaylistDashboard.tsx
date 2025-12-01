@@ -4,7 +4,7 @@ import PlaylistGrid from './PlaylistGrid';
 import AscendingButton from '../../../components/ui/AscendingButton';
 import DescendingButton from '../../../components/ui/DescendingButton';
 import FilterButton from '../../../components/ui/FilterButton';
-import { getUserPlaylists } from '../../spotify/services/playlist_services';
+import { getUserPlaylists } from '../services/playlist_services';
 import type { Tables } from '../../../types/supabase';
 import { CreatePlaylistModal } from './CreatePlaylistModal';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';

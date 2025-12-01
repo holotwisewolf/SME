@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import type { Playlist, CreatePlaylistRequest } from '../../playlist/type/playlist_type';
-import { getUserPlaylists, createPlaylist, addTrackToPlaylist, addTracksToPlaylist } from '../services/playlist_services';
+import { getUserPlaylists, createPlaylist, addTrackToPlaylist, addTracksToPlaylist, type CreatePlaylistRequest } from '../../playlist/services/playlist_services';
+import type { Tables } from '../../../types/supabase';
 
 interface PlaylistSelectCardProps {
     trackId?: string;
@@ -18,7 +18,7 @@ export function PlaylistSelectCard({
     trackName,
     onClose
 }: PlaylistSelectCardProps) {
-    const [playlists, setPlaylists] = useState<Playlist[]>([]);
+    const [playlists, setPlaylists] = useState<Tables<'playlists'>[]>([]);
     const [newPlaylistName, setNewPlaylistName] = useState('New Playlist');
     const [loading, setLoading] = useState(false);
 
@@ -131,7 +131,7 @@ export function PlaylistSelectCard({
                                     disabled={loading}
                                     className="w-full text-left px-4 py-3 bg-[#282828] hover:bg-[#333333] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <div className="text-white font-medium">{playlist.name}</div>
+                                    <div className="text-white font-medium">{playlist.title}</div>
                                     <div className="text-xs text-gray-400">{playlist.track_count} tracks</div>
                                 </button>
                             ))
