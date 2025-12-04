@@ -24,6 +24,7 @@ const PRESET_COLORS = [
     '#F97316', // Orange
     '#EAB308', // Yellow
     '#14B8A6', // Teal
+    '#000000', // Black
 ];
 
 export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
