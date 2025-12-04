@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import EditIcon from '../../../../components/ui/EditIcon';
+import { useError } from '../../../../context/ErrorContext';
 import { updatePlaylistRating, uploadPlaylistImage, addPlaylistTag, removePlaylistTag, deletePlaylistRating, getPlaylistRating } from '../../services/playlist_services';
 
 interface PlaylistHeaderProps {
@@ -37,6 +38,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     isEditingEnabled,
     onRatingUpdate
 }) => {
+    const { showError } = useError();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [tags, setTags] = useState<string[]>(initialTags);
     const [newTag, setNewTag] = useState('');
@@ -80,7 +82,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
             window.location.reload(); // Simple way to refresh for now
         } catch (error) {
             console.error('Error uploading image:', error);
-            alert('Failed to upload image');
+            showError('Failed to upload image');
         } finally {
             setIsUploading(false);
         }

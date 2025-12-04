@@ -17,6 +17,7 @@ import {
 } from '../../services/playlist_services';
 import { getProfile } from '../../../auth/services/auth_services';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
+import { useError } from '../../../../context/ErrorContext';
 import { PlaylistHeader } from './PlaylistHeader';
 import { PlaylistTracks } from './PlaylistTracks';
 import { PlaylistComments } from './PlaylistComments';
@@ -36,6 +37,7 @@ interface ExpandedPlaylistCardProps {
 type ActiveTab = 'tracks' | 'comments' | 'settings';
 
 export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange }) => {
+    const { showError } = useError();
     const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -109,7 +111,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             // Success - no further action needed as local state is already updated
         } catch (error) {
             console.error('Error updating title:', error);
-            alert('Failed to update title');
+            showError('Failed to update title');
             // Revert on error
             setPlaylistTitle(playlist.title);
             setIsEditingTitle(true); // Re-open edit mode so user can try again
@@ -194,12 +196,12 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
 
     const handleExportToSpotify = () => {
         // Placeholder for future implementation
-        alert('Export to Spotify feature coming soon!');
+        showError('Export to Spotify feature coming soon!');
     };
 
     const handleCopyPlaylist = () => {
         // Placeholder for future implementation
-        alert('Copy playlist feature coming soon!');
+        showError('Copy playlist feature coming soon!');
     };
 
     const handleDeletePlaylist = async () => {
@@ -217,7 +219,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                 }
             } catch (error) {
                 console.error('Error deleting playlist:', error);
-                alert('Failed to delete playlist');
+                showError('Failed to delete playlist');
             }
         }
     };
