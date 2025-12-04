@@ -283,6 +283,7 @@ export async function getPlaylistComments(playlistId: string): Promise<any[]> {
             *,
             profiles(
                 username,
+                display_name,
                 avatar_url
             )
         `)

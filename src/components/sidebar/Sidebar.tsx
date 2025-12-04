@@ -41,13 +41,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
             ]
         },
         {
-            path: '/favourites/playlists',
+            path: '/discovery/trending',
             icon: FavouritesIcon,
-            label: 'Favourites',
+            label: 'Discovery',
             subItems: [
-                { path: '/favourites/playlists', icon: folderIcon, label: 'Playlists' },
-                { path: '/favourites/tracks', icon: musicIcon, label: 'Tracks' },
-                { path: '/favourites/albums', icon: musicIcon, label: 'Albums' }
+                { path: '/discovery/trending', icon: folderIcon, label: 'Trending' },
+                { path: '/discovery/community-discovery', icon: musicIcon, label: 'Community Activity' },
+                { path: '/discovery/for-you', icon: musicIcon, label: 'For You' }
             ]
         },
         { path: '/songs', icon: musicIcon, label: 'Songs' },

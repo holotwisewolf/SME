@@ -1,5 +1,6 @@
 import React from 'react';
 import SpotifyIcon from '../../../../components/ui/SpotifyIcon';
+import { useError } from '../../../../context/ErrorContext';
 import { updatePlaylistPublicStatus } from '../../services/playlist_services';
 
 interface PlaylistSettingsProps {
@@ -39,6 +40,8 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
     color,
     onColorChange
 }) => {
+    const { showError } = useError();
+
     const handlePublicToggle = async () => {
         try {
             const newStatus = !isPublic;
@@ -46,7 +49,7 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
             onPublicStatusChange(newStatus);
         } catch (error) {
             console.error('Error updating public status:', error);
-            alert('Failed to update public status');
+            showError('Failed to update public status');
         }
     };
 

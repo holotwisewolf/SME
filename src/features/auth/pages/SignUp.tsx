@@ -7,10 +7,12 @@ import TextInput from "../../../components/ui/TextInput";
 import PasswordInput from "../../../components/ui/PasswordInput";
 import CloudLogo from "../../../components/shared/CloudLogo";
 import { AuthService } from "../services/auth_services";
+import { useError } from "../../../context/ErrorContext";
 
 const SignUpPage = () => {
     const navigate = useNavigate();
     const dragControls = useDragControls();
+    const { showError } = useError();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -24,7 +26,7 @@ const SignUpPage = () => {
     // Real request handler
     const handleSignUp = async () => {
         if (!email || !password || !username) {
-            alert("Please fill in all fields.");
+            showError("Please fill in all fields.");
             return;
         }
 
@@ -42,12 +44,12 @@ const SignUpPage = () => {
                     if (loginSession) {
                         navigate("/setup-profile");
                     } else {
-                        alert("Please check your email to confirm your account.");
+                        showError("Please check your email to confirm your account.");
                         navigate("/");
                     }
                 } catch (loginError: any) {
                     if (loginError.message.includes("Email not confirmed")) {
-                        alert("Please check your email to confirm your account.");
+                        showError("Please check your email to confirm your account.");
                         navigate("/");
                     } else {
                         throw loginError;
@@ -56,7 +58,7 @@ const SignUpPage = () => {
             }
         } catch (error: any) {
             console.error("Sign up error:", error);
-            alert(error.message || "Sign up failed");
+            showError(error.message || "Sign up failed");
         } finally {
             setLoading(false);
         }
