@@ -9,11 +9,13 @@ import CloudLogo from "../../../components/shared/CloudLogo";
 import { AuthService } from "../services/auth_services";
 import { signInWithSpotify } from "../../spotify/services/spotify_auth";
 import { useError } from "../../../context/ErrorContext";
+import { useSuccess } from "../../../context/SuccessContext";
 
 const SignUpPage = () => {
     const navigate = useNavigate();
     const dragControls = useDragControls();
     const { showError } = useError();
+    const { showSuccess } = useSuccess();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -36,6 +38,7 @@ const SignUpPage = () => {
             const { session } = await AuthService.register({ email, password, username });
 
             if (session) {
+                showSuccess("Account created successfully!");
                 navigate("/setup-profile");
             } else {
                 // If no session (e.g. email confirmation required), try to login immediately
@@ -43,6 +46,7 @@ const SignUpPage = () => {
                 try {
                     const loginSession = await AuthService.login({ email, password });
                     if (loginSession) {
+                        showSuccess("Account created successfully!");
                         navigate("/setup-profile");
                     } else {
                         showError("Please check your email to confirm your account.");
