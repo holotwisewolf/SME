@@ -118,7 +118,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
                                 onError={() => setImgError(true)}
                             />
                         ) : color ? (
-                            <div className="w-full h-full" style={{ backgroundColor: color }} />
+                            <div className="w-full h-full" style={{ backgroundColor: color + '80' }} />
                         ) : (
                             <div className="w-full h-full bg-gradient-to-br from-[#333] to-[#1a1a1a] flex items-center justify-center text-gray-600">
                                 <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -244,6 +244,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
                     currentTitle={title}
                     onDeletePlaylist={onDelete}
                     onColorChange={setColor}
+                    currentColor={color}
                 />
             )}
         </>

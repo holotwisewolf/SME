@@ -32,11 +32,12 @@ interface ExpandedPlaylistCardProps {
     currentTitle?: string;
     onDeletePlaylist?: () => void;
     onColorChange?: (newColor: string) => void;
+    currentColor?: string | null;
 }
 
 type ActiveTab = 'tracks' | 'community' | 'settings';
 
-export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange }) => {
+export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor }) => {
     const { showError } = useError();
     const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
     const [imgError, setImgError] = useState(false);
@@ -51,7 +52,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [creatorName, setCreatorName] = useState<string>('Unknown');
     const [playlistTitle, setPlaylistTitle] = useState(currentTitle ?? playlist.title);
     const [isPublic, setIsPublic] = useState(playlist.is_public || false);
-    const [playlistColor, setPlaylistColor] = useState<string | undefined>(playlist.color || undefined);
+    const [playlistColor, setPlaylistColor] = useState<string | undefined>(currentColor || playlist.color || undefined);
 
     // Interaction States
     const [isEditingTitle, setIsEditingTitle] = useState(false);
