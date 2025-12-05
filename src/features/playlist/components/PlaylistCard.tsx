@@ -205,7 +205,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
                                 <svg className="w-4 h-4 text-gray-500 group-hover/search:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
-                                <span className="text-xs text-gray-400 group-hover/search:text-gray-200">Search for songs...</span>
+                                <span className="text-xs text-gray-400 group-hover/search:text-gray-200">Add songs...</span>
                             </div>
                             <div className="flex justify-center py-1">
                                 <CollapseVerticalButton
@@ -237,18 +237,14 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
             )}
 
             {isExpanded && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-                    <div className="w-full max-w-5xl">
-                        <ExpandedPlaylistCard
-                            playlist={playlist}
-                            onClose={() => setIsExpanded(false)}
-                            onTitleChange={setTitle}
-                            currentTitle={title}
-                            onDeletePlaylist={onDelete}
-                            onColorChange={setColor}
-                        />
-                    </div>
-                </div>
+                <ExpandedPlaylistCard
+                    playlist={playlist}
+                    onClose={() => setIsExpanded(false)}
+                    onTitleChange={setTitle}
+                    currentTitle={title}
+                    onDeletePlaylist={onDelete}
+                    onColorChange={setColor}
+                />
             )}
         </>
     );

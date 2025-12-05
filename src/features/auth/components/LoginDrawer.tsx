@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useLogin } from "./LoginProvider";
+import { useError } from "../../../context/ErrorContext";
 import TextInput from "../../../components/ui/TextInput";
 import PasswordInput from "../../../components/ui/PasswordInput";
 import InputGroup from "../../../components/ui/InputGroup";
@@ -10,6 +11,7 @@ import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 
 const LoginDrawer = () => {
     const { isOpen, closeLogin } = useLogin();
+    const { showError } = useError();
     const [canClose, setCanClose] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -19,7 +21,7 @@ const LoginDrawer = () => {
     const handleLogin = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!email || !password) {
-            alert("Please enter both email and password.");
+            showError("Please enter both email and password.");
             return;
         }
 
@@ -37,7 +39,7 @@ const LoginDrawer = () => {
             }
         } catch (error: any) {
             console.error("Login failed:", error);
-            alert(error.message || "Failed to login. Please check your credentials.");
+            showError(error.message || "Failed to login. Please check your credentials.");
         } finally {
             setLoading(false);
         }
@@ -45,7 +47,7 @@ const LoginDrawer = () => {
 
     const handleForgotPassword = async () => {
         if (!email) {
-            alert("Please enter your email address first.");
+            showError("Please enter your email address first.");
             return;
         }
         try {
@@ -53,7 +55,7 @@ const LoginDrawer = () => {
             alert("Password reset email sent! Please check your inbox.");
         } catch (error: any) {
             console.error("Reset password failed:", error);
-            alert(error.message || "Failed to send reset email.");
+            showError(error.message || "Failed to send reset email.");
         }
     };
 

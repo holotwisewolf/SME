@@ -109,12 +109,10 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
         </div>
       </div>
 
-
-
       {/* Playlist Grid */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <LoadingSpinner className="w-10 h-10 text-[grey]" />
+          <LoadingSpinner className="w-10 h-10 text-[white]" />
         </div>
       ) : (
         <PlaylistGrid playlists={sortedPlaylists} onDelete={loadPlaylists} />
@@ -127,19 +125,22 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
             onClick={() => setShowCreateModal(true)}
             className="bg-[#1a1a1a] text-[#BAFFB5] text-sm font-medium rounded-full px-12 py-4 shadow-lg hover:bg-[#252525] transition"
           >
-            Add new
+            Create Playlist
           </button>
         </div>
-      )}
+      )
+      }
 
-      {showCreateModal && (
-        <CreatePlaylistModal
-          onClose={() => setShowCreateModal(false)}
-          onCreated={loadPlaylists}
-        />
-      )}
+      {
+        showCreateModal && (
+          <CreatePlaylistModal
+            onClose={() => setShowCreateModal(false)}
+            onCreated={loadPlaylists}
+          />
+        )
+      }
 
-    </div>
+    </div >
   );
 };
 
