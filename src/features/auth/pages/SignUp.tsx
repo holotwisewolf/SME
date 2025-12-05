@@ -7,6 +7,7 @@ import TextInput from "../../../components/ui/TextInput";
 import PasswordInput from "../../../components/ui/PasswordInput";
 import CloudLogo from "../../../components/shared/CloudLogo";
 import { AuthService } from "../services/auth_services";
+import { signInWithSpotify } from "../../spotify/services/spotify_auth";
 import { useError } from "../../../context/ErrorContext";
 
 const SignUpPage = () => {
@@ -137,7 +138,7 @@ const SignUpPage = () => {
                     stiffness: 200,
                     damping: 20,
                 }}
-                className="w-full max-w-md bg-[#1f1f1f] p-10 rounded-2xl shadow-2xl relative select-none"
+                className="w-full max-w-md bg-[#1f1f1f] px-10 pt-2 pb-6 rounded-2xl shadow-2xl relative select-none"
             >
                 {/* Header */}
                 <div className="flex flex-col items-center mb-4">
@@ -184,6 +185,20 @@ const SignUpPage = () => {
                 >
                     Sign Up
                 </button>
+
+                <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-white/10"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <button
+                            onClick={signInWithSpotify}
+                            className="px-2 bg-[#1f1f1f] text-gray-500 hover:text-[#1DB954] transition-colors"
+                        >
+                            Sign In with Spotify
+                        </button>
+                    </div>
+                </div>
 
                 <p className="text-gray-500 text-xs text-center mt-6">
                     Password must be at least 8 characters long

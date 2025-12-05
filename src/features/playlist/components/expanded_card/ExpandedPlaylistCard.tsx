@@ -15,7 +15,7 @@ import {
     deletePlaylist,
     updatePlaylistColor
 } from '../../services/playlist_services';
-import { getProfile } from '../../../auth/services/auth_services';
+import { getProfile, getSession } from '../../../auth/services/auth_services';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { useError } from '../../../../context/ErrorContext';
 import { PlaylistHeader } from './PlaylistHeader';
@@ -200,9 +200,26 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         }
     };
 
-    const handleExportToSpotify = () => {
-        // Placeholder for future implementation
-        showError('Export to Spotify feature coming soon!');
+    const handleExportToSpotify = async () => {
+        try {
+            const session = await getSession();
+            if (!session) {
+                showError('You must be logged in to export.');
+                return;
+            }
+
+            const profile = await getProfile(session.user.id);
+            if (!profile?.spotify_connected) {
+                showError('Please link your Spotify account in settings to export.');
+                return;
+            }
+
+            // Placeholder for future implementation
+            showError('Export to Spotify feature coming soon!');
+        } catch (error) {
+            console.error('Error checking Spotify status:', error);
+            showError('Failed to verify Spotify connection.');
+        }
     };
 
     const handleCopyPlaylist = () => {

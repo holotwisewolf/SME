@@ -237,9 +237,14 @@ export async function updatePassword(password: string) {
  * Updates the user's username (stored in user_metadata).
  * @param username - The new username.
  */
-export async function updateUsername(username: string) {
+export async function updateUsername(username: string, displayName?: string) {
+  const dataToUpdate: any = { username };
+  if (displayName) {
+    dataToUpdate.display_name = displayName;
+  }
+
   const { data, error } = await supabase.auth.updateUser({
-    data: { username }
+    data: dataToUpdate
   });
 
   if (error) throw error;
