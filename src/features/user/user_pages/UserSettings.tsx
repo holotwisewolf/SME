@@ -8,9 +8,11 @@ import TextInput from "../../../components/ui/TextInput";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import { AuthService } from "../../auth/services/auth_services";
 import { useLogin } from "../../auth/components/LoginProvider";
+import { useSuccess } from "../../../context/SuccessContext";
 
 const UserSettings = () => {
     const navigate = useNavigate();
+    const { showSuccess } = useSuccess();
     const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [isPublicRating, setIsPublicRating] = useState(false);
@@ -74,7 +76,7 @@ const UserSettings = () => {
         }
         try {
             await AuthService.updatePassword(newPassword);
-            alert("Password updated successfully!");
+            showSuccess("Password updated successfully!");
             setShowPasswordChange(false);
             setOldPassword("");
             setNewPassword("");
@@ -130,7 +132,7 @@ const UserSettings = () => {
                 isDeveloper: devStatus,
             });
 
-            alert("Settings saved successfully!");
+            showSuccess("Settings saved successfully!");
             navigate(-1);
         } catch (error: any) {
             console.error("Settings save failed:", error);

@@ -141,7 +141,7 @@ const SpotifySearchBar: React.FC = () => {
     <div ref={containerRef} className="flex-1 max-w-[600px] min-w-[200px]">
       <div className="relative flex items-center w-full h-12">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center pointer-events-none">
-          {loading ? <LoadingSpinner className="w-6 h-6 text-[#1db954]" /> : <SearchButton />}
+          {loading ? <LoadingSpinner className="w-6 h-6 text-[white]" /> : <SearchButton />}
         </div>
 
         {searchText && (

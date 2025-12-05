@@ -8,11 +8,13 @@ import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import { AuthService } from "../../auth/services/auth_services";
 import { useLogin } from "../../auth/components/LoginProvider";
 import { useError } from "../../../context/ErrorContext";
+import { useSuccess } from "../../../context/SuccessContext";
 
 const UserAccount = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { showError } = useError();
+    const { showSuccess } = useSuccess();
     const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [username, setUsername] = useState("");
@@ -168,7 +170,7 @@ const UserAccount = () => {
             });
 
             // Show success feedback (toast or alert)
-            alert("Profile updated successfully!");
+            showSuccess("Profile updated successfully!");
             navigate(-1);
         } catch (error: any) {
             console.error("Update failed:", error);
