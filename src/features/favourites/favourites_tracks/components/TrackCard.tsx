@@ -8,6 +8,8 @@ import { getItemComments } from '../../../../features/comments/services/comment_
 import { getPersonalRating } from '../../../../features/ratings/services/rating_services';
 import { addToFavourites, removeFromFavourites } from '../../../../features/favourites/services/favourites_services';
 import { supabase } from '../../../../lib/supabaseClient';
+import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface TrackCardProps {
     track: SpotifyTrack;
@@ -16,6 +18,12 @@ interface TrackCardProps {
     isFavourite?: boolean;
     onToggleFavourite?: (e: React.MouseEvent) => void;
     onClick: () => void;
+}
+
+interface RatingPayload {
+    user_id: string;
+    rating: number;
+    [key: string]: unknown;
 }
 
 export const TrackCard: React.FC<TrackCardProps> = ({
@@ -31,7 +39,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
 
     useEffect(() => {
         let isMounted = true;
-        let ratingSubscription: any = null;
+        let ratingSubscription: RealtimeChannel | null = null;
 
         const fetchData = async () => {
             try {
@@ -67,10 +75,10 @@ export const TrackCard: React.FC<TrackCardProps> = ({
                             table: 'ratings',
                             filter: `item_id=eq.${track.id}`,
                         },
-                        (payload: any) => {
-                            if (payload.new && payload.new.user_id === user.id) {
+                        (payload: RealtimePostgresChangesPayload<RatingPayload>) => {
+                            if (payload.new && 'user_id' in payload.new && payload.new.user_id === user.id) {
                                 setUserRating(payload.new.rating);
-                            } else if (payload.eventType === 'DELETE' && payload.old.user_id === user.id) {
+                            } else if (payload.eventType === 'DELETE' && payload.old && 'user_id' in payload.old && payload.old.user_id === user.id) {
                                 setUserRating(null);
                             }
                         }
@@ -163,12 +171,12 @@ export const TrackCard: React.FC<TrackCardProps> = ({
                     </div>
                 </div>
 
-                <p className="text-sm text-[#A7A7A7] truncate mb-4">{track.artists.map((a: any) => a.name).join(', ')}</p>
+                <p className="text-sm text-[#A7A7A7] truncate mb-4">{track.artists.map((a) => a.name).join(', ')}</p>
 
                 {/* Footer: Rotating Comment */}
                 <div className="mt-auto pt-3 border-t border-white/10">
-                    <p className="text-xs text-[#A7A7A7] line-clamp-2 italic text-center">
-                        {loading ? "Loading..." : `"${comment}"`}
+                    <p className="text-xs text-[#A7A7A7] line-clamp-2 italic text-center min-h-[1.5em] flex items-center justify-center">
+                        {loading ? <LoadingSpinner className="w-4 h-4" /> : `"${comment}"`}
                     </p>
                 </div>
             </div>
