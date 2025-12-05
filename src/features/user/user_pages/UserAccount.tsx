@@ -22,6 +22,18 @@ const UserAccount = () => {
     const [loading, setLoading] = useState(false);
     const [initializing, setInitializing] = useState(true);
     const [isEditingUsername, setIsEditingUsername] = useState(false);
+    const [bioPlaceholder, setBioPlaceholder] = useState("Tell us about yourself...");
+
+    // Random Bio Placeholder on Mount
+    useEffect(() => {
+        const placeholders = [
+            "Tell us about yourself...",
+            "What's an interesting fact about you?",
+            "Quite lonely here..."
+        ];
+        const randomIndex = Math.floor(Math.random() * placeholders.length);
+        setBioPlaceholder(placeholders[randomIndex]);
+    }, []);
 
     const [initialState, setInitialState] = useState({
         displayName: "",
@@ -309,6 +321,7 @@ const UserAccount = () => {
 
                             <TextInput
                                 label="Bio"
+                                placeholder={bioPlaceholder}
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
                             />
