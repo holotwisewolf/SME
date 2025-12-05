@@ -7,9 +7,11 @@ import EditIcon from "../../../components/ui/EditIcon";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import { AuthService } from "../../auth/services/auth_services";
 import { useLogin } from "../../auth/components/LoginProvider";
+import { useSuccess } from "../../../context/SuccessContext";
 
 const SetUpUserProfile = () => {
     const navigate = useNavigate();
+    const { showSuccess } = useSuccess();
     const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [username, setUsername] = useState("");
@@ -167,6 +169,7 @@ const SetUpUserProfile = () => {
 
 
             // 4. Navigate to main app
+            showSuccess("Profile setup completed!");
             navigate("/library/playlists");
         } catch (error: any) {
             console.error("Setup failed:", error);
