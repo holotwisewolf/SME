@@ -137,7 +137,7 @@ const YourTracks: React.FC = () => {
             {/* Grid */}
             {loading ? (
                 <div className="flex justify-center items-center h-64">
-                    <LoadingSpinner />
+                    <LoadingSpinner className="w-10 h-10 text-[#FFD1D1]" />
                 </div>
             ) : (
                 <DndContext

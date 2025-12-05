@@ -20,7 +20,7 @@ import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { useError } from '../../../../context/ErrorContext';
 import { PlaylistHeader } from './PlaylistHeader';
 import { PlaylistTracks } from './PlaylistTracks';
-import { PlaylistComments } from './PlaylistComments';
+import { PlaylistCommunity } from './PlaylistCommunity';
 import { PlaylistSettings } from './PlaylistSettings';
 import ExpandButton from '../../../../components/ui/ExpandButton';
 import { PlaylistTrackDetailModal } from './PlaylistTrackDetailModal';
@@ -34,7 +34,7 @@ interface ExpandedPlaylistCardProps {
     onColorChange?: (newColor: string) => void;
 }
 
-type ActiveTab = 'tracks' | 'comments' | 'settings';
+type ActiveTab = 'tracks' | 'community' | 'settings';
 
 export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange }) => {
     const { showError } = useError();
@@ -59,6 +59,12 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [commentLoading, setCommentLoading] = useState(false);
     const [isEditingEnabled, setIsEditingEnabled] = useState(false);
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredTracks = tracks.filter(track =>
+        (track.details?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        track.details?.artists?.some((a: any) => (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
     // Image URL logic
     const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
@@ -230,19 +236,24 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
 
     if (loading) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
                 <div className="flex items-center justify-center w-full max-w-5xl h-[500px] bg-[#1e1e1e] rounded-2xl shadow-2xl border border-white/5 mx-auto" onClick={(e) => e.stopPropagation()}>
-                    <LoadingSpinner className="w-12 h-12 text-[#1DB954]" />
+                    <LoadingSpinner className="w-12 h-12 text-[white]" />
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
             <div
-                className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative max-h-[515px]"
+                className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative h-[515px]"
                 onClick={(e) => e.stopPropagation()}
+                style={{
+                    background: playlistColor
+                        ? `linear-gradient(135deg, ${playlistColor}20 0%, #1e1e1e 100%)`
+                        : '#1e1e1e'
+                }}
             >
                 {/* Close Button */}
                 <div className="absolute top-4 right-4 z-10">
@@ -273,10 +284,10 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                 />
 
                 {/* Right Column */}
-                <div className="w-full md:w-[65%] p-6 flex flex-col bg-[#1e1e1e] overflow-hidden">
+                <div className="w-full md:w-[65%] p-6 flex flex-col bg-transparent overflow-hidden">
                     {/* Tab Navigation */}
                     <div className="flex items-center gap-2 mb-6 bg-black/20 p-1 rounded-full w-max flex-shrink-0">
-                        {(['tracks', 'comments', 'settings'] as const).map((tab) => (
+                        {(['tracks', 'community', 'settings'] as const).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -290,11 +301,32 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                         ))}
                     </div>
 
+                    {/* Search Bar */}
+                    {activeTab === 'tracks' && (
+                        <div className="mb-4 relative">
+                            <input
+                                type="text"
+                                placeholder="Search in playlist..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-[#151515]/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[#1DB954] transition-colors"
+                            />
+                            <svg
+                                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    )}
+
                     {/* Content Panel */}
-                    <div className="flex-1 bg-[#151515] rounded-xl border border-white/5 p-6 shadow-inner min-h-[400px] overflow-hidden flex flex-col">
+                    <div className="flex-1 bg-[#151515]/80 rounded-xl border border-white/5 p-4 shadow-inner overflow-hidden flex flex-col backdrop-blur-sm">
                         {activeTab === 'tracks' && (
                             <PlaylistTracks
-                                tracks={tracks}
+                                tracks={filteredTracks}
                                 isEditingEnabled={isEditingEnabled}
                                 onRemoveTrack={handleRemoveTrack}
                                 onReorderTracks={handleReorderTracks}
@@ -302,13 +334,15 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                             />
                         )}
 
-                        {activeTab === 'comments' && (
-                            <PlaylistComments
+                        {activeTab === 'community' && (
+                            <PlaylistCommunity
                                 comments={comments}
                                 newComment={newComment}
                                 setNewComment={setNewComment}
                                 handleAddComment={handleAddComment}
                                 commentLoading={commentLoading}
+                                ratingData={ratingData}
+                                tags={tags}
                             />
                         )}
 
@@ -331,12 +365,14 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             </div>
 
             {/* Track Detail Modal */}
-            {selectedTrack && (
-                <PlaylistTrackDetailModal
-                    track={selectedTrack}
-                    onClose={() => setSelectedTrack(null)}
-                />
-            )}
-        </div>
+            {
+                selectedTrack && (
+                    <PlaylistTrackDetailModal
+                        track={selectedTrack}
+                        onClose={() => setSelectedTrack(null)}
+                    />
+                )
+            }
+        </div >
     );
 };

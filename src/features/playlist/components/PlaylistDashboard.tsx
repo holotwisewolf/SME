@@ -109,12 +109,10 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
         </div>
       </div>
 
-
-
       {/* Playlist Grid */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <LoadingSpinner className="w-10 h-10 text-[grey]" />
+          <LoadingSpinner className="w-10 h-10 text-[white]" />
         </div>
       ) : (
         <PlaylistGrid playlists={sortedPlaylists} onDelete={loadPlaylists} />
