@@ -38,16 +38,16 @@ interface PlaylistSettingsProps {
 }
 
 const PRESET_COLORS = [
-    '#1DB954', // Spotify Green
-    '#3B82F6', // Blue
-    '#8B5CF6', // Purple
-    '#EC4899', // Pink
-    '#EF4444', // Red
-    '#F97316', // Orange
-    '#EAB308', // Yellow
-    '#14B8A6', // Teal
-    '#000000', // Black
-    '#FFD1D1', // Pastel Blush
+    '#09090B', // Zinc 950 (Rich Black)
+    '#FFD1D1', // Pastel Blush (Your Custom)
+    '#1DB954', // Spotify Green (Brand)
+    '#6366F1', // Indigo (Modern Blue replacement)
+    '#A855F7', // Vivid Purple
+    '#D946EF', // Fuchsia (Modern Pink)
+    '#F43F5E', // Rose (Modern Red)
+    '#FB923C', // Orange (Softer, vibrant)
+    '#FACC15', // Sunshine Yellow
+    '#2DD4BF', // Mint Teal
 ];
 
 export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
