@@ -18,6 +18,7 @@ import {
 import { getProfile, getSession } from '../../../auth/services/auth_services';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { useError } from '../../../../context/ErrorContext';
+import { useSuccess } from '../../../../context/SuccessContext';
 import { PlaylistHeader } from './PlaylistHeader';
 import { PlaylistTracks } from './PlaylistTracks';
 import { PlaylistCommunity } from './PlaylistCommunity';
@@ -39,6 +40,7 @@ type ActiveTab = 'tracks' | 'community' | 'settings';
 
 export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor }) => {
     const { showError } = useError();
+    const { showSuccess } = useSuccess();
     const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -115,6 +117,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             if (onTitleChange) {
                 onTitleChange(playlistTitle);
             }
+            showSuccess('Playlist title updated');
             // Success - no further action needed as local state is already updated
         } catch (error) {
             console.error('Error updating title:', error);
@@ -163,6 +166,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         setCommentLoading(true);
         try {
             await addPlaylistComment(playlist.id, newComment);
+            showSuccess('Comment posted');
             setNewComment('');
             const commentsData = await getPlaylistComments(playlist.id);
             setComments(commentsData);
@@ -177,6 +181,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         try {
             await updatePlaylistPublicStatus(playlist.id, newStatus);
             setIsPublic(newStatus);
+            showSuccess(newStatus ? 'Playlist is now public' : 'Playlist is now private');
         } catch (error) {
             console.error('Error updating public status:', error);
             setIsPublic(!newStatus); // Revert
@@ -192,6 +197,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         }
         try {
             await updatePlaylistColor(playlist.id, newColor);
+            showSuccess('Playlist color updated');
         } catch (error) {
             console.error('Error updating playlist color:', error);
             setPlaylistColor(oldColor); // Revert
@@ -233,6 +239,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             try {
                 // Perform the deletion
                 await deletePlaylist(playlist.id);
+                showSuccess('Playlist deleted');
 
                 // Call the parent's onDelete handler if provided (to refresh the list)
                 if (onDeletePlaylist) {
