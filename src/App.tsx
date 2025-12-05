@@ -18,26 +18,7 @@ import SignUpPage from "./features/auth/pages/SignUp";
 import TestingGround from "./features/dev/dev_pages/testing_ground";
 import DevRoute from "./features/dev/DevRoute";
 import SetUpUserProfile from "./features/user/user_pages/SetUpUserProfile";
-import { useLocation, Routes, Route, Navigate } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
 
-import { LoginProvider } from "./features/auth/components/LoginProvider";
-import LoginDrawer from "./features/auth/components/LoginDrawer";
-
-import Layout from "./components/shared/Layout";
-import Header from "./components/header/Header";
-import PageWrapper from "./components/shared/PageWrapper";
-
-// Pages
-import LibraryPlaylists from "./pages/library/LibraryPlaylists";
-import LibraryTracks from "./pages/library/LibraryTracks";
-import LibraryAlbums from "./pages/library/LibraryAlbums";
-import Songs from "./pages/Songs";
-import Info from "./pages/Info";
-import SignUpPage from "./features/auth/pages/SignUp";
-import TestingGround from "./features/dev/dev_pages/testing_ground";
-import DevRoute from "./features/dev/DevRoute";
-import SetUpUserProfile from "./features/user/user_pages/SetUpUserProfile";
 import UserAccount from "./features/user/user_pages/UserAccount";
 import UserSettings from "./features/user/user_pages/UserSettings";
 import { TracksFullPage } from "./features/spotify/pages/TracksFullPage";
