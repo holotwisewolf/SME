@@ -8,6 +8,7 @@ import { useState } from "react";
 import Checkbox from "../../../components/ui/CheckboxIcon";
 import { AuthService } from "../services/auth_services";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
+import { signInWithSpotify } from "../../spotify/services/spotify_auth";
 
 const LoginDrawer = () => {
     const { isOpen, closeLogin } = useLogin();
@@ -15,7 +16,6 @@ const LoginDrawer = () => {
     const [canClose, setCanClose] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [remember, setRemember] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async (e?: React.FormEvent) => {
@@ -27,7 +27,7 @@ const LoginDrawer = () => {
 
         setLoading(true);
         try {
-            const { session, error } = await AuthService.login({ email, password, remember });
+            const { session, error } = await AuthService.login({ email, password });
             if (error) throw error;
 
             if (session) {
@@ -110,12 +110,13 @@ const LoginDrawer = () => {
                             </InputGroup>
                             {/* --- NEW FOOTER --- */}
                             <div className="flex items-center justify-between mt-4 select-none">
-                                <Checkbox
-                                    className="mt-2 text-sm"
-                                    checked={remember}
-                                    onChange={setRemember}
-                                    label="Remember me"
-                                />
+                                <button
+                                    type="button"
+                                    onClick={signInWithSpotify}
+                                    className="text-sm text-gray-400 hover:text-[white] transition mt-2 font-medium"
+                                >
+                                    Sign In with Spotify
+                                </button>
 
                                 <button
                                     type="button"

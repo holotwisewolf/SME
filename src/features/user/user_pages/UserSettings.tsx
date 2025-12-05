@@ -163,7 +163,7 @@ const UserSettings = () => {
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="w-full max-w-md bg-[#1f1f1f] p-10 rounded-2xl shadow-2xl relative select-none border border-white/5 max-h-[90vh] overflow-y-auto scrollbar-hide min-h-[600px] flex flex-col my-auto"
+                className="w-full max-w-md bg-[#1f1f1f] rounded-2xl shadow-2xl relative select-none border border-white/5 h-[80vh] max-h-[800px] flex flex-col overflow-hidden"
             >
                 {initializing ? (
                     <div className="flex items-center justify-center h-full">
@@ -174,15 +174,15 @@ const UserSettings = () => {
                         {/* Close Button */}
                         <button
                             onClick={() => navigate(-1)}
-                            className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+                            className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-10"
                         >
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M18 6L6 18M6 6l12 12" />
                             </svg>
                         </button>
 
-                        {/* Header */}
-                        <div className="flex flex-col items-center mb-8">
+                        {/* Header - Fixed */}
+                        <div className="flex flex-col items-center pt-10 pb-6 px-10 border-b border-white/5 bg-[#1f1f1f] z-10">
                             <div className="w-16 h-16 rounded-full bg-[#2a2a2a] flex items-center justify-center mb-4 text-gray-400">
                                 <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
@@ -196,8 +196,8 @@ const UserSettings = () => {
                             </p>
                         </div>
 
-                        {/* Settings Groups */}
-                        <div className="space-y-6">
+                        {/* Scrollable Content */}
+                        <div className="flex-1 overflow-y-auto p-10 space-y-6 scrollbar-thin scrollbar-thumb-[#333] scrollbar-track-transparent">
 
                             {/* Security Section */}
                             <div className="bg-[#2a2a2a]/50 p-4 rounded-xl border border-white/5">
@@ -311,8 +311,8 @@ const UserSettings = () => {
 
                         </div>
 
-                        {/* Footer Actions */}
-                        <div className="flex gap-3 mt-8 pt-4 border-t border-white/10">
+                        {/* Footer Actions - Fixed */}
+                        <div className="flex gap-3 p-6 border-t border-white/10 bg-[#1f1f1f] rounded-b-2xl z-10">
                             <button
                                 onClick={() => navigate(-1)}
                                 className="flex-1 bg-[#2a2a2a] text-white font-semibold py-4 rounded-lg hover:bg-[#363636] transition"

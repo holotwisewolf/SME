@@ -2,12 +2,10 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import TextInput from "../../../components/ui/TextInput";
-import Checkbox from "../../../components/ui/CheckboxIcon";
 import DefUserAvatar from "../../../components/ui/DefUserAvatar";
 import EditIcon from "../../../components/ui/EditIcon";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import { AuthService } from "../../auth/services/auth_services";
-import { linkSpotifyAccount, unlinkSpotifyAccount } from "../../spotify/services/spotify_auth";
 import { useLogin } from "../../auth/components/LoginProvider";
 
 const SetUpUserProfile = () => {
@@ -18,7 +16,6 @@ const SetUpUserProfile = () => {
     const [displayName, setDisplayName] = useState("");
     const [bio, setBio] = useState("");
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [linkSpotify, setLinkSpotify] = useState(false);
     const [loading, setLoading] = useState(false);
     const [initializing, setInitializing] = useState(true);
     const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -39,11 +36,45 @@ const SetUpUserProfile = () => {
 
                 // Fetch existing profile data if any
                 const profile = await AuthService.getProfile(session.user.id);
+
+                // If profile exists and setup is completed, redirect to main app
+                // We check for 'setup_completed' flag (boolean)
+                if (profile && profile.setup_completed) {
+                    navigate("/library/playlists");
+                    return;
+                }
+
                 if (profile) {
-                    setDisplayName(profile.display_name || "");
+                    // Use profile data, but fallback to metadata if missing
+                    const metadata = session.user.user_metadata;
+
+                    setDisplayName(profile.display_name || metadata.full_name || metadata.name || metadata.display_name || "");
                     setBio(profile.bio || "");
-                    setAvatarUrl(profile.avatar_url);
-                    setLinkSpotify(profile.spotify_connected || false);
+                    setAvatarUrl(profile.avatar_url || metadata.avatar_url || metadata.picture || null);
+
+                    // Also ensure username is set if not in profile (though it should be in session metadata)
+                    if (!username && metadata) {
+                        const spotifyUsername = metadata.preferred_username || metadata.user_name || metadata.name || "";
+                        setUsername(spotifyUsername.replace(/\s+/g, '').toLowerCase());
+                    }
+                } else {
+                    // Pre-fill from Spotify metadata if no profile exists
+                    const metadata = session.user.user_metadata;
+                    if (metadata) {
+                        if (!username) {
+                            // Try to get a username from Spotify data
+                            const spotifyUsername = metadata.preferred_username || metadata.user_name || metadata.name || "";
+                            // Sanitize: remove spaces/special chars if needed, or just use as is
+                            setUsername(spotifyUsername.replace(/\s+/g, '').toLowerCase());
+                        }
+                        if (!displayName) {
+                            // Spotify often uses 'full_name' or 'name'
+                            setDisplayName(metadata.full_name || metadata.name || metadata.display_name || "");
+                        }
+                        if (!avatarUrl) {
+                            setAvatarUrl(metadata.avatar_url || metadata.picture || null);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("Error loading profile:", error);
@@ -112,17 +143,16 @@ const SetUpUserProfile = () => {
                 display_name: displayName,
                 bio: bio,
                 avatar_url: avatarUrl,
+                setup_completed: true, // Mark setup as done
                 updated_at: new Date().toISOString(),
             });
 
-            // 3. Handle Spotify Linking
-            if (linkSpotify) {
-                // Only link if not already connected (check logic could be improved)
-                await linkSpotifyAccount();
-            } else {
-                // If unchecked, ensure it's unlinked
-                await unlinkSpotifyAccount();
+            // 3. Update Username & Display Name in Auth Metadata (so trigger syncs correctly)
+            if (username.trim()) {
+                await AuthService.updateUsername(username, displayName);
             }
+
+
 
             // 4. Navigate to main app
             navigate("/library/playlists");
@@ -145,6 +175,8 @@ const SetUpUserProfile = () => {
             exit={{ opacity: 0 }}
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
+                    // Prevent closing if required fields are empty
+                    if (!username.trim() || !displayName.trim()) return;
                     navigate(-1);
                 }
             }}
@@ -245,21 +277,19 @@ const SetUpUserProfile = () => {
                                 onChange={(e) => setBio(e.target.value)}
                             />
 
-                            <div className="pt-2">
-                                <Checkbox
-                                    label="Link Spotify Account"
-                                    checked={linkSpotify}
-                                    onChange={setLinkSpotify}
-                                    className="bg-[#2a2a2a] p-3 rounded-xl border border-transparent hover:border-white/10 transition-colors"
-                                />
-                            </div>
+
                         </div>
 
                         {/* Submit button */}
+                        {/* Submit button */}
                         <button
                             onClick={handleSave}
-                            className="w-full bg-[#f8baba] text-black font-semibold py-4 rounded-lg mt-8 hover:bg-[#FFD1D1] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={loading}
+                            className={`w-full font-semibold py-4 rounded-lg mt-8 transition disabled:cursor-not-allowed
+                                ${username.trim() && displayName.trim()
+                                    ? "bg-[#f8baba] text-black hover:bg-[#FFD1D1]"
+                                    : "bg-[#f8baba]/20 text-[#f8baba]/50"
+                                }`}
+                            disabled={loading || !username.trim() || !displayName.trim()}
                         >
                             {loading ? "Saving..." : "Complete Setup"}
                         </button>

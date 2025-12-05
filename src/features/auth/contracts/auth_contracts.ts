@@ -9,7 +9,7 @@ export interface IAuthService {
     deleteAvatar(avatarUrl: string): Promise<void>;
     getProfile(userId: string): Promise<any>;
     updatePassword(password: string): Promise<void>;
-    updateUsername(username: string): Promise<any>;
+    updateUsername(username: string, displayName?: string): Promise<any>;
     validateInviteCode(code: string): Promise<boolean>;
     getSession(): Promise<any>;
     checkAuthStatus(): Promise<boolean>;

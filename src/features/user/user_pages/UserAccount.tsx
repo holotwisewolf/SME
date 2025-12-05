@@ -1,28 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import TextInput from "../../../components/ui/TextInput";
 import DefUserAvatar from "../../../components/ui/DefUserAvatar";
 import EditIcon from "../../../components/ui/EditIcon";
-import SpotifyIcon from "../../../components/ui/SpotifyIcon";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import { AuthService } from "../../auth/services/auth_services";
-import { linkSpotifyAccount, unlinkSpotifyAccount } from "../../spotify/services/spotify_auth";
 import { useLogin } from "../../auth/components/LoginProvider";
+import { useError } from "../../../context/ErrorContext";
 
 const UserAccount = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { showError } = useError();
     const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [username, setUsername] = useState("");
     const [displayName, setDisplayName] = useState("");
     const [bio, setBio] = useState("");
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [isSpotifyLinked, setIsSpotifyLinked] = useState(false);
     const [loading, setLoading] = useState(false);
     const [initializing, setInitializing] = useState(true);
     const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [isLinking, setIsLinking] = useState(false);
 
     const [initialState, setInitialState] = useState({
         displayName: "",
@@ -53,7 +52,6 @@ const UserAccount = () => {
                     setDisplayName(initialData.displayName);
                     setBio(initialData.bio);
                     setAvatarUrl(initialData.avatarUrl);
-                    setIsSpotifyLinked(profile.spotify_connected || false);
                     setInitialState(initialData);
                 }
             } catch (error) {
@@ -64,6 +62,23 @@ const UserAccount = () => {
         };
         loadData();
     }, [navigate]);
+
+    // Check for Spotify auth errors
+    useEffect(() => {
+        // Check query params
+        const params = new URLSearchParams(location.search);
+        const error = params.get('error');
+
+        // Check hash params (Supabase often returns errors in hash)
+        const hashParams = new URLSearchParams(location.hash.substring(1));
+        const hashError = hashParams.get('error');
+
+        if (error === 'access_denied' || hashError === 'access_denied') {
+            showError("Spotify authorization was denied.");
+            // Clear the error from URL by replacing current entry
+            navigate('/account', { replace: true });
+        }
+    }, [location, navigate, showError]);
 
     // Check for changes
     const hasChanges =
@@ -105,27 +120,7 @@ const UserAccount = () => {
         }
     };
 
-    const handleSpotifyToggle = async () => {
-        try {
-            if (isSpotifyLinked) {
-                // Unlink
-                if (confirm("Are you sure you want to unlink your Spotify account?")) {
-                    await unlinkSpotifyAccount();
-                    setIsSpotifyLinked(false);
-                }
-            } else {
-                // Link
-                setIsLinking(true);
-                await linkSpotifyAccount();
-                // Do not set isSpotifyLinked(true) here. 
-                // The app will redirect to Spotify, and upon return, the profile data will reflect the linked status.
-            }
-        } catch (error) {
-            console.error("Spotify toggle failed:", error);
-            alert("Failed to update Spotify connection.");
-            setIsLinking(false);
-        }
-    };
+
 
     const handleSave = async () => {
         if (!userId || !hasChanges) return;
@@ -318,31 +313,7 @@ const UserAccount = () => {
                                 onChange={(e) => setBio(e.target.value)}
                             />
 
-                            {/* Spotify Link Status */}
-                            <div className="pt-2">
-                                <label className="text-gray-300 text-sm font-medium px-1 block mb-1">Connected Accounts</label>
-                                {isSpotifyLinked ? (
-                                    <button
-                                        onClick={handleSpotifyToggle}
-                                        className="w-full bg-[#2a2a2a] text-[#BAFFB5] font-medium py-3.5 rounded-xl border border-transparent flex items-center justify-center gap-2 hover:bg-[#333] transition"
-                                    >
-                                        <SpotifyIcon size={20} color="currentColor" />
-                                        Spotify Linked (Click to Unlink)
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={handleSpotifyToggle}
-                                        disabled={isLinking}
-                                        className="w-full bg-[#BAFFB5] text-black font-semibold py-2.5 rounded-xl hover:bg-[#a3e69e] transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                                    >
-                                        {isLinking ? (
-                                            <LoadingSpinner className="w-5 h-5 text-black" />
-                                        ) : (
-                                            "Link Spotify Account"
-                                        )}
-                                    </button>
-                                )}
-                            </div>
+
                         </div>
 
                         {/* Actions */}
