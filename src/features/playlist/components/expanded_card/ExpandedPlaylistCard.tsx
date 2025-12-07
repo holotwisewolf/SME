@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import type { Tables } from '../../../../types/supabase';
+import { Star, Tag, X } from 'lucide-react';
 import { supabase } from '../../../../lib/supabaseClient';
 import {
     fetchPlaylistTracksWithDetails,
-    getPlaylistTags,
     getPlaylistRating,
     getPlaylistComments,
     addPlaylistComment,
@@ -13,8 +13,10 @@ import {
     updatePlaylistPublicStatus,
     getUserPlaylistRating,
     deletePlaylist,
-    updatePlaylistColor
+    updatePlaylistColor,
+    updatePlaylistRating
 } from '../../services/playlist_services';
+import { getItemTags } from '../../../tags/services/tag_services';
 import { getProfile, getSession } from '../../../auth/services/auth_services';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { useError } from '../../../../context/ErrorContext';
@@ -23,6 +25,7 @@ import { PlaylistHeader } from './PlaylistHeader';
 import { PlaylistTracks } from './PlaylistTracks';
 import { PlaylistCommunity } from './PlaylistCommunity';
 import { PlaylistSettings } from './PlaylistSettings';
+import { PlaylistReview } from './PlaylistReview';
 import ExpandButton from '../../../../components/ui/ExpandButton';
 import { PlaylistTrackDetailModal } from './PlaylistTrackDetailModal';
 
@@ -36,7 +39,7 @@ interface ExpandedPlaylistCardProps {
     currentColor?: string | null;
 }
 
-type ActiveTab = 'tracks' | 'community' | 'settings';
+type ActiveTab = 'tracks' | 'review' | 'community' | 'settings';
 
 export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor }) => {
     const { showError } = useError();
@@ -64,6 +67,18 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
+    const handleUserRating = async (rating: number) => {
+        try {
+            setUserRating(rating);
+            await updatePlaylistRating(playlist.id, rating);
+            // Refresh global rating
+            const ratingRes = await getPlaylistRating(playlist.id);
+            setRatingData(ratingRes);
+        } catch (error) {
+            console.error('Error updating rating:', error);
+        }
+    };
+
     const filteredTracks = tracks.filter(track =>
         (track.details?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         track.details?.artists?.some((a: any) => (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
@@ -81,7 +96,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         try {
             const [tracksData, tagsData, ratingRes, userRatingRes, commentsData, profileData] = await Promise.all([
                 fetchPlaylistTracksWithDetails(playlist.id),
-                getPlaylistTags(playlist.id),
+                getItemTags(playlist.id, 'playlist'),
                 getPlaylistRating(playlist.id),
                 getUserPlaylistRating(playlist.id),
                 getPlaylistComments(playlist.id),
@@ -89,7 +104,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             ]);
 
             setTracks(tracksData);
-            setTags(tagsData);
+            setTags(tagsData.map(tag => tag.name)); // Extract tag names
             setRatingData(ratingRes);
             setUserRating(userRatingRes);
             setComments(commentsData);
@@ -127,6 +142,8 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             setIsEditingTitle(true); // Re-open edit mode so user can try again
         }
     };
+
+
 
     const handleRatingUpdate = async () => {
         const [ratingRes, userRatingRes] = await Promise.all([
@@ -312,7 +329,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                 <div className="w-full md:w-[65%] p-6 flex flex-col bg-transparent overflow-hidden">
                     {/* Tab Navigation */}
                     <div className="flex items-center gap-2 mb-6 bg-black/20 p-1 rounded-full w-max flex-shrink-0">
-                        {(['tracks', 'community', 'settings'] as const).map((tab) => (
+                        {(['tracks', 'review', 'community', 'settings'] as const).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -359,6 +376,19 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                             />
                         )}
 
+                        {activeTab === 'review' && (
+                            <PlaylistReview
+                                playlist={playlist}
+                                userRating={userRating}
+                                tags={tags}
+                                setTags={setTags}
+                                onDescriptionChange={(newDescription) => {
+                                    // Update the playlist object to reflect the new description
+                                    playlist.description = newDescription;
+                                }}
+                            />
+                        )}
+
                         {activeTab === 'community' && (
                             <PlaylistCommunity
                                 comments={comments}
@@ -393,7 +423,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             {
                 selectedTrack && (
                     <PlaylistTrackDetailModal
-                        track={selectedTrack}
+                        track={selectedTrack.details || selectedTrack}
                         onClose={() => setSelectedTrack(null)}
                     />
                 )

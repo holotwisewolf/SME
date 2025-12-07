@@ -6,7 +6,7 @@ import { ResultMenuDropdown } from '../components/ResultMenuDropdown';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import { TrackDetailModal } from '../components/TrackDetailModal';
 import { useTrackPreview } from '../hooks/useTrackPreview';
-import { addToFavourites } from '../../playlist/services/playlist_services';
+import { addToFavourites } from '../../favourites/services/favourites_services';
 import type { SpotifyTrack } from '../type/spotify_types';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
@@ -72,7 +72,7 @@ export function TracksFullPage() {
 
     const handleAddToFavourites = async (trackId: string) => {
         try {
-            await addToFavourites(trackId);
+            await addToFavourites(trackId, 'track');
         } catch (error) {
             console.error('Error adding to favourites:', error);
         }

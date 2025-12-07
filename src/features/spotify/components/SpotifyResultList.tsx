@@ -12,7 +12,7 @@ import { ArtistDetailModal } from './ArtistDetailModal';
 import { AlbumDetailModal } from './AlbumDetailModal';
 import { useTrackPreview } from '../hooks/useTrackPreview';
 import { useArtistPopup } from '../hooks/useArtistPopup';
-import { addToFavourites } from '../../playlist/services/playlist_services';
+import { addToFavourites } from '../../favourites/services/favourites_services';
 import { getAlbumDetails } from '../services/spotify_services';
 import type { ArtistFullDetail } from '../type/artist_type';
 import type { SpotifyTrack, SpotifyAlbum, SpotifyArtist } from '../type/spotify_types';
@@ -65,7 +65,7 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
     // Handler: Add track to user's favourites
     const handleAddToFavourites = async (trackId: string) => {
         try {
-            await addToFavourites(trackId);
+            await addToFavourites(trackId, 'track');
             // TODO: Show success notification
         } catch (error) {
             console.error('Error adding to favourites:', error);

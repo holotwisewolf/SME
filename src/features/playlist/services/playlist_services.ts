@@ -148,13 +148,7 @@ export async function getPlaylistTracks(playlistId: string): Promise<string[]> {
     return data.map(item => item.spotify_track_id);
 }
 
-/**
- * Add an item to favourites (Wrapper for FavouritesService)
- */
-export async function addToFavourites(itemId: string, type: 'track' | 'album' = 'track'): Promise<void> {
-    const { addToFavourites: addToFavs } = await import('../../favourites/services/favourites_services');
-    return addToFavs(itemId, type);
-}
+
 
 /**
  * Delete a playlist
@@ -472,6 +466,18 @@ export async function updatePlaylistTitle(playlistId: string, newTitle: string):
 }
 
 /**
+ * Update playlist description
+ */
+export async function updatePlaylistDescription(playlistId: string, newDescription: string): Promise<void> {
+    const { error } = await supabase
+        .from('playlists')
+        .update({ description: newDescription })
+        .eq('id', playlistId);
+
+    if (error) throw error;
+}
+
+/**
  * Update playlist rating
  */
 export async function updatePlaylistRating(playlistId: string, rating: number): Promise<void> {
@@ -525,4 +531,19 @@ export async function removeTrackFromPlaylist(playlistId: string, trackId: strin
         .eq('spotify_track_id', trackId);
 
     if (error) throw error;
+}
+
+/**
+ * Get all available tags (preseeded/system tags)
+ */
+export async function getAllTags(): Promise<string[]> {
+    const { data, error } = await supabase
+        .from('tags')
+        .select('name')
+        //.eq('type', 'system') // Commented out to fetch all for now, as I'm not sure of the data
+        .order('name');
+
+    if (error) throw error;
+    // Return unique names
+    return Array.from(new Set(data.map(t => t.name)));
 }
