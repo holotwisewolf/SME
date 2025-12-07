@@ -6,19 +6,21 @@ interface ExpandButtonProps {
   /** Custom stroke color for the SVG icon (e.g., '#FF0000' or 'currentColor') */
   strokeColor?: string;
   className?: string;
+  title?: string;
 }
 
 // 2. Destructure the new prop and set a default value
 const ExpandButton: React.FC<ExpandButtonProps> = ({
   onClick,
   strokeColor = "#292929", // Default color for accessibility/consistency
-  className = ""
+  className = "",
+  title = "Expand"
 }) => {
   return (
     <button
       onClick={onClick}
       className={`group focus:outline-none transition-transform duration-200 hover:scale-110 active:scale-95 ${className}`}
-      title="Expand"
+      title={title}
     >
       <svg
         width="24"

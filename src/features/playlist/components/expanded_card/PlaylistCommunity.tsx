@@ -57,7 +57,7 @@ export const PlaylistCommunity: React.FC<PlaylistCommunityProps> = ({
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Type your comment..."
-                    className="flex-1 bg-[#2a2a2a] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1DB954] text-sm"
+                    className="flex-1 bg-[#2a2a2a] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[white]/60 text-sm"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
                 />
                 <button
