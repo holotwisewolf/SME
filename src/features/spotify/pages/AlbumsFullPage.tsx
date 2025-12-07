@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchAlbums, getAlbumDetails } from '../services/spotify_services';
-import { addToFavourites } from '../../playlist/services/playlist_services';
+import { addToFavourites } from '../../favourites/services/favourites_services';
 import { TrackDetailModal } from '../components/TrackDetailModal';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import type { SpotifyAlbum, SpotifyTrack } from '../type/spotify_types';

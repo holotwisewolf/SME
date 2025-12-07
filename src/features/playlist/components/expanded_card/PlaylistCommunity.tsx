@@ -50,24 +50,6 @@ export const PlaylistCommunity: React.FC<PlaylistCommunityProps> = ({
                 </div>
             </div>
 
-            {/* Global Tags Section */}
-            <div className="mb-6">
-                <p className="text-gray-400 text-xs mb-2">People find this playlist:</p>
-                <div className="bg-white/5 rounded-lg p-3 border border-white/5 max-h-[80px] overflow-y-auto custom-scrollbar">
-                    {tags && tags.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                            {tags.map((tag, index) => (
-                                <span key={index} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded-full">
-                                    #{tag}
-                                </span>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-500 text-xs italic">No tags currently / Playlist is private</p>
-                    )}
-                </div>
-            </div>
-
             {/* Comment Input */}
             <div className="flex gap-2 mb-4 flex-shrink-0">
                 <input
@@ -88,10 +70,10 @@ export const PlaylistCommunity: React.FC<PlaylistCommunityProps> = ({
             </div>
 
             {/* Comments List */}
-            <div className="overflow-y-auto flex-1 pr-2 space-y-4">
+            <div className="overflow-y-auto flex-1 pr-2 space-y-4 mb-4">
                 {comments.length > 0 ? (
                     comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-3">
+                        <div key={comment.id} className="flex gap-3 hover:bg-white/5 transition-colors p-2 rounded-lg">
                             <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 overflow-hidden">
                                 {comment.profiles?.avatar_url ? (
                                     <img src={comment.profiles.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -115,6 +97,24 @@ export const PlaylistCommunity: React.FC<PlaylistCommunityProps> = ({
                         <p>No comments yet. Be the first!</p>
                     </div>
                 )}
+            </div>
+
+            {/* Global Tags Section */}
+            <div className="mb-2">
+                <p className="text-gray-400 text-xs mb-2">Tags:</p>
+                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-hidden flex items-center">
+                    {tags && tags.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                            {tags.map((tag, index) => (
+                                <span key={index} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded-full">
+                                    #{tag}
+                                </span>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-xs italic">No tags currently</p>
+                    )}
+                </div>
             </div>
         </div>
     );

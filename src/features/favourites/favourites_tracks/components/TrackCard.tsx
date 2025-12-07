@@ -126,10 +126,9 @@ export const TrackCard: React.FC<TrackCardProps> = ({
 
     return (
         <motion.div
-            layoutId={`track-${track.id}`}
             onClick={onClick}
-            className="group relative bg-[#181818] rounded-lg overflow-hidden cursor-pointer hover:bg-[#282828] transition-colors duration-300 flex flex-col h-full"
-            whileHover={{ y: -8, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)" }}
+            className="group relative bg-[#131313]/80 rounded-xl overflow-hidden cursor-pointer flex flex-col h-full shadow-md transition-all duration-300 border border-transparent hover:border-white/10 hover:bg-[#282828]"
+            whileHover={{ y: -4, boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
         >
