@@ -6,20 +6,22 @@ interface CollapseVerticalButtonProps {
     /** Custom fill color for the SVG icon (e.g., '#0070f3' or 'currentColor') */
     fillColor?: string;
     className?: string;
+    title?: string;
 }
 
 // 2. Use the interface and destructure the props with default values
 const CollapseVerticalButton: React.FC<CollapseVerticalButtonProps> = ({
     onClick,
     fillColor = "currentColor", // Default color allows CSS color inheritance
-    className = ""
+    className = "",
+    title = "Collapse"
 }) => {
     return (
         <button
             onClick={onClick}
             // Added common button styling for interactivity
             className={`group focus:outline-none transition-transform duration-200 hover:scale-105 active:scale-95 ${className}`}
-            title="Upload"
+            title={title}
         >
             <svg
                 width="24" // Set a common display size

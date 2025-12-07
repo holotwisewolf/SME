@@ -39,7 +39,10 @@ export const PlaylistTrackDetailModal: React.FC<PlaylistTrackDetailModalProps> =
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    onClick={onClose}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onClose();
+                    }}
                     className="absolute inset-0 bg-black/60 backdrop-blur-md"
                 />
 
