@@ -87,7 +87,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
         <>
             <div
                 ref={setNodeRef}
-                className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 ${isInlineExpanded ? 'h-[28rem]' : 'h-80'} ${isOver ? 'ring-2 ring-white/50 bg-[#2a2a2a] shadow-[0_0_15px_rgba(255,255,255,0.3)]' : ''}`}
+                className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 ${isInlineExpanded ? 'min-h-[20rem] max-h-[28rem] h-auto' : 'h-80'} ${isOver ? 'ring-2 ring-white/50 bg-[#2a2a2a] shadow-[0_0_15px_rgba(255,255,255,0.3)]' : ''}`}
             >
                 {/* Header */}
                 <div className="flex justify-between items-start mb-4 px-1">
@@ -129,10 +129,10 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
                     </div>
 
                     {/* Track Preview Area */}
-                    <div className="flex-1 min-h-0 overflow-hidden relative">
+                    <div className="flex-1 min-h-0 overflow-hidden relative flex flex-col">
                         {isInlineExpanded ? (
                             // Expanded: Scrollable List
-                            <div className="h-full overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                            <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
                                 {previewTracks.length > 0 ? (
                                     previewTracks.map((track) => (
                                         <DraggableTrackRow key={track.id} track={track} playlistId={playlist.id}>
