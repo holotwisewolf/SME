@@ -386,6 +386,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                                 userRating={userRating}
                                 tags={tags}
                                 setTags={setTags}
+                                isEditingEnabled={isEditingEnabled}
                                 onDescriptionChange={(newDescription) => {
                                     // Update the playlist object to reflect the new description
                                     playlist.description = newDescription;

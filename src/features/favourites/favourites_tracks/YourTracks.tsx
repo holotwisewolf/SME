@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion, LayoutGroup } from 'framer-motion';
-import { Search, Filter } from 'lucide-react';
+
 import {
     DndContext,
     closestCenter,
@@ -21,7 +21,7 @@ import { getMultipleTracks } from '../../spotify/services/spotify_services';
 import type { SpotifyTrack } from '../../spotify/type/spotify_types';
 import { TrackCard } from './components/TrackCard';
 import { SortableTrackCard } from './components/SortableTrackCard';
-import { TrackReviewModal } from './components/TrackReviewModal';
+import { TrackReviewModal } from './components/expanded_card/TrackReviewModal';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import AscendingButton from '../../../components/ui/AscendingButton';
 import DescendingButton from '../../../components/ui/DescendingButton';
@@ -226,6 +226,9 @@ const YourTracks: React.FC = () => {
                     <TrackReviewModal
                         track={selectedTrack}
                         onClose={() => setSelectedTrack(null)}
+                        onRemove={() => {
+                            setTracks(prev => prev.filter(t => t.id !== selectedTrack.id));
+                        }}
                     />
                 )}
             </AnimatePresence>

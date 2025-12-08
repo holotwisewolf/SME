@@ -13,6 +13,7 @@ interface PlaylistReviewProps {
     tags: string[];
     setTags: (tags: string[]) => void;
     onDescriptionChange?: (newDescription: string) => void;
+    isEditingEnabled?: boolean;
 }
 
 export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
@@ -20,7 +21,8 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
     userRating,
     tags,
     setTags,
-    onDescriptionChange
+    onDescriptionChange,
+    isEditingEnabled = true
 }) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
@@ -147,8 +149,9 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                                 handleDescriptionUpdate();
                             }
                         }}
-                        placeholder="Write your thoughts on this playlist..."
-                        className="w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed"
+                        readOnly={!isEditingEnabled}
+                        placeholder={isEditingEnabled ? "Write your thoughts on this playlist..." : "No description provided, turn on edit mode to write in here.."}
+                        className={`w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed ${!isEditingEnabled ? 'cursor-default' : ''}`}
                     />
                 </div>
             </div>
