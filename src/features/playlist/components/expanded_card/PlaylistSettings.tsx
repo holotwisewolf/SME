@@ -1,22 +1,16 @@
 import React from 'react';
+import { ExternalLink, Copy } from 'lucide-react';
 
 // --- Internal Mocks for Canvas Environment ---
 
-// 1. Mock Spotify Icon Component
-const SpotifyIcon = ({ size = 24, color = "currentColor" }: { size?: number, color?: string }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0ZM17.525 17.294C17.219 17.769 16.6 17.919 16.125 17.625C13.369 15.938 9.881 15.544 5.794 16.481C5.263 16.6 4.731 16.256 4.613 15.725C4.494 15.194 4.838 14.663 5.369 14.544C9.9 13.506 13.781 13.969 16.969 15.919C17.444 16.213 17.594 16.831 17.294 17.294ZM18.988 14.031C18.6 14.631 17.806 14.819 17.206 14.45C14.063 12.519 9.306 11.956 5.581 13.088C4.894 13.3 4.163 12.919 3.95 12.231C3.738 11.544 4.119 10.813 4.806 10.6C9.156 9.275 14.481 9.925 18.156 12.181C18.756 12.55 18.944 13.344 18.569 13.95V14.031ZM19.113 10.638C15.225 8.325 8.85 8.113 5.15 9.238C4.55 9.419 3.919 9.081 3.738 8.481C3.556 7.881 3.894 7.25 4.494 7.069C8.75 5.775 15.756 6.019 20.269 8.7C20.806 9.019 20.988 9.713 20.669 10.25C20.35 10.788 19.65 10.956 19.113 10.638Z" fill={color} />
-    </svg>
-);
-
-// 2. Mock Error Context
+// 1. Mock Error Context
 const useError = () => {
     return {
         showError: (msg: string) => console.error("Error Context:", msg)
     };
 };
 
-// 3. Mock Service
+// 2. Mock Service
 const updatePlaylistPublicStatus = async (id: string, status: boolean) => {
     console.log(`[Mock Service] Playlist ${id} public status updated to: ${status}`);
     return new Promise(resolve => setTimeout(resolve, 300));
@@ -89,12 +83,9 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
                             className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors group"
                         >
                             <div className="flex items-center gap-3">
-                                <SpotifyIcon size={20} color="#1DB954" />
+                                <ExternalLink className="w-5 h-5 text-[#1DB954]" />
                                 <span className="text-gray-300">Export to Spotify</span>
                             </div>
-                            <svg className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
                         </button>
 
                         <button
@@ -102,14 +93,9 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
                             className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors group"
                         >
                             <div className="flex items-center gap-3">
-                                <svg className="w-5 h-5 text-[#1DB954]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
+                                <Copy className="w-5 h-5 text-[#1DB954]" />
                                 <span className="text-gray-300">Copy Playlist</span>
                             </div>
-                            <svg className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                            </svg>
                         </button>
                     </div>
                 </div>

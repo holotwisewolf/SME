@@ -66,14 +66,14 @@ export const TrackCard: React.FC<TrackCardProps> = ({
 
                 // 3. Subscribe to Rating Updates
                 ratingSubscription = supabase
-                    .channel(`public:ratings:${track.id}`)
+                    .channel(`public:ratings:track:${track.id}`)
                     .on(
                         'postgres_changes',
                         {
                             event: '*',
                             schema: 'public',
                             table: 'ratings',
-                            filter: `item_id=eq.${track.id}`,
+                            filter: `item_id=eq.${track.id},item_type=eq.track`,
                         },
                         (payload: RealtimePostgresChangesPayload<RatingPayload>) => {
                             if (payload.new && 'user_id' in payload.new && payload.new.user_id === user.id) {
