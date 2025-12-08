@@ -1,66 +1,43 @@
-import React, { useRef, useState } from 'react';
-import EditIcon from '../../../../components/ui/EditIcon';
-import { useError } from '../../../../context/ErrorContext';
-import { updatePlaylistRating, uploadPlaylistImage, addPlaylistTag, removePlaylistTag, deletePlaylistRating, getPlaylistRating } from '../../services/playlist_services';
+import React, { useState } from 'react';
+import { updateItemRating, deleteItemRating } from '../../../services/item_services';
+import { addItemTag, removeItemTag } from '../../../services/item_services';
 
-interface PlaylistHeaderProps {
-    playlistId: string;
-    creatorName: string;
-    playlistImgUrl: string;
-    imgError: boolean;
-    setImgError: (error: boolean) => void;
+interface AlbumHeaderProps {
+    albumId: string;
+    album: any;
     ratingData: { average: number; count: number };
     userRating: number | null;
     tags: string[];
-    isEditingTitle: boolean;
-    setIsEditingTitle: (isEditing: boolean) => void;
-    playlistTitle: string;
-    setPlaylistTitle: (title: string) => void;
-    handleTitleUpdate: () => void;
-    isEditingEnabled: boolean;
     onRatingUpdate: () => void;
-    trackCount: number;
+    isEditingEnabled: boolean;
 }
 
-export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
-    playlistId,
-    creatorName,
-    playlistImgUrl,
-    imgError,
-    setImgError,
+export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
+    albumId,
+    album,
     ratingData,
     userRating,
     tags: initialTags,
-    isEditingTitle,
-    setIsEditingTitle,
-    playlistTitle,
-    setPlaylistTitle,
-    handleTitleUpdate,
-    isEditingEnabled,
     onRatingUpdate,
-    trackCount
+    isEditingEnabled
 }) => {
-    const { showError } = useError();
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const [tags, setTags] = useState<string[]>(initialTags);
     const [newTag, setNewTag] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
 
-    // Sync local tags with prop tags when prop changes (e.g. on load)
+    // Sync local tags with prop tags when prop changes
     React.useEffect(() => {
         setTags(initialTags);
     }, [initialTags]);
 
     const handleRate = async (rating: number) => {
         if (!isEditingEnabled) return;
-
         try {
             if (userRating === rating) {
                 // Toggle off (delete rating)
-                await deletePlaylistRating(playlistId);
+                await deleteItemRating(albumId, 'album');
             } else {
                 // Update or create rating
-                await updatePlaylistRating(playlistId, rating);
+                await updateItemRating(albumId, 'album', rating);
             }
             onRatingUpdate();
         } catch (error) {
@@ -68,29 +45,8 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
         }
     };
 
-    const handleImageClick = () => {
-        if (isEditingEnabled && fileInputRef.current) {
-            fileInputRef.current.click();
-        }
-    };
-
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        try {
-            await uploadPlaylistImage(playlistId, file);
-            window.location.reload(); // Simple way to refresh for now
-        } catch (error) {
-            console.error('Error uploading image:', error);
-            showError('Failed to upload image');
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
     const handleAddTag = async (e: React.KeyboardEvent) => {
+        if (!isEditingEnabled) return;
         if (e.key === 'Enter' && newTag.trim()) {
             const tagToAdd = newTag.trim();
             if (tags.includes(tagToAdd)) {
@@ -102,7 +58,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                 // Optimistic update
                 setTags([...tags, tagToAdd]);
                 setNewTag('');
-                await addPlaylistTag(playlistId, tagToAdd);
+                await addItemTag(albumId, 'album', tagToAdd);
             } catch (error) {
                 console.error('Error adding tag:', error);
                 setTags(tags); // Revert
@@ -112,11 +68,10 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
 
     const handleRemoveTag = async (tagToRemove: string) => {
         if (!isEditingEnabled) return;
-
         try {
             // Optimistic update
             setTags(tags.filter(t => t !== tagToRemove));
-            await removePlaylistTag(playlistId, tagToRemove);
+            await removeItemTag(albumId, 'album', tagToRemove);
         } catch (error) {
             console.error('Error removing tag:', error);
             setTags(tags); // Revert
@@ -133,7 +88,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     const handleNumericRate = async (rating: number) => {
         if (!isEditingEnabled) return;
         try {
-            await updatePlaylistRating(playlistId, rating);
+            await updateItemRating(albumId, 'album', rating);
             onRatingUpdate();
         } catch (error) {
             console.error('Error updating rating:', error);
@@ -151,82 +106,32 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
 
     return (
         <div className="w-full md:w-[35%] p-6 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
-            {/* Title & Creator */}
+            {/* Title & Artist */}
             <div>
-                {isEditingTitle ? (
-                    <div className="flex items-center gap-2 mb-1">
-                        <input
-                            type="text"
-                            value={playlistTitle}
-                            onChange={(e) => setPlaylistTitle(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleTitleUpdate()}
-                            onBlur={handleTitleUpdate}
-                            autoFocus
-                            className="text-2xl font-bold text-white bg-transparent border-b border-white/20 focus:outline-none focus:border-[#696969] w-full"
-                        />
-                        <button
-                            onClick={handleTitleUpdate}
-                            className="p-1 hover:bg-white/10 rounded-full text-[#FFD1D1] transition-colors"
-                            title="Confirm title"
-                        >
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                        </button>
-                    </div>
-                ) : (
-                    <h2
-                        onClick={() => isEditingEnabled && setIsEditingTitle(true)}
-                        className={`text-2xl font-bold text-white leading-tight mb-1 transition-all ${isEditingEnabled ? 'cursor-pointer hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : ''}`}
-                        title={isEditingEnabled ? "Click to edit" : ""}
-                    >
-                        {playlistTitle}
-                    </h2>
-                )}
-                <p className="text-sm text-gray-400">Created by <span className="text-white">{creatorName}</span></p>
-                <p className="text-xs text-gray-500 mt-1">{trackCount} {trackCount === 1 ? 'track' : 'tracks'}</p>
+                <h2 className="text-2xl font-bold text-white leading-tight mb-1">
+                    {album.name}
+                </h2>
+                <p className="text-sm text-gray-400">
+                    by <span className="text-white">{album.artists?.[0]?.name || 'Unknown Artist'}</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                    {album.release_date ? new Date(album.release_date).getFullYear() : ''} • {album.total_tracks} tracks
+                </p>
             </div>
 
-            {/* Image (4:3 Aspect Ratio) */}
-            <div
-                className={`w-full aspect-[4/3] rounded-xl overflow-hidden bg-[#2a2a2a] shadow-lg relative group ${isEditingEnabled ? 'cursor-pointer' : ''}`}
-                onClick={handleImageClick}
-            >
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                />
-
-                {!imgError ? (
+            {/* Album Image (4:3 Aspect Ratio) */}
+            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-[#2a2a2a] shadow-lg relative">
+                {album.images?.[0]?.url ? (
                     <img
-                        src={`${playlistImgUrl}?t=${Date.now()}`} // Cache busting
-                        alt={playlistTitle}
-                        className={`w-full h-full object-cover transition-transform duration-500 ${isEditingEnabled ? 'group-hover:scale-105' : ''}`}
-                        onError={() => setImgError(true)}
+                        src={album.images[0].url}
+                        alt={album.name}
+                        className="w-full h-full object-cover"
                     />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-[#333] to-[#1a1a1a] flex items-center justify-center text-gray-600">
                         <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                         </svg>
-                    </div>
-                )}
-
-                {/* Edit Overlay */}
-                {isEditingEnabled && (
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="bg-black/60 p-3 rounded-full hover:bg-black/80 transition-colors">
-                            <EditIcon className="w-6 h-6 text-white" />
-                        </div>
-                    </div>
-                )}
-
-                {isUploading && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     </div>
                 )}
             </div>
@@ -272,7 +177,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                 <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Rated by You</span>
             </div>
 
-            {/* Tags Container (Flexible Wrap) */}
+            {/* Tags Container */}
             <div className="flex-1">
                 <div className="flex items-center gap-2 mb-3">
                     <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>

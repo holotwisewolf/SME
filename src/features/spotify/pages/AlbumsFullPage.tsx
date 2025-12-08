@@ -10,6 +10,8 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import ViewIcon from '../../../components/ui/ViewIcon';
 import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
 import { ResultMenuDropdown } from '../components/ResultMenuDropdown';
+import { useSuccess } from '../../../context/SuccessContext';
+import { useError } from '../../../context/ErrorContext';
 
 interface AlbumTrack {
     id: string;
@@ -30,6 +32,8 @@ interface AlbumWithTracks {
 }
 
 export function AlbumsFullPage() {
+    const { showSuccess } = useSuccess();
+    const { showError } = useError();
     const [searchParams] = useSearchParams();
     const artistId = searchParams.get('artistId');
     const artistName = searchParams.get('artistName');
@@ -168,9 +172,10 @@ export function AlbumsFullPage() {
     const handleAddToFavourites = async (id: string, type: 'track' | 'album' = 'track') => {
         try {
             await addToFavourites(id, type);
-            // Optional: Show success toast
+            showSuccess(`${type === 'album' ? 'Album' : 'Track'} added to favorites!`);
         } catch (error) {
             console.error('Error adding to favourites:', error);
+            showError(`Failed to add ${type} to favorites`);
         }
     };
 

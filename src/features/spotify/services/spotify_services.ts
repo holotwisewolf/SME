@@ -1,5 +1,4 @@
 import { spotifyFetch, getSpotifyToken } from './spotifyConnection';
-import type { ISpotifyService } from '../contracts/spotify_contracts';
 
 // ============================================
 // Search Functions
@@ -89,6 +88,22 @@ export async function getMultipleAlbums(albumIds: string[]) {
   const ids = albumIds.join(',')
   return await spotifyFetch(`albums?ids=${ids}`)
 }
+
+/**
+ * Get a single album (alias for getAlbumDetails)
+ */
+export async function getAlbum(albumId: string) {
+  return await getAlbumDetails(albumId)
+}
+
+/**
+ * Get tracks for an album
+ */
+export async function getAlbumTracks(albumId: string) {
+  const data = await spotifyFetch(`albums/${albumId}/tracks`)
+  return data
+}
+
 
 // ============================================
 // Playlist Management Functions (NEW)
@@ -225,7 +240,7 @@ export function formatDuration(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
-export const SpotifyService: ISpotifyService = {
+export const SpotifyService = {
   searchTracks,
   searchAlbums,
   searchArtists,
@@ -235,6 +250,8 @@ export const SpotifyService: ISpotifyService = {
   getArtistDetails,
   getMultipleTracks,
   getMultipleAlbums,
+  getAlbum,
+  getAlbumTracks,
   createSpotifyPlaylist,
   addTracksToSpotifyPlaylist,
   getTrackPreview,
@@ -242,3 +259,5 @@ export const SpotifyService: ISpotifyService = {
   extractSpotifyId,
   formatDuration
 };
+
+

@@ -14,6 +14,8 @@ import { useTrackPreview } from '../hooks/useTrackPreview';
 import { useArtistPopup } from '../hooks/useArtistPopup';
 import { addToFavourites } from '../../favourites/services/favourites_services';
 import { getAlbumDetails } from '../services/spotify_services';
+import { useSuccess } from '../../../context/SuccessContext';
+import { useError } from '../../../context/ErrorContext';
 import type { ArtistFullDetail } from '../type/artist_type';
 import type { SpotifyTrack, SpotifyAlbum, SpotifyArtist } from '../type/spotify_types';
 
@@ -62,13 +64,28 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
     // Active menu state for controlled dropdowns
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
+    const { showSuccess } = useSuccess();
+    const { showError } = useError();
+
     // Handler: Add track to user's favourites
     const handleAddToFavourites = async (trackId: string) => {
         try {
             await addToFavourites(trackId, 'track');
-            // TODO: Show success notification
+            showSuccess('Track added to favorites!');
         } catch (error) {
             console.error('Error adding to favourites:', error);
+            showError('Failed to add track to favorites');
+        }
+    };
+
+    // Handler: Add album to user's favourites
+    const handleAddAlbumToFavourites = async (albumId: string) => {
+        try {
+            await addToFavourites(albumId, 'album');
+            showSuccess('Album added to favorites!');
+        } catch (error) {
+            console.error('Error adding album to favourites:', error);
+            showError('Failed to add album to favorites');
         }
     };
 
@@ -223,7 +240,7 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                                                             spotifyUrl={(item as SpotifyAlbum).external_urls.spotify}
                                                             isOpen={activeMenuId === item.id}
                                                             onToggle={(isOpen) => setActiveMenuId(isOpen ? item.id : null)}
-                                                            onAddToFavourites={(id) => handleAddToFavourites(id)} // TODO: Pass type 'album' when supported
+                                                            onAddToFavourites={handleAddAlbumToFavourites}
                                                             onImportToPlaylist={(id) => handleImportAlbumToPlaylist(id, item.name)}
                                                             type="album"
                                                         />
@@ -302,7 +319,7 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 <AlbumDetailModal
                     album={selectedAlbum}
                     onClose={() => setSelectedAlbum(null)}
-                    onAddToFavourites={(id) => handleAddToFavourites(id)} // TODO: Pass type 'album' when supported
+                    onAddToFavourites={handleAddAlbumToFavourites}
                     onImportToPlaylist={(album) => handleImportAlbumToPlaylist(album.id, album.name)}
                 />
             )}
