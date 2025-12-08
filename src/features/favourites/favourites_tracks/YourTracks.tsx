@@ -32,7 +32,7 @@ const YourTracks: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'none'>('asc');
     const [isFilterActive, setIsFilterActive] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -72,6 +72,8 @@ const YourTracks: React.FC = () => {
 
     const handleDragStart = (event: any) => {
         setActiveId(event.active.id);
+        // Clear sort order when manually reordering
+        setSortOrder('none');
     };
 
     const handleDragEnd = (event: any) => {
@@ -79,8 +81,8 @@ const YourTracks: React.FC = () => {
 
         if (active.id !== over?.id) {
             setTracks((items) => {
-                const oldIndex = items.findIndex((item) => item.id === active.id);
-                const newIndex = items.findIndex((item) => item.id === over.id);
+                const oldIndex = items.findIndex((item) => item && item.id === active.id);
+                const newIndex = items.findIndex((item) => item && item.id === over.id);
                 return arrayMove(items, oldIndex, newIndex);
             });
         }
@@ -89,10 +91,13 @@ const YourTracks: React.FC = () => {
     };
 
     const filteredTracks = tracks.filter(track => {
+        if (!track || !track.name) return false;
         const matchesSearch = track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            track.artists.some((a: any) => a.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            (track.artists && track.artists.some((a: any) => a?.name?.toLowerCase().includes(searchQuery.toLowerCase())));
         return matchesSearch;
     }).sort((a, b) => {
+        if (!a?.name || !b?.name) return 0;
+        if (sortOrder === 'none') return 0; // Preserve original order
         if (sortOrder === 'asc') {
             return a.name.localeCompare(b.name);
         } else {
@@ -100,15 +105,15 @@ const YourTracks: React.FC = () => {
         }
     });
 
-    const activeTrack = activeId ? tracks.find(t => t.id === activeId) : null;
+    const activeTrack = activeId ? tracks.find(t => t && t.id === activeId) : null;
 
     return (
-        <div className="min-h-screen bg-[#696969] text-white p-8 pb-32">
+        <div className="flex flex-col h-full px-6 relative pb-32">
             {/* Header Section */}
             <div className="flex justify-between items-center mb-8 pt-2 mt-6">
                 <div className="flex items-center gap-6">
                     <h1 className="text-4xl font-bold text-[#FFD1D1] tracking-tight leading-none">
-                        Liked Tracks
+                        Favourited Tracks
                     </h1>
                 </div>
 

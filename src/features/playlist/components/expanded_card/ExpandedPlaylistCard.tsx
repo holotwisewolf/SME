@@ -324,6 +324,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                     handleTitleUpdate={handleTitleUpdate}
                     isEditingEnabled={isEditingEnabled}
                     onRatingUpdate={handleRatingUpdate}
+                    trackCount={tracks.length}
                 />
 
                 {/* Right Column */}
