@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import PlaylistCard from './PlaylistCard';
 import type { Tables } from '../../../types/supabase';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
-import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
-import { addTrackToPlaylist } from '../services/playlist_services';
+import type { DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core';
+import { addTrackToPlaylist, removeTrackFromPlaylist } from '../services/playlist_services';
+import { Trash2 } from 'lucide-react';
 
 interface PlaylistGridProps {
     playlists: Tables<'playlists'>[];
@@ -12,6 +13,7 @@ interface PlaylistGridProps {
 
 const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
     const [activeTrack, setActiveTrack] = useState<any>(null);
+    const [isOverDroppable, setIsOverDroppable] = useState(false);
     const [playlistUpdates, setPlaylistUpdates] = useState<Record<string, number>>({});
 
     const sensors = useSensors(
@@ -25,24 +27,44 @@ const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
         setActiveTrack(active.data.current?.track);
+        setIsOverDroppable(true); // Assume start over valid area (though effectively unrelated until move)
         console.log("Drag Start:", active.id);
+    };
+
+    const handleDragOver = (event: DragOverEvent) => {
+        setIsOverDroppable(!!event.over);
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveTrack(null);
+        setIsOverDroppable(false);
+
+        const sourceId = active.id as string;
+        // Check if the drag source is a track (contains '::')
+        if (!sourceId.includes('::')) return;
+
+        const [originPlaylistId, trackId] = sourceId.split('::');
 
         if (!over) {
-            console.log("Dropped over nothing");
+            console.log("Dropped over nothing - attempting deletion", { originPlaylistId, trackId });
+            try {
+                await removeTrackFromPlaylist(originPlaylistId, trackId);
+                // Trigger update to refresh the card
+                setPlaylistUpdates(prev => ({
+                    ...prev,
+                    [originPlaylistId]: Date.now()
+                }));
+                console.log("Track removed successfully via drag-to-delete");
+            } catch (error) {
+                console.error("Error removing track in Grid View:", error);
+            }
             return;
         }
 
-        const sourceId = active.id as string;
         const targetPlaylistId = over.id as string;
 
         console.log("Drag End:", { sourceId, targetPlaylistId });
-
-        const [originPlaylistId, trackId] = sourceId.split('::');
 
         // Don't do anything if dropped on the same playlist
         if (originPlaylistId === targetPlaylistId) {
@@ -67,7 +89,7 @@ const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
     };
 
     return (
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
             <div className="border border-[white/60] rounded-xl p-6 relative bg-[#444444]">
                 {playlists.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-gray-400 py-12">
@@ -75,7 +97,7 @@ const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
                         <p className="text-sm text-gray-500">Create a playlist to get started</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-3 gap-8">
+                    <div className="grid grid-cols-3 gap-8 items-start">
                         {playlists.map((playlist) => (
                             <PlaylistCard
                                 key={playlist.id}
@@ -90,8 +112,14 @@ const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
 
             <DragOverlay>
                 {activeTrack ? (
-                    <div className="flex items-center gap-3 p-2 rounded-lg bg-[#282828] shadow-xl border border-white/10 w-64 cursor-grabbing">
-                        <div className="w-10 h-10 rounded overflow-hidden bg-[#1a1a1a] shrink-0">
+                    <div className={`flex items-center gap-3 p-2 rounded-lg shadow-xl border w-64 cursor-grabbing transition-colors duration-200 ${!isOverDroppable ? 'bg-red-500/20 border-red-500 ring-2 ring-red-500' : 'bg-[#282828] border-white/10'}`}>
+                        <div className="w-10 h-10 rounded overflow-hidden bg-[#1a1a1a] shrink-0 relative">
+                            {/* Overlay Trash Icon if deleting */}
+                            {!isOverDroppable && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10 transition-opacity">
+                                    <Trash2 className="w-5 h-5 text-red-500" />
+                                </div>
+                            )}
                             {activeTrack.album?.images?.[0]?.url ? (
                                 <img src={activeTrack.album.images[0].url} alt={activeTrack.name} className="w-full h-full object-cover" />
                             ) : (
@@ -103,7 +131,9 @@ const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
                             )}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="text-sm text-white font-medium truncate">{activeTrack.name}</div>
+                            <div className={`text-sm font-medium truncate ${!isOverDroppable ? 'text-red-200' : 'text-white'}`}>
+                                {!isOverDroppable ? 'Release to Delete' : activeTrack.name}
+                            </div>
                             <div className="text-xs text-gray-400 truncate">{activeTrack.artists?.[0]?.name}</div>
                         </div>
                     </div>
