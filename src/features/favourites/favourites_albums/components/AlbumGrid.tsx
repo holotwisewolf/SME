@@ -8,9 +8,10 @@ import { SortableAlbumCard } from './SortableAlbumCard';
 interface AlbumGridProps {
     albums: string[]; // Array of album IDs
     onDelete?: () => void;
+    searchQuery?: string;
 }
 
-const AlbumGrid: React.FC<AlbumGridProps> = ({ albums, onDelete }) => {
+const AlbumGrid: React.FC<AlbumGridProps> = ({ albums, onDelete, searchQuery = '' }) => {
     const [removedAlbums, setRemovedAlbums] = useState<Set<string>>(new Set());
     const [sortedAlbums, setSortedAlbums] = useState<string[]>(albums);
     const [activeAlbum, setActiveAlbum] = useState<string | null>(null);
@@ -73,6 +74,7 @@ const AlbumGrid: React.FC<AlbumGridProps> = ({ albums, onDelete }) => {
                                     key={albumId}
                                     albumId={albumId}
                                     onRemove={() => handleRemove(albumId)}
+                                    searchQuery={searchQuery}
                                 />
                             ))}
                         </div>

@@ -26,6 +26,7 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import AscendingButton from '../../../components/ui/AscendingButton';
 import DescendingButton from '../../../components/ui/DescendingButton';
 import FilterButton from '../../../components/ui/FilterButton';
+import SearchField from '../../../components/ui/SearchField';
 
 const YourTracks: React.FC = () => {
     const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
@@ -119,19 +120,12 @@ const YourTracks: React.FC = () => {
 
                 {/* Sorting & Filtering Controls (Right Aligned) */}
                 <div className="flex items-center gap-3">
-                    {/* Search Bar - Only visible when filter is active */}
-                    {isFilterActive && (
-                        <div className="relative animate-in fade-in slide-in-from-right-4 duration-300">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search tracks..."
-                                className="bg-[#292929] text-white text-sm rounded-full px-4 py-2 border-none focus:ring-1 focus:ring-white/20 w-48 transition-all"
-                                autoFocus
-                            />
-                        </div>
-                    )}
+                    {/* Search Bar - Always visible */}
+                    <SearchField
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search tracks..."
+                    />
 
                     {/* Filter Button */}
                     <button
@@ -203,7 +197,7 @@ const YourTracks: React.FC = () => {
                                         isFavourite={true}
                                         onToggleFavourite={() => {
                                             // Remove from list if unfavourited
-                                            setTracks(prev => prev.filter(t => t.id !== track.id));
+                                            setTracks(prev => prev.filter(t => t && t.id !== track.id));
                                         }}
                                     />
                                 ))}
@@ -232,7 +226,7 @@ const YourTracks: React.FC = () => {
                         track={selectedTrack}
                         onClose={() => setSelectedTrack(null)}
                         onRemove={() => {
-                            setTracks(prev => prev.filter(t => t.id !== selectedTrack.id));
+                            setTracks(prev => prev.filter(t => t && t.id !== selectedTrack.id));
                         }}
                     />
                 )}

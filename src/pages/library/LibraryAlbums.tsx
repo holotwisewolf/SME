@@ -6,12 +6,14 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import AscendingButton from '../../components/ui/AscendingButton';
 import DescendingButton from '../../components/ui/DescendingButton';
 import FilterButton from '../../components/ui/FilterButton';
+import SearchField from '../../components/ui/SearchField';
 
 const LibraryAlbums: React.FC = () => {
     const [albums, setAlbums] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [isFilterActive, setIsFilterActive] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         loadAlbums();
@@ -57,6 +59,12 @@ const LibraryAlbums: React.FC = () => {
 
                 {/* Sorting & Filtering Controls (Right Aligned) */}
                 <div className="flex items-center gap-3">
+                    {/* Search Bar - Always visible */}
+                    <SearchField
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search albums..."
+                    />
 
                     {/* Filter Button */}
                     <button
@@ -100,7 +108,7 @@ const LibraryAlbums: React.FC = () => {
                     </LayoutGroup>
                 </div>
             </div>
-            <AlbumGrid albums={sortedAlbums} onDelete={loadAlbums} />
+            <AlbumGrid albums={sortedAlbums} onDelete={loadAlbums} searchQuery={searchQuery} />
         </div>
     );
 };
