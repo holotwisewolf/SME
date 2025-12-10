@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, LayoutGroup } from 'framer-motion';
 import PlaylistGrid from './PlaylistGrid';
 import AscendingButton from '../../../components/ui/AscendingButton';
 import DescendingButton from '../../../components/ui/DescendingButton';
 import FilterButton from '../../../components/ui/FilterButton';
+import SearchField from '../../../components/ui/SearchField';
+import FilterDropdown from '../../../components/ui/FilterDropdown';
 import { getUserPlaylists } from '../services/playlist_services';
 import type { Tables } from '../../../types/supabase';
 import { CreatePlaylistModal } from './CreatePlaylistModal';
@@ -23,6 +25,8 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   const [playlists, setPlaylists] = useState<Tables<'playlists'>[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   const loadPlaylists = async () => {
     setLoading(true);
@@ -43,7 +47,11 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
     }
   }, [source, isAuthLoading]);
 
-  const sortedPlaylists = [...playlists].sort((a, b) => {
+  const filteredPlaylists = playlists.filter(playlist =>
+    playlist.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const sortedPlaylists = [...filteredPlaylists].sort((a, b) => {
     if (sortOrder === 'asc') {
       return a.title.localeCompare(b.title);
     } else {
@@ -63,15 +71,29 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
         </div>
 
         {/* Sorting & Filtering Controls (Right Aligned) */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 relative">
+          {/* Search Bar - Always visible */}
+          <SearchField
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search playlists..."
+          />
 
           {/* Filter Button */}
           <button
+            ref={filterButtonRef}
             onClick={() => setIsFilterActive(!isFilterActive)}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isFilterActive ? 'bg-[#FFD1D1] text-black' : 'bg-[#292929] text-gray-400 hover:text-white'}`}
           >
             <FilterButton className="w-5 h-5" color="currentColor" isActive={isFilterActive} />
           </button>
+
+          {/* Filter Dropdown */}
+          <FilterDropdown
+            isOpen={isFilterActive}
+            onClose={() => setIsFilterActive(false)}
+            anchorRef={filterButtonRef}
+          />
 
           {/* Sort Toggle - Wrapped in LayoutGroup to isolate animations */}
           <LayoutGroup id="playlist-sort">

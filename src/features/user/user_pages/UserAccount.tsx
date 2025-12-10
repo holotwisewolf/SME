@@ -185,7 +185,7 @@ const UserAccount = () => {
 
     return (
         <motion.div
-            className="fixed inset-0 bg-[#121212] flex items-center justify-center z-[200] px-4 overflow-hidden"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[200] px-4 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

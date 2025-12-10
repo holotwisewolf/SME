@@ -32,6 +32,11 @@ export const TrackCard: React.FC<TrackCardProps> = ({
     onToggleFavourite,
     onClick
 }) => {
+    // Safety check: return null if track data is invalid
+    if (!track || !track.id || !track.name || !track.album || !track.artists) {
+        return null;
+    }
+
     const [comment, setComment] = useState<string>("");
     const [userRating, setUserRating] = useState<number | null>(null);
     const [isLiked, setIsLiked] = useState(initialIsFavourite);

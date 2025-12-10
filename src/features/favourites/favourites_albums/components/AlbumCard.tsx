@@ -9,9 +9,10 @@ import { ExpandedAlbumCard } from './expanded_card/ExpandedAlbumCard';
 interface AlbumCardProps {
     albumId: string;
     onRemove?: () => void;
+    searchQuery?: string;
 }
 
-const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove }) => {
+const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove, searchQuery = '' }) => {
     const [isFavourite, setIsFavourite] = useState(true); // Already in favorites
     const [isExpanded, setIsExpanded] = useState(false);
     const [isInlineExpanded, setIsInlineExpanded] = useState(false);
@@ -67,6 +68,17 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove }) => {
                 <div className="h-3 bg-[#292929] rounded w-1/2"></div>
             </div>
         );
+    }
+
+    // Filter based on search query
+    if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const albumName = album.name?.toLowerCase() || '';
+        const artistName = album.artists?.[0]?.name?.toLowerCase() || '';
+
+        if (!albumName.includes(query) && !artistName.includes(query)) {
+            return null; // Hide card if it doesn't match search
+        }
     }
 
     return (
