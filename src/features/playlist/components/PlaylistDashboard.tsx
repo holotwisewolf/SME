@@ -10,15 +10,14 @@ import { getUserPlaylists } from '../services/playlist_services';
 import type { Tables } from '../../../types/supabase';
 import { CreatePlaylistModal } from './CreatePlaylistModal';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import { supabase } from '../../../lib/supabaseClient'; // [Change 1] Import Supabase
 
-import { useLogin } from '../../auth/components/LoginProvider';
 
 interface PlaylistDashboardProps {
   source: "library" | "favourites";
 }
 
 const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
-  const { isLoading: isAuthLoading } = useLogin();
   const isLibrary = source === "library";
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isFilterActive, setIsFilterActive] = useState(false);
@@ -29,6 +28,13 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   const loadPlaylists = async () => {
+    // Check session first to avoid errors
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+        setLoading(false);
+        return; 
+    }
+
     setLoading(true);
     try {
       // TODO: Handle 'favourites' source differently when implemented
@@ -42,10 +48,24 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   };
 
   useEffect(() => {
-    if (!isAuthLoading) {
-      loadPlaylists();
-    }
-  }, [source, isAuthLoading]);
+    // Initial load
+    loadPlaylists();
+
+    //  Auth State Listener for Auto-Refresh on Login
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+            loadPlaylists();
+        }
+        if (event === 'SIGNED_OUT') {
+            setPlaylists([]);
+            setLoading(false);
+        }
+    });
+
+    return () => {
+        subscription.unsubscribe();
+    };
+  }, [source]);
 
   const filteredPlaylists = playlists.filter(playlist =>
     playlist.title.toLowerCase().includes(searchQuery.toLowerCase())

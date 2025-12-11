@@ -11,9 +11,15 @@ interface AddTrackModalProps {
     playlistId: string;
     playlistName: string;
     onClose: () => void;
+    onTrackAdded: () => void;
 }
 
-export const AddTrackModal: React.FC<AddTrackModalProps> = ({ playlistId, playlistName, onClose }) => {
+export const AddTrackModal: React.FC<AddTrackModalProps> = ({ 
+    playlistId, 
+    playlistName, 
+    onClose,
+    onTrackAdded 
+}) => {
     const [searchText, setSearchText] = useState('');
     const [results, setResults] = useState<SpotifyTrack[]>([]);
     const [loading, setLoading] = useState(false);
@@ -44,9 +50,10 @@ export const AddTrackModal: React.FC<AddTrackModalProps> = ({ playlistId, playli
         setAddingTrackId(track.id);
         try {
             await addTrackToPlaylist({ playlistId, trackId: track.id });
-            // Optional: Show success toast or feedback
-            // For now, we can close the modal or let the user add more
-            // Let's keep it open to add more tracks
+            
+            // Trigger the refresh in parent
+            onTrackAdded();
+
         } catch (error) {
             console.error('Error adding track to playlist:', error);
             alert('Failed to add track');
