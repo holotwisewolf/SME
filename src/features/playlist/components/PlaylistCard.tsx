@@ -27,7 +27,9 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
     const [color, setColor] = useState(playlist.color);
     const [previewTracks, setPreviewTracks] = useState<any[]>([]);
 
-    // Construct public URL for playlist image (assumes file name is playlist.id)
+    //  Local trigger to force refresh when songs are added locally
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
     const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
 
     const { setNodeRef, isOver } = useDroppable({
@@ -55,30 +57,25 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
             }
         };
         loadPreviewTracks();
-    }, [playlist.id, lastUpdated]);
+    }, [
+        playlist.id, 
+        lastUpdated, 
+        refreshTrigger 
+    ]);
 
     const handleFavourite = async () => {
-        // 1. Get the target state
         const willBeFavourite = !isFavourite;
-
-        // 2. Optimistic Update
         setIsFavourite(willBeFavourite);
 
         try {
             if (!willBeFavourite) {
-                // Target is NOT a favorite -> REMOVE
                 await removeFromFavourites(playlist.id, "playlist");
             } else {
-                // Target IS a favorite -> ADD
                 await addToFavourites(playlist.id, "playlist");
             }
         } catch (error) {
             console.error('Error toggling favourite:', error);
-
-            // 3. Revert state on error (revert to the *original* state)
             setIsFavourite(!willBeFavourite);
-
-            // Optional: Show error to user
             alert('Failed to update favorite status.');
         }
     };
@@ -233,6 +230,8 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
                     playlistId={playlist.id}
                     playlistName={title}
                     onClose={() => setShowAddTrackModal(false)}
+                    // Pass the updater function
+                    onTrackAdded={() => setRefreshTrigger(prev => prev + 1)}
                 />
             )}
 
