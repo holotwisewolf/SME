@@ -52,75 +52,90 @@ const Trending: React.FC = () => {
     };
 
     const tabs: { value: TabType; label: string }[] = [
+        { value: 'playlists', label: 'Playlists' },
         { value: 'tracks', label: 'Tracks' },
         { value: 'albums', label: 'Albums' },
-        { value: 'playlists', label: 'Playlists' },
     ];
 
     return (
-        <div className="flex flex-col h-full px-6 pb-32">
-            {/* Header */}
-            <div className="pt-6 mb-8">
-                <h1 className="text-4xl font-bold text-[#FFD1D1] tracking-tight leading-none mb-2">
-                    Trending
-                </h1>
-                <p className="text-gray-400 text-sm">
-                    Discover what the community is loving right now
-                </p>
+        <div className="h-full flex flex-col p-8">
+            {/* Page Title */}
+            <div className="mb-8">
+                <h1 className="text-4xl font-bold text-[#D1D1D1] tracking-tight">Trending</h1>
+                <p className="text-[#D1D1D1]/60 mt-2">Discover what's popular in the community</p>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex gap-2 mb-6">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.value}
-                        onClick={() => setActiveTab(tab.value)}
-                        className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === tab.value
-                                ? 'bg-[#FFD1D1] text-black'
-                                : 'bg-[#292929] text-gray-400 hover:text-white hover:bg-[#333333]'
-                            }`}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
+            {/* Main Content Area */}
+            <div className="flex gap-8 flex-1 min-h-0">
+                {/* Left Sidebar - Advanced Filters */}
+                <TrendingFilters filters={filters} onFiltersChange={setFilters} />
 
-            {/* Main Content */}
-            <div className="flex gap-6 flex-1 overflow-hidden">
-                {/* Filters Sidebar */}
-                <div className="w-80 flex-shrink-0 overflow-y-auto">
-                    <TrendingFilters filters={filters} onFiltersChange={setFilters} />
-                </div>
+                {/* Right Content Area */}
+                <div className="flex-1 flex flex-col min-w-0 bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-6 shadow-lg">
+                    {/* Tab Navigation */}
+                    <div className="flex gap-3 mb-6">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.value}
+                                onClick={() => setActiveTab(tab.value)}
+                                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${activeTab === tab.value
+                                        ? 'bg-[#FFD1D1] text-black shadow-lg shadow-[#FFD1D1]/20'
+                                        : 'bg-[#696969]/50 text-[#D1D1D1]/70 hover:bg-[#696969] hover:text-[#D1D1D1] border border-[#D1D1D1]/10'
+                                    }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
 
-                {/* Trending Items List */}
-                <div className="flex-1 overflow-y-auto">
-                    {loading ? (
-                        <div className="flex justify-center items-center h-64">
-                            <LoadingSpinner className="w-10 h-10 text-[#FFD1D1]" />
-                        </div>
-                    ) : trendingItems.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-64 text-center">
-                            <div className="text-6xl mb-4">🔍</div>
-                            <h3 className="text-xl font-semibold text-white mb-2">
-                                No trending {activeTab} found
-                            </h3>
-                            <p className="text-gray-400 text-sm max-w-md">
-                                Try adjusting your filters or check back later when the community has been more active!
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {trendingItems.map((item, index) => (
-                                <TrendingCard
-                                    key={item.id}
-                                    item={item}
-                                    rank={index + 1}
-                                />
-                            ))}
-                        </div>
-                    )}
+                    {/* Content Area with Scroll */}
+                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                        {loading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <LoadingSpinner />
+                            </div>
+                        ) : trendingItems.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-64 text-center">
+                                <div className="w-16 h-16 rounded-full bg-[#FFD1D1]/20 flex items-center justify-center mb-4">
+                                    <svg className="w-8 h-8 text-[#D1D1D1]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                    </svg>
+                                </div>
+                                <p className="text-xl font-semibold text-[#D1D1D1] mb-2">No trending items found</p>
+                                <p className="text-sm text-[#D1D1D1]/50">Try adjusting your filters or check back later</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3 pb-4">
+                                {trendingItems.map((item, index) => (
+                                    <TrendingCard
+                                        key={item.id}
+                                        item={item}
+                                        rank={index + 1}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
+
+            <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #696969;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #FFD1D1;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #FFD1D1;
+          opacity: 0.8;
+        }
+      `}</style>
         </div>
     );
 };

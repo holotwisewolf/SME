@@ -8,6 +8,8 @@ export type SortBy =
     | 'top-rated'           // Highest average rating
     | 'most-ratings'        // Most rating count
     | 'most-commented'      // Most comment count
+    | 'most-favorited'      // Most favorited
+    | 'most-activity'       // Most overall activity (ratings + comments + tags + favorites)
     | 'recently-commented'  // Latest comment timestamp
     | 'newly-tagged';       // Most recent tag additions
 
@@ -16,7 +18,7 @@ export interface TrendingFilters {
     sortBy: SortBy;
     tags?: string[];           // Filter by tag IDs
     genres?: string[];         // Filter by Spotify genres
-    minRating?: number;        // Minimum average rating (1-10)
+    minRating?: number;        // Minimum average rating (1-5)
     activityAge?: number;      // Max days since last activity
 }
 
