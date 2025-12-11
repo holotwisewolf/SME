@@ -112,3 +112,15 @@
     - Ctrl + F search /* added onclick on the album img */
     - search /*notion logo YJ can modified*/
     - search /* Album Detail Modal */
+
+
+
+### 2025-12-11(Matthew)
+### Fixed
+- **UI Layout (Add Track Modal):**
+  - Modified `src/features/spotify/components/SpotifyResultItem.tsx` to accept a `className` prop for custom styling.
+  - Updated `src/features/playlists/components/AddTrackModal.tsx` to apply right padding (`pr-24`) to result items. This prevents the "Add" button from overlapping with the track duration and text.
+
+- **Playlist Auto-Refresh & Auth Loading:**
+  - Modified `src/features/playlists/components/PlaylistDashboard.tsx`: Added `supabase.auth.onAuthStateChange` listener to automatically load playlists immediately upon login or session restore.
+  - Modified `PlaylistCard.tsx` & `AddTrackModal.tsx`: Implemented a callback mechanism (`onTrackAdded` and `refreshTrigger`) to immediately reload the playlist track list after a new song is added.

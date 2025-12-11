@@ -117,6 +117,7 @@ export const AddTrackModal: React.FC<AddTrackModalProps> = ({
                                         track={track}
                                         isSelected={false}
                                         onSelect={() => handleAddTrack(track)}
+                                        className="pr-24" 
                                     />
                                     {/* Add Button Overlay */}
                                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 ${addingTrackId === track.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>

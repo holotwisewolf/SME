@@ -7,21 +7,28 @@ interface SpotifyResultItemProps {
     track: SpotifyTrack;
     isSelected: boolean;
     onSelect: (track: SpotifyTrack) => void;
+    className?: string; 
 }
 
-const SpotifyResultItem: React.FC<SpotifyResultItemProps> = ({ track, isSelected, onSelect }) => {
+const SpotifyResultItem: React.FC<SpotifyResultItemProps> = ({ 
+    track, 
+    isSelected, 
+    onSelect,
+    className = '' 
+}) => {
     // Get smallest image for list view
     const imageUrl = track?.album?.images?.length > 0
         ? track.album.images[track.album.images.length - 1].url
-        : ''; // Fallback placeholder could be added
+        : ''; 
 
     return (
         <motion.div
             layout
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className={`grid grid-cols-[auto_1fr_auto] items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors group ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'
-                }`}
+            className={`grid grid-cols-[auto_1fr_auto] items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors group ${
+                isSelected ? 'bg-white/10' : 'hover:bg-white/5'
+            } ${className}`}
             onClick={() => onSelect(track)}
         >
             {/* Album Art */}
