@@ -24,6 +24,7 @@ import UserSettings from "./features/user/user_pages/UserSettings";
 import { TracksFullPage } from "./features/spotify/pages/TracksFullPage";
 import { AlbumsFullPage } from "./features/spotify/pages/AlbumsFullPage";
 import { ArtistsFullPage } from "./features/spotify/pages/ArtistsFullPage";
+import Trending from "./pages/discovery/Trending";
 
 import { ErrorProvider } from "./context/ErrorContext";
 import ErrorMessage from "./components/ui/ErrorMessage";
@@ -117,6 +118,18 @@ function App() {
                       </PageWrapper>
                     }
                   />
+
+                  {/* DISCOVERY --------------------- */}
+                  <Route path="/discovery">
+                    <Route
+                      path="trending"
+                      element={
+                        <PageWrapper>
+                          <Trending />
+                        </PageWrapper>
+                      }
+                    />
+                  </Route>
 
                   <Route path="/testing-ground" element={
                     <DevRoute>
