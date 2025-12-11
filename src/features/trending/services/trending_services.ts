@@ -37,6 +37,12 @@ function getSortClause(sortBy: SortBy): { column: string; ascending: boolean } {
             return { column: 'rating_count', ascending: false };
         case 'most-commented':
             return { column: 'comment_count', ascending: false };
+        case 'most-favorited':
+            return { column: 'favorite_count', ascending: false };
+        case 'most-activity':
+            // Sort by rating_count as proxy for overall activity
+            // (items with more ratings tend to have more overall engagement)
+            return { column: 'rating_count', ascending: false };
         case 'recently-commented':
             // Fallback to comment count since we don't have timestamps
             return { column: 'comment_count', ascending: false };
@@ -176,8 +182,10 @@ async function filterByTags(items: any[], tagIds: string[]): Promise<any[]> {
  * Enrich trending items with metadata from Spotify API or playlists table
  */
 async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]> {
-    // Separate playlists from tracks/albums
+    // Separate items by type
     const playlists = items.filter(item => item.type === 'playlist');
+    const tracks = items.filter(item => item.type === 'track');
+    const albums = items.filter(item => item.type === 'album');
 
     // Fetch playlist metadata from database
     if (playlists.length > 0) {
@@ -197,9 +205,49 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
         }
     }
 
-    // For tracks/albums, we would fetch from Spotify API
-    // This would require the spotify_services integration
-    // For now, we'll leave them with empty names and handle in the component
+    // Fetch track metadata from Spotify API
+    if (tracks.length > 0) {
+        try {
+            const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
+            const trackIds = tracks.map(t => t.id);
+            const spotifyData = await getMultipleTracks(trackIds);
+
+            if (spotifyData?.tracks) {
+                tracks.forEach(track => {
+                    const spotifyTrack = spotifyData.tracks.find((t: any) => t?.id === track.id);
+                    if (spotifyTrack) {
+                        track.name = spotifyTrack.name;
+                        track.artist = spotifyTrack.artists?.[0]?.name;
+                        track.imageUrl = spotifyTrack.album?.images?.[0]?.url;
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching track metadata from Spotify:', error);
+        }
+    }
+
+    // Fetch album metadata from Spotify API
+    if (albums.length > 0) {
+        try {
+            const { getMultipleAlbums } = await import('../../spotify/services/spotify_services');
+            const albumIds = albums.map(a => a.id);
+            const spotifyData = await getMultipleAlbums(albumIds);
+
+            if (spotifyData?.albums) {
+                albums.forEach(album => {
+                    const spotifyAlbum = spotifyData.albums.find((a: any) => a?.id === album.id);
+                    if (spotifyAlbum) {
+                        album.name = spotifyAlbum.name;
+                        album.artist = spotifyAlbum.artists?.[0]?.name;
+                        album.imageUrl = spotifyAlbum.images?.[0]?.url;
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching album metadata from Spotify:', error);
+        }
+    }
 
     return items;
 }
