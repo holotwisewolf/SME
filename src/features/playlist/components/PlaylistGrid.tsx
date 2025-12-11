@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PlaylistCard from './PlaylistCard';
 import type { Tables } from '../../../types/supabase';
-import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, closestCenter } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, rectIntersection } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { addTrackToPlaylist, removeTrackFromPlaylist } from '../services/playlist_services';
@@ -121,7 +121,7 @@ const PlaylistGrid: React.FC<PlaylistGridProps> = ({ playlists, onDelete }) => {
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
-            collisionDetection={closestCenter}
+            collisionDetection={rectIntersection}
         >
             <div className="border border-[white/60] rounded-xl p-6 relative bg-[#444444]">
                 {sortedPlaylists.length === 0 ? (
