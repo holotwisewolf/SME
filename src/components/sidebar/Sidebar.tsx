@@ -11,6 +11,7 @@ import SettingsIcon from '../ui/SettingsIcon';
 import type { MenuItem } from './SidebarSubItem';
 import { AuthService } from '../../features/auth/services/auth_services';
 import { useLogin } from '../../features/auth/components/LoginProvider';
+import { LayoutDashboard, Activity, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
     isExpanded: boolean;
@@ -41,13 +42,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
             ]
         },
         {
-            path: '/discovery/trending',
+            path: '/discovery/dashboard',
             icon: FavouritesIcon,
             label: 'Discovery',
             subItems: [
-                { path: '/discovery/trending', icon: folderIcon, label: 'Trending' },
-                { path: '/discovery/community-discovery', icon: musicIcon, label: 'Community Activity' },
-                { path: '/discovery/for-you', icon: musicIcon, label: 'For You' }
+                { path: '/discovery/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+                { path: '/discovery/activity', icon: Activity, label: 'Community Activity' },
+                { path: '/discovery/for-you', icon: Sparkles, label: 'For You' }
             ]
         },
         { path: '/songs', icon: musicIcon, label: 'Songs' },

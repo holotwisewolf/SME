@@ -24,7 +24,9 @@ import UserSettings from "./features/user/user_pages/UserSettings";
 import { TracksFullPage } from "./features/spotify/pages/TracksFullPage";
 import { AlbumsFullPage } from "./features/spotify/pages/AlbumsFullPage";
 import { ArtistsFullPage } from "./features/spotify/pages/ArtistsFullPage";
-import Trending from "./pages/discovery/Trending";
+import Dashboard from "./pages/discovery/Dashboard";
+import CommunityActivity from "./pages/discovery/CommunityActivity";
+import ForYou from "./pages/discovery/ForYou";
 
 import { ErrorProvider } from "./context/ErrorContext";
 import ErrorMessage from "./components/ui/ErrorMessage";
@@ -122,10 +124,26 @@ function App() {
                   {/* DISCOVERY --------------------- */}
                   <Route path="/discovery">
                     <Route
-                      path="trending"
+                      path="dashboard"
                       element={
                         <PageWrapper>
-                          <Trending />
+                          <Dashboard />
+                        </PageWrapper>
+                      }
+                    />
+                    <Route
+                      path="activity"
+                      element={
+                        <PageWrapper>
+                          <CommunityActivity />
+                        </PageWrapper>
+                      }
+                    />
+                    <Route
+                      path="for-you"
+                      element={
+                        <PageWrapper>
+                          <ForYou />
                         </PageWrapper>
                       }
                     />

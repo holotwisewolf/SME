@@ -369,3 +369,141 @@ export async function getTrendingTags(timeRange: TimeRange, limit = 20): Promise
         .sort((a, b) => b.count - a.count)
         .slice(0, limit);
 }
+
+/**
+ * Get recent community activity (ratings, comments, favorites)
+ */
+export async function getRecentActivity(limit = 10): Promise<any[]> {
+    try {
+        const activities: any[] = [];
+
+        // Fetch recent ratings
+        const { data: ratings } = await supabase
+            .from('ratings')
+            .select('id, item_id, item_type, rating, created_at, profiles(username)')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (ratings) {
+            ratings.forEach(rating => {
+                activities.push({
+                    id: rating.id,
+                    type: 'rating',
+                    user: (rating.profiles as any)?.username || 'Unknown',
+                    itemId: rating.item_id,
+                    itemType: rating.item_type,
+                    value: rating.rating,
+                    timestamp: rating.created_at,
+                });
+            });
+        }
+
+        // Fetch recent comments
+        const { data: comments } = await supabase
+            .from('comments')
+            .select('id, item_id, item_type, comment_text, created_at, profiles(username)')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (comments) {
+            comments.forEach(comment => {
+                activities.push({
+                    id: comment.id,
+                    type: 'comment',
+                    user: (comment.profiles as any)?.username || 'Unknown',
+                    itemId: comment.item_id,
+                    itemType: comment.item_type,
+                    preview: comment.comment_text?.substring(0, 50) + (comment.comment_text?.length > 50 ? '...' : ''),
+                    timestamp: comment.created_at,
+                });
+            });
+        }
+
+        // Fetch recent favorites
+        const { data: favorites } = await supabase
+            .from('favourites')
+            .select('id, item_id, item_type, created_at, profiles(username)')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (favorites) {
+            favorites.forEach(fav => {
+                activities.push({
+                    id: fav.id,
+                    type: 'favorite',
+                    user: (fav.profiles as any)?.username || 'Unknown',
+                    itemId: fav.item_id,
+                    itemType: fav.item_type,
+                    timestamp: fav.created_at,
+                });
+            });
+        }
+
+        // Sort all activities by timestamp and limit
+        return activities
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .slice(0, limit);
+
+    } catch (error) {
+        console.error('Error fetching recent activity:', error);
+        return [];
+    }
+}
+
+/**
+ * Get community quick statistics
+ */
+export async function getCommunityQuickStats(): Promise<{
+    totalItems: number;
+    activeUsers: number;
+    thisWeek: number;
+}> {
+    try {
+        // Get total items count
+        const { count: totalItems } = await supabase
+            .from('item_stats')
+            .select('*', { count: 'exact', head: true });
+
+        // Get active users (users who have rated/commented in last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const { data: activeRaters } = await supabase
+            .from('ratings')
+            .select('user_id')
+            .gte('created_at', thirtyDaysAgo.toISOString());
+
+        const { data: activeCommenters } = await supabase
+            .from('comments')
+            .select('user_id')
+            .gte('created_at', thirtyDaysAgo.toISOString());
+
+        const uniqueUsers = new Set([
+            ...(activeRaters?.map(r => r.user_id) || []),
+            ...(activeCommenters?.map(c => c.user_id) || [])
+        ]);
+
+        // Get items added this week
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const { count: thisWeek } = await supabase
+            .from('item_stats')
+            .select('*', { count: 'exact', head: true })
+            .gte('created_at', sevenDaysAgo.toISOString());
+
+        return {
+            totalItems: totalItems || 0,
+            activeUsers: uniqueUsers.size,
+            thisWeek: thisWeek || 0,
+        };
+
+    } catch (error) {
+        console.error('Error fetching community stats:', error);
+        return {
+            totalItems: 0,
+            activeUsers: 0,
+            thisWeek: 0,
+        };
+    }
+}
