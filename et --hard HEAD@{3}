@@ -1,0 +1,233 @@
+[33me3acb25[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m HEAD@{0}: pull --rebase (finish): returning to refs/heads/dev
+[33me3acb25[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m HEAD@{1}: pull --rebase (pick): backup trending
+[33m033bb80[m HEAD@{2}: pull --rebase (start): checkout 033bb80610f4725e9c33bc41ac53078557f1d2bb
+[33m457548b[m HEAD@{3}: commit: backup trending
+[33m197131b[m HEAD@{4}: pull --rebase (finish): returning to refs/heads/dev
+[33m197131b[m HEAD@{5}: pull --rebase (pick): testing trending
+[33mac389a9[m HEAD@{6}: pull --rebase (start): checkout ac389a97132ac36891c99c071958562bd56a6f3a
+[33mb36c206[m HEAD@{7}: commit: testing trending
+[33m96bed02[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{8}: checkout: moving from main to dev
+[33m96bed02[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{9}: merge dev: Fast-forward
+[33m4f900d5[m HEAD@{10}: checkout: moving from dev to main
+[33m96bed02[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{11}: rebase (abort): returning to refs/heads/dev
+[33mcf26c79[m HEAD@{12}: pull --rebase (start): checkout cf26c79b76909b16243e06ce4f0c1f734dc15bc2
+[33m96bed02[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{13}: commit: added placehold filter
+[33m50d8989[m HEAD@{14}: commit: added dragging in playlist
+[33ma3768e7[m HEAD@{15}: commit: added dragging in playlist
+[33m4f900d5[m HEAD@{16}: checkout: moving from main to dev
+[33m4f900d5[m HEAD@{17}: merge dev: Fast-forward
+[33ma53eb97[m HEAD@{18}: checkout: moving from dev to main
+[33m4f900d5[m HEAD@{19}: commit: added albums
+[33m60dae59[m HEAD@{20}: commit: added albums
+[33mdc72f80[m HEAD@{21}: commit: polished playlist ad tracks
+[33mdd04d56[m HEAD@{22}: commit: finished tracks
+[33m76e3ec0[m HEAD@{23}: commit: playlist mostly done
+[33m6527116[m HEAD@{24}: commit: fixed playlist
+[33ma53eb97[m HEAD@{25}: merge main: Fast-forward
+[33m4fdfc90[m HEAD@{26}: checkout: moving from main to dev
+[33ma53eb97[m HEAD@{27}: checkout: moving from main to main
+[33ma53eb97[m HEAD@{28}: commit: fixed spotify login
+[33me2e4001[m HEAD@{29}: commit: fixed playlist stuff
+[33mc0f3968[m HEAD@{30}: commit: fixed spotify login
+[33m4e41d2d[m HEAD@{31}: commit: fixed spotify login
+[33m94f29af[m HEAD@{32}: commit: fixed spotify login
+[33m841f36f[m HEAD@{33}: commit: fixed spotify login
+[33m2e34020[m HEAD@{34}: checkout: moving from main to main
+[33m2e34020[m HEAD@{35}: merge dev: Merge made by the 'ort' strategy.
+[33m089bd0b[m HEAD@{36}: checkout: moving from dev to main
+[33m4fdfc90[m HEAD@{37}: commit: still working on lbrary playlist and tracks
+[33mfad04df[m HEAD@{38}: commit: working on liked tracks
+[33mef34cb6[m HEAD@{39}: commit: added black
+[33m6b37c21[m HEAD@{40}: checkout: moving from main to dev
+[33m089bd0b[m HEAD@{41}: merge dev: Merge made by the 'ort' strategy.
+[33m9050eec[m HEAD@{42}: checkout: moving from dev to main
+[33m6b37c21[m HEAD@{43}: checkout: moving from dev to dev
+[33m6b37c21[m HEAD@{44}: commit: still need to change playlist colour
+[33m7967b8e[m HEAD@{45}: commit: playlist features
+[33m337c5a4[m HEAD@{46}: checkout: moving from main to dev
+[33m9050eec[m HEAD@{47}: merge dev: Merge made by the 'ort' strategy.
+[33m0aad949[m HEAD@{48}: checkout: moving from dev to main
+[33m337c5a4[m HEAD@{49}: commit: revert supabase changes
+[33m820fd7e[m HEAD@{50}: commit: supabase changed item_id to uuid
+[33mfc0b613[m HEAD@{51}: commit: ui changes
+[33m2a85ece[m HEAD@{52}: commit: ui
+[33md852ff6[m HEAD@{53}: pull --rebase (finish): returning to refs/heads/dev
+[33md852ff6[m HEAD@{54}: pull --rebase (pick): changed sidebar
+[33m9ede4ef[m HEAD@{55}: pull --rebase (start): checkout 9ede4ef6d7b3af3d3e67a87ffbe78f9aac7aeb2d
+[33m501990b[m HEAD@{56}: commit: changed sidebar
+[33m88ccbba[m HEAD@{57}: commit: fixed deletions
+[33mc7b12a5[m HEAD@{58}: pull --rebase: Fast-forward
+[33m3eae998[m HEAD@{59}: pull --rebase origin dev (finish): returning to refs/heads/dev
+[33m3eae998[m HEAD@{60}: pull --rebase origin dev (pick): changed title not updating bug
+[33mf9fa1ee[m HEAD@{61}: pull --rebase origin dev (pick): ui changes 3
+[33mb655270[m HEAD@{62}: pull --rebase origin dev (start): checkout b655270b628172efb0eab388ba56b1b0d6065c97
+[33mfa5b224[m HEAD@{63}: commit: changed title not updating bug
+[33m2e3536c[m HEAD@{64}: commit: ui changes 3
+[33m691aa09[m HEAD@{65}: commit: recovered playlist.tsx
+[33mf53677d[m HEAD@{66}: commit: ui changes 2
+[33m08da33c[m HEAD@{67}: commit: ui changes
+[33mae20fea[m HEAD@{68}: commit: ui
+[33m667c9af[m HEAD@{69}: commit: better ui
+[33m4bcc754[m HEAD@{70}: commit: better ui
+[33mb1dfbb9[m HEAD@{71}: commit: shitty ui
+[33m59c953e[m HEAD@{72}: commit: anon sign in working
+[33me2beb8b[m HEAD@{73}: checkout: moving from main to dev
+[33m0aad949[m HEAD@{74}: merge dev: Merge made by the 'ort' strategy.
+[33mccefea7[m HEAD@{75}: checkout: moving from dev to main
+[33me2beb8b[m HEAD@{76}: commit: fixed some bugs
+[33madea6f1[m HEAD@{77}: checkout: moving from main to dev
+[33mccefea7[m HEAD@{78}: merge dev: Merge made by the 'ort' strategy.
+[33mca31785[m HEAD@{79}: checkout: moving from dev to main
+[33madea6f1[m HEAD@{80}: commit: updated supabase type
+[33m145f023[m HEAD@{81}: pull --rebase: Fast-forward
+[33mbbca3ec[m HEAD@{82}: pull --rebase: Fast-forward
+[33m7ed0666[m HEAD@{83}: commit: still fixing fav button
+[33mdb834bd[m HEAD@{84}: commit: trying to add favourites and playlist objects
+[33m5ddf3cc[m HEAD@{85}: commit: added buckets
+[33m8b462f1[m HEAD@{86}: checkout: moving from main to dev
+[33mca31785[m HEAD@{87}: merge dev: Merge made by the 'ort' strategy.
+[33md6bcd2e[m HEAD@{88}: checkout: moving from dev to main
+[33m8b462f1[m HEAD@{89}: commit: changed supabase schema
+[33mfaf45b8[m HEAD@{90}: checkout: moving from main to dev
+[33md6bcd2e[m HEAD@{91}: checkout: moving from main to main
+[33md6bcd2e[m HEAD@{92}: merge dev: Merge made by the 'ort' strategy.
+[33mba7488b[m HEAD@{93}: checkout: moving from dev to main
+[33mfaf45b8[m HEAD@{94}: commit: fixed search
+[33m4f6e81d[m HEAD@{95}: checkout: moving from main to dev
+[33mba7488b[m HEAD@{96}: merge dev: Merge made by the 'ort' strategy.
+[33me66a14f[m HEAD@{97}: checkout: moving from dev to main
+[33m4f6e81d[m HEAD@{98}: commit: In preparation of new changes
+[33m10e81b3[m HEAD@{99}: commit: Search function finally working
+[33m70b8357[m HEAD@{100}: reset: moving to 70b8357
+[33mfb3a8f5[m HEAD@{101}: checkout: moving from 70b83575a704e889a7e0f31fee2a87a2a210eab7 to dev
+[33m70b8357[m HEAD@{102}: checkout: moving from dev to 70b8357
+[33mfb3a8f5[m HEAD@{103}: checkout: moving from 70b83575a704e889a7e0f31fee2a87a2a210eab7 to dev
+[33m70b8357[m HEAD@{104}: commit: fixed a bunch of shit and restructure folder
+[33mfb3a8f5[m HEAD@{105}: checkout: moving from main to fb3a8f5
+[33me66a14f[m HEAD@{106}: checkout: moving from dev to main
+[33mfb3a8f5[m HEAD@{107}: checkout: moving from main to dev
+[33me66a14f[m HEAD@{108}: merge dev: Merge made by the 'ort' strategy.
+[33m4b6871b[m HEAD@{109}: checkout: moving from dev to main
+[33mfb3a8f5[m HEAD@{110}: commit: profile update
+[33m7fce692[m HEAD@{111}: commit: profile updaate
+[33m35c1e6e[m HEAD@{112}: commit: polishing..
+[33m3b55d30[m HEAD@{113}: commit: polishing
+[33m41e80ee[m HEAD@{114}: commit: polished profile settings etc
+[33me7fcc60[m HEAD@{115}: commit: Actually able to login now
+[33med33a9c[m HEAD@{116}: commit: cleaned up ui
+[33mcb7d6d6[m HEAD@{117}: commit: added sign up
+[33mfde9e78[m HEAD@{118}: commit: Sign up page
+[33m4442de4[m HEAD@{119}: commit: added testing_ground
+[33md04b52c[m HEAD@{120}: pull --rebase origin dev: Fast-forward
+[33mda6e7ec[m HEAD@{121}: commit: added comments_services
+[33ma884569[m HEAD@{122}: checkout: moving from main to dev
+[33m4b6871b[m HEAD@{123}: merge dev: Merge made by the 'ort' strategy.
+[33m1d0919d[m HEAD@{124}: checkout: moving from dev to main
+[33ma884569[m HEAD@{125}: commit: sign up page need to add back button and step 2
+[33m050a369[m HEAD@{126}: commit: Sign up
+[33mde8b534[m HEAD@{127}: commit: Log in
+[33md2962f7[m HEAD@{128}: commit: cleaned up
+[33m685f5c4[m HEAD@{129}: commit: Login overlay
+[33m8180f1b[m HEAD@{130}: checkout: moving from main to dev
+[33m1d0919d[m HEAD@{131}: merge dev: Merge made by the 'ort' strategy.
+[33m7b1ded9[m HEAD@{132}: checkout: moving from dev to main
+[33m8180f1b[m HEAD@{133}: commit: fixed type in service
+[33mf42c510[m HEAD@{134}: pull --rebase origin dev (finish): returning to refs/heads/dev
+[33mf42c510[m HEAD@{135}: pull --rebase origin dev (pick): changed program structure
+[33m8de6185[m[33m ([m[1;31morigin/feature/login-page[m[33m)[m HEAD@{136}: pull --rebase origin dev (start): checkout 8de6185015e561e8866eabfb739d0327afc73060
+[33m6568201[m HEAD@{137}: commit: changed program structure
+[33m9256a24[m HEAD@{138}: pull --rebase origin dev (finish): returning to refs/heads/dev
+[33m9256a24[m HEAD@{139}: pull --rebase origin dev (pick): added placeholder pages
+[33mc2ee08f[m HEAD@{140}: pull --rebase origin dev (pick): added folder structure
+[33m0fc21f0[m HEAD@{141}: pull --rebase origin dev (start): checkout 0fc21f043c437725fc4adc7a26b2948627c6eab8
+[33m81339eb[m HEAD@{142}: commit: added placeholder pages
+[33m21df858[m HEAD@{143}: commit: added folder structure
+[33m3fabeba[m HEAD@{144}: checkout: moving from main to dev
+[33m7b1ded9[m HEAD@{145}: merge dev: Merge made by the 'ort' strategy.
+[33mc175c78[m HEAD@{146}: checkout: moving from dev to main
+[33m3fabeba[m HEAD@{147}: commit: added Subfolders
+[33m033ffa8[m HEAD@{148}: commit: modularized
+[33m5add0a5[m HEAD@{149}: commit: added favourites page
+[33m3639c70[m HEAD@{150}: commit: added ui stuff
+[33mf979ebc[m HEAD@{151}: checkout: moving from main to dev
+[33mc175c78[m HEAD@{152}: merge dev: Merge made by the 'ort' strategy.
+[33m9f3c4c9[m HEAD@{153}: checkout: moving from dev to main
+[33mf979ebc[m HEAD@{154}: commit: Fixed header to look prettier
+[33mdae456f[m HEAD@{155}: checkout: moving from main to dev
+[33m9f3c4c9[m HEAD@{156}: merge dev: Merge made by the 'ort' strategy.
+[33mb3d7dbd[m HEAD@{157}: checkout: moving from dev to main
+[33mdae456f[m HEAD@{158}: commit: Changed theme
+[33m14ff3b9[m HEAD@{159}: checkout: moving from main to dev
+[33mb3d7dbd[m HEAD@{160}: merge dev: Merge made by the 'ort' strategy.
+[33ma5ed8ad[m HEAD@{161}: checkout: moving from dev to main
+[33m14ff3b9[m HEAD@{162}: commit: Worked on the UI/UX, still not completed other pages though
+[33m897dca1[m HEAD@{163}: commit: working on sidebar
+[33mfc03375[m HEAD@{164}: pull --rebase origin dev: Fast-forward
+[33m93e5ea4[m HEAD@{165}: pull --rebase origin dev: Fast-forward
+[33md6486a6[m HEAD@{166}: pull --rebase origin dev: Fast-forward
+[33m63578e8[m HEAD@{167}: pull --rebase origin dev: Fast-forward
+[33m8bb6218[m HEAD@{168}: checkout: moving from main to dev
+[33ma5ed8ad[m HEAD@{169}: checkout: moving from dev to main
+[33m8bb6218[m HEAD@{170}: commit: did better UI
+[33m92b1e92[m HEAD@{171}: pull --rebase origin dev (finish): returning to refs/heads/dev
+[33m92b1e92[m HEAD@{172}: pull --rebase origin dev (pick): Modularized Header Components
+[33m186edb1[m HEAD@{173}: pull --rebase origin dev (pick): changed clock style
+[33m02b5ff9[m HEAD@{174}: pull --rebase origin dev (pick): added clock
+[33m8da103b[m HEAD@{175}: pull --rebase origin dev (start): checkout 8da103be427ac8eaedea3aec3ec131571323917c
+[33m5ad327e[m HEAD@{176}: checkout: moving from main to dev
+[33ma5ed8ad[m HEAD@{177}: pull --rebase origin main: Fast-forward
+[33mb8928fd[m HEAD@{178}: checkout: moving from dev to main
+[33m5ad327e[m HEAD@{179}: commit: Modularized Header Components
+[33me4bf641[m HEAD@{180}: commit: changed clock style
+[33m9ee59b5[m HEAD@{181}: commit: added clock
+[33mb8928fd[m HEAD@{182}: reset: moving to origin/dev
+[33m4555ae1[m HEAD@{183}: checkout: moving from main to dev
+[33mb8928fd[m HEAD@{184}: checkout: moving from main to main
+[33mb8928fd[m HEAD@{185}: checkout: moving from dev to main
+[33m4555ae1[m HEAD@{186}: checkout: moving from main to dev
+[33mb8928fd[m HEAD@{187}: checkout: moving from dev to main
+[33m4555ae1[m HEAD@{188}: commit (merge): Merge branch 'dev' of https://github.com/holotwisewolf/SME into dev
+[33m508ff60[m HEAD@{189}: checkout: moving from main to dev
+[33mb8928fd[m HEAD@{190}: checkout: moving from dev to main
+[33m508ff60[m HEAD@{191}: checkout: moving from main to dev
+[33mb8928fd[m HEAD@{192}: checkout: moving from main to main
+[33mb8928fd[m HEAD@{193}: commit: changelog.md
+[33mebcffef[m HEAD@{194}: commit: added services
+[33m9a39b48[m HEAD@{195}: checkout: moving from compare-work to main
+[33m508ff60[m HEAD@{196}: checkout: moving from dev to compare-work
+[33m508ff60[m HEAD@{197}: rebase (finish): returning to refs/heads/dev
+[33m508ff60[m HEAD@{198}: rebase (pick): spotify api
+[33m9a39b48[m HEAD@{199}: rebase (start): checkout main
+[33m6c0a9ad[m HEAD@{200}: checkout: moving from main to dev
+[33m9a39b48[m HEAD@{201}: pull: Fast-forward
+[33m1dd57b4[m HEAD@{202}: checkout: moving from compare-work to main
+[33m6c885aa[m HEAD@{203}: pull origin dev: Merge made by the 'ort' strategy.
+[33m1dd57b4[m HEAD@{204}: checkout: moving from main to compare-work
+[33m1dd57b4[m HEAD@{205}: checkout: moving from dev to main
+[33m6c0a9ad[m HEAD@{206}: pull: Fast-forward
+[33m83a62df[m HEAD@{207}: checkout: moving from main to dev
+[33m1dd57b4[m HEAD@{208}: commit: added name
+[33mea0834b[m HEAD@{209}: commit: supabase cloud updated
+[33m17a18e8[m HEAD@{210}: commit: added necessary folder structure
+[33mc71ba31[m HEAD@{211}: commit: removed old v3plan
+[33m811407a[m HEAD@{212}: pull: Fast-forward
+[33m59a5b53[m HEAD@{213}: commit: removed migration file
+[33m1f17258[m HEAD@{214}: commit: added initial supabase database schema and their respective workflow in docs
+[33m33ece10[m HEAD@{215}: pull origin main: Fast-forward
+[33m83a62df[m HEAD@{216}: commit: Temporary front-end added
+[33mf200539[m HEAD@{217}: commit: removed env from history
+[33ma19a42a[m HEAD@{218}: commit: oopsies
+[33m55101ba[m HEAD@{219}: commit: removed some env stuff
+[33mb49b54a[m HEAD@{220}: commit: added setup.md
+[33mb013bd3[m HEAD@{221}: commit: setup the environment
+[33mecb4d29[m HEAD@{222}: commit: added scopes (features) and gantt chart (project timeline)
+[33m0d709ed[m HEAD@{223}: commit: removed V2plan
+[33md1970b9[m HEAD@{224}: commit: project_planV3
+[33m11b0d15[m HEAD@{225}: commit: changes to plan
+[33m439cd12[m HEAD@{226}: commit: project_planV2.md, old plan moved to local
+[33mc86790d[m HEAD@{227}: commit: modified plans again
+[33mb0c8173[m HEAD@{228}: commit: added project_plan.md mainly
+[33m0982d33[m HEAD@{229}: commit: changed prd
+[33m1d04e19[m HEAD@{230}: Branch: renamed refs/heads/main to refs/heads/main
+[33m1d04e19[m HEAD@{232}: Branch: renamed refs/heads/master to refs/heads/main
+[33m1d04e19[m HEAD@{234}: commit (initial): first commit
