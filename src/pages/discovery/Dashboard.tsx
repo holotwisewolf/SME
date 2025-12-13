@@ -87,6 +87,7 @@ const Dashboard: React.FC = () => {
                 if (playlist) {
                     setSelectedPlaylist(playlist);
                 } else {
+                    // Playlist was deleted - CASCADE DELETE will have cleaned up all references automatically
                     console.warn('Playlist not found in database:', item.id);
                 }
             } catch (error) {

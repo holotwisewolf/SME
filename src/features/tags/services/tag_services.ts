@@ -143,6 +143,33 @@ export async function getItemTags(
 }
 
 /**
+ * Get tags applied to an item by a specific user (creator)
+ * Also includes system tags (where creator_id is null)
+ */
+export async function getCreatorItemTags(
+  itemId: string,
+  itemType: ItemType,
+  creatorUserId: string
+): Promise<Tag[]> {
+  const { data, error } = await supabase
+    .from('item_tags')
+    .select(`
+      tag_id,
+      user_id,
+      tags (*)
+    `)
+    .eq('item_id', itemId)
+    .eq('item_type', itemType)
+    .or(`user_id.eq.${creatorUserId},user_id.is.null`);
+
+  if (error) {
+    throw new Error(`Failed to fetch creator tags: ${error.message}`);
+  }
+
+  return (data ?? []).map((entry) => entry.tags as Tag);
+}
+
+/**
  * Search for tags by name
  */
 export async function searchTags(query: string): Promise<Tag[]> {

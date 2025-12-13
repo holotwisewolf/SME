@@ -277,7 +277,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
             {/* Tags Container (Flexible Wrap) */}
             <div className="flex-1">
                 <div className="flex items-center gap-2 mb-3">
-                    <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>
+                    <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Creator Tags</h3>
                     {isEditingEnabled && (
                         <input
                             type="text"

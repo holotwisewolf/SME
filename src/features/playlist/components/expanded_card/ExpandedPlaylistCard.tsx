@@ -9,14 +9,13 @@ import {
     addPlaylistComment,
     updatePlaylistTitle,
     removeTrackFromPlaylist,
-    reorderPlaylistTracks,
     updatePlaylistPublicStatus,
     getUserPlaylistRating,
     deletePlaylist,
     updatePlaylistColor,
     updatePlaylistRating
 } from '../../services/playlist_services';
-import { getItemTags } from '../../../tags/services/tag_services';
+import { getItemTags, getCreatorItemTags } from '../../../tags/services/tag_services';
 import { getProfile, getSession } from '../../../auth/services/auth_services';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { useError } from '../../../../context/ErrorContext';
@@ -50,11 +49,14 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
 
     // Data States
     const [tracks, setTracks] = useState<any[]>([]);
-    const [tags, setTags] = useState<string[]>([]);
+    const [creatorTags, setCreatorTags] = useState<string[]>([]); // Tags added by creator only (for left column)
+    const [userTags, setUserTags] = useState<string[]>([]); // Tags added by current user (for Review tab)
+    const [communityTags, setCommunityTags] = useState<string[]>([]); // All tags (for Community tab)
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [userRating, setUserRating] = useState<number | null>(null);
     const [comments, setComments] = useState<any[]>([]);
-    const [creatorName, setCreatorName] = useState<string>('Unknown');
+    const [creatorName, setCreatorName] = useState('Creator');
+    const [currentUserName, setCurrentUserName] = useState('You');
     const [playlistTitle, setPlaylistTitle] = useState(currentTitle ?? playlist.title);
     const [isPublic, setIsPublic] = useState(playlist.is_public || false);
     const [playlistColor, setPlaylistColor] = useState<string | undefined>(currentColor || playlist.color || undefined);
@@ -104,25 +106,34 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const loadData = async () => {
         setLoading(true);
         try {
-            const [tracksData, tagsData, ratingRes, userRatingRes, commentsData, profileData] = await Promise.all([
+            // Get current user session
+            const session = await getSession();
+            const currentUserId = session?.user?.id;
+
+            const [tracksData, allTagsData, creatorTagsData, userTagsData, ratingRes, userRatingRes, commentsData, profileData, currentUserProfile] = await Promise.all([
                 fetchPlaylistTracksWithDetails(playlist.id),
-                getItemTags(playlist.id, 'playlist'),
+                getItemTags(playlist.id, 'playlist'), // All tags for community
+                getCreatorItemTags(playlist.id, 'playlist', playlist.user_id), // Only creator's tags for left column
+                currentUserId ? getCreatorItemTags(playlist.id, 'playlist', currentUserId) : Promise.resolve([]), // Current user's tags for Review tab
                 getPlaylistRating(playlist.id),
                 getUserPlaylistRating(playlist.id),
                 getPlaylistComments(playlist.id),
-                getProfile(playlist.user_id)
+                getProfile(playlist.user_id),
+                currentUserId ? getProfile(currentUserId) : Promise.resolve(null)
             ]);
 
             setTracks(tracksData);
-            setTags(tagsData.map(tag => tag.name)); // Extract tag names
+            setCreatorTags(creatorTagsData.map(tag => tag.name)); // Creator tags for left column
+            setUserTags(userTagsData.map(tag => tag.name)); // Current user's tags for Review tab
+            setCommunityTags(allTagsData.map(tag => tag.name)); // All tags for Community tab
             setRatingData(ratingRes);
             setUserRating(userRatingRes);
             setComments(commentsData);
-            if (profileData) {
-                setCreatorName(profileData.username || profileData.display_name || 'Unknown');
-            }
+            setCreatorName(profileData?.display_name || profileData?.username || 'Creator');
+            setCurrentUserName(currentUserProfile?.display_name || currentUserProfile?.username || 'You');
         } catch (error) {
             console.error('Error loading playlist details:', error);
+            showError('Failed to load playlist details');
         } finally {
             setLoading(false);
         }
@@ -181,7 +192,9 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                 id: track.id,
                 position: index
             }));
-            await reorderPlaylistTracks(updates);
+            // TODO: Implement track reordering in playlist_services.ts
+            // await reorderPlaylistTracks(updates);
+            console.log('Track reorder updates:', updates);
         } catch (error) {
             console.error('Error reordering tracks:', error);
             loadData(); // Revert on error
@@ -326,7 +339,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                     setImgError={setImgError}
                     ratingData={ratingData}
                     userRating={userRating}
-                    tags={tags}
+                    tags={creatorTags}
                     isEditingTitle={isEditingTitle}
                     setIsEditingTitle={setIsEditingTitle}
                     playlistTitle={playlistTitle}
@@ -396,11 +409,10 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                             <PlaylistReview
                                 playlist={playlist}
                                 userRating={userRating}
-                                tags={tags}
-                                setTags={setTags}
+                                tags={userTags}
+                                setTags={setUserTags}
                                 isEditingEnabled={isEditingEnabled}
-                                isOwner={isOwner}
-                                creatorName={creatorName}
+                                userName={currentUserName}
                                 onDescriptionChange={(newDescription) => {
                                     // Update the playlist object to reflect the new description
                                     playlist.description = newDescription;
@@ -416,7 +428,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                                 handleAddComment={handleAddComment}
                                 commentLoading={commentLoading}
                                 ratingData={ratingData}
-                                tags={tags}
+                                tags={communityTags}
                             />
                         )}
 

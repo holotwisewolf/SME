@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MoreOptionsIcon } from '../../../../components/ui/MoreOptionsIcon';
-import { updatePlaylistDescription } from '../../services/playlist_services';
-import { getPreMadeTags, assignTagToItem } from '../../../tags/services/tag_services';
+import { updatePlaylistDescription, updatePlaylistRating } from '../../services/playlist_services';
+import { getPreMadeTags, assignTagToItem, createCustomTag, searchTags, removeTagFromItem } from '../../../tags/services/tag_services';
 import type { Tag } from '../../../tags/type/tag_types';
 import { useError } from '../../../../context/ErrorContext';
 import { useSuccess } from '../../../../context/SuccessContext';
@@ -14,8 +14,7 @@ interface PlaylistReviewProps {
     setTags: (tags: string[]) => void;
     onDescriptionChange?: (newDescription: string) => void;
     isEditingEnabled?: boolean;
-    isOwner?: boolean;
-    creatorName?: string;
+    userName?: string; // Current user's display name
 }
 
 export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
@@ -25,15 +24,15 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
     setTags,
     onDescriptionChange,
     isEditingEnabled = true,
-    isOwner = true,
-    creatorName = 'Creator'
+    userName = 'You'
 }) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
 
-    const [reviewText, setReviewText] = useState(playlist.description || '');
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
+    const [customTagInput, setCustomTagInput] = useState('');
+    const [reviewText, setReviewText] = useState(playlist.description || '');
 
     // Sync with playlist prop changes
     useEffect(() => {
@@ -108,6 +107,72 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
         }
     };
 
+    const handleAddCustomTag = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && customTagInput.trim()) {
+            const tagName = customTagInput.trim();
+
+            // Check if tag already exists in current playlist
+            if (tags.includes(tagName)) {
+                showError('Tag already added to this playlist');
+                return;
+            }
+
+            try {
+                // First, search for existing tag
+                const existingTags = await searchTags(tagName);
+                let tagToAssign;
+
+                if (existingTags.length > 0 && existingTags[0].name.toLowerCase() === tagName.toLowerCase()) {
+                    // Tag exists, use it
+                    tagToAssign = existingTags[0];
+                } else {
+                    // Tag doesn't exist, create it
+                    tagToAssign = await createCustomTag(tagName);
+                }
+
+                // Assign the tag to the playlist
+                await assignTagToItem(playlist.id, 'playlist', tagToAssign.id);
+                setTags([...tags, tagToAssign.name]);
+                setCustomTagInput('');
+                showSuccess(`Tag #${tagToAssign.name} added`);
+            } catch (error) {
+                console.error('Error adding custom tag:', error);
+                showError('Failed to add custom tag');
+            }
+        }
+    };
+
+    const handleStarClick = async (rating: number) => {
+        try {
+            await updatePlaylistRating(playlist.id, rating);
+            showSuccess(`Rated ${rating}/5`);
+            // Trigger parent to reload rating data
+            window.location.reload(); // Simple reload for now
+        } catch (error) {
+            console.error('Error updating rating:', error);
+            showError('Failed to update rating');
+        }
+    };
+
+    const handleRemoveTag = async (tagToRemove: string) => {
+        try {
+            // Find the tag ID from the available tags or search for it
+            const existingTags = await searchTags(tagToRemove);
+            const tagToDelete = existingTags.find(t => t.name === tagToRemove);
+
+            if (tagToDelete) {
+                // Remove from database
+                await removeTagFromItem(playlist.id, 'playlist', tagToDelete.id);
+            }
+
+            // Remove from local state
+            setTags(tags.filter(tag => tag !== tagToRemove));
+            showSuccess(`Tag #${tagToRemove} removed`);
+        } catch (error) {
+            console.error('Error removing tag:', error);
+            showError('Failed to remove tag');
+        }
+    };
 
 
     return (
@@ -116,18 +181,24 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
             <div className="flex items-center justify-between mb-2 bg-white/5 p-4 rounded-xl border border-white/5">
                 <div>
                     <h3 className="text-white font-bold text-lg">Rating</h3>
-                    <p className="text-gray-400 text-xs">{isOwner ? 'Based on you' : `Based on ${creatorName}`}</p>
+                    <p className="text-gray-400 text-xs">Based on {userName}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-3xl font-bold text-[white]">
-                        {userRating || 0}
+                    <span
+                        className="text-3xl font-bold text-[white] cursor-pointer hover:text-gray-300 transition-colors"
+                        onClick={() => userRating !== null && handleStarClick(userRating)}
+                        title="Click to rate"
+                    >
+                        {userRating !== null ? (Number.isInteger(userRating) ? userRating : userRating.toFixed(1)) : 'Not Rated'}
                     </span>
                     <div className="flex flex-col">
                         <div className="flex text-yellow-400">
                             {[1, 2, 3, 4, 5].map((star) => (
                                 <svg
                                     key={star}
-                                    className={`w-4 h-4 ${star <= (userRating || 0) ? 'fill-current' : 'text-gray-600 fill-none'}`}
+                                    onClick={() => handleStarClick(star)}
+                                    className={`w-4 h-4 cursor-pointer transition-all hover:scale-110 ${star <= (userRating || 0) ? 'fill-current' : 'text-gray-600 fill-none'
+                                        }`}
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
                                     strokeWidth={2}
@@ -154,7 +225,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                             }
                         }}
                         readOnly={!isEditingEnabled}
-                        placeholder={isEditingEnabled ? "Write your thoughts on this playlist..." : (isOwner ? "No description provided, turn on edit mode to write in here.." : "No description provided by the creator.")}
+                        placeholder={isEditingEnabled ? "Write your thoughts on this playlist..." : (playlist.description ? "" : "Creator has not provided a description.")}
                         className={`w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed ${!isEditingEnabled ? 'cursor-default' : ''}`}
                     />
                 </div>
@@ -163,7 +234,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
             {/* Bottom Row: Tags */}
             <div className="mb-2">
                 <div className="flex items-center justify-between mb-2">
-                    <p className="text-gray-400 text-xs">{isOwner ? 'Personal Tags:' : 'Creator Tags:'}</p>
+                    <p className="text-gray-400 text-xs">Your Tags:</p>
                     <div className="relative tag-menu-container">
                         <button
                             onClick={() => setIsTagMenuOpen(!isTagMenuOpen)}
@@ -177,7 +248,20 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                                 <div className="px-3 py-2 border-b border-white/5 bg-white/5">
                                     <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">Add Tags</span>
                                 </div>
-                                <div className="max-h-48 overflow-y-auto custom-scrollbar">
+
+                                {/* Custom Tag Input */}
+                                <div className="px-3 py-2 border-b border-white/5">
+                                    <input
+                                        type="text"
+                                        value={customTagInput}
+                                        onChange={(e) => setCustomTagInput(e.target.value)}
+                                        onKeyDown={handleAddCustomTag}
+                                        placeholder="Press Enter to add"
+                                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
+                                    />
+                                </div>
+
+                                <div className="max-h-32 overflow-y-auto custom-scrollbar">
                                     {availableTags.filter(t => !tags.includes(t.name)).length > 0 ? (
                                         availableTags
                                             .filter(t => !tags.includes(t.name))
@@ -204,14 +288,26 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                 <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-hidden flex items-center">
                     {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                            {tags.map(tag => (
-                                <span key={tag} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded-full flex items-center gap-1 transition-colors">
-                                    #{tag}
+                            {tags.map((tag, index) => (
+                                <span
+                                    key={index}
+                                    className="group relative text-xs bg-white/10 text-gray-300 px-2 py-1 rounded-full hover:bg-white/20 transition-colors cursor-pointer"
+                                >
+                                    <span className="group-hover:opacity-0 transition-opacity">#{tag}</span>
+                                    <button
+                                        onClick={() => handleRemoveTag(tag)}
+                                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-200"
+                                        title="Remove tag"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
                                 </span>
                             ))}
                         </div>
                     ) : (
-                        <span className="text-gray-500 text-xs italic">No tags currently</span>
+                        <p className="text-gray-500 text-xs italic">No tags yet</p>
                     )}
                 </div>
             </div>

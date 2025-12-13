@@ -99,9 +99,9 @@ export const PlaylistCommunity: React.FC<PlaylistCommunityProps> = ({
                 )}
             </div>
 
-            {/* Global Tags Section */}
+            {/* Community Tags Section */}
             <div className="mb-2">
-                <p className="text-gray-400 text-xs mb-2">Tags:</p>
+                <p className="text-gray-400 text-xs mb-2">Community Tags:</p>
                 <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-hidden flex items-center">
                     {tags && tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
