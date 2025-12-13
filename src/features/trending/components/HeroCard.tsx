@@ -1,4 +1,4 @@
-// HeroCard - Large card component for top 3 trending items
+// HeroCard - Large card component for top 3 trending items (REDESIGNED)
 
 import React from 'react';
 import { motion } from 'framer-motion';
@@ -8,20 +8,21 @@ import { Star, MessageCircle, Heart, Tag } from 'lucide-react';
 interface HeroCardProps {
     item: TrendingItem;
     rank: number;
+    onClick?: () => void;
 }
 
-const HeroCard: React.FC<HeroCardProps> = ({ item, rank }) => {
-    // Gradient colors for top 3 ranks
-    const getRankGradient = (rank: number) => {
+const HeroCard: React.FC<HeroCardProps> = ({ item, rank, onClick }) => {
+    // Rank badge colors
+    const getRankColor = (rank: number) => {
         switch (rank) {
             case 1:
-                return 'from-[#FFD1D1] to-[#FFB5B5]'; // Gold-ish pink
+                return 'bg-[#FFD700]/90'; // Gold
             case 2:
-                return 'from-[#D1D1D1] to-[#B5B5B5]'; // Silver
+                return 'bg-[#C0C0C0]/90'; // Silver
             case 3:
-                return 'from-[#FFE5CC] to-[#FFCCAA]'; // Bronze-ish
+                return 'bg-[#CD7F32]/90'; // Bronze
             default:
-                return 'from-[#FFD1D1] to-[#FFB5B5]';
+                return 'bg-[#FFD1D1]/90';
         }
     };
 
@@ -30,83 +31,64 @@ const HeroCard: React.FC<HeroCardProps> = ({ item, rank }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, delay: rank * 0.1 }}
-            className="bg-[#292929] rounded-2xl p-6 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#FFD1D1]/10 cursor-pointer group"
+            className="bg-[#292929] rounded-xl p-4 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#FFD1D1]/10 cursor-pointer group"
+            onClick={onClick}
         >
             <div className="flex flex-col h-full">
-                {/* Rank Badge */}
-                <div className="flex items-start justify-between mb-4">
-                    <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${getRankGradient(rank)} flex items-center justify-center shadow-lg`}>
-                        <span className="text-black font-bold text-2xl">#{rank}</span>
-                    </div>
-
-                    {/* Type Badge */}
-                    <span className="px-3 py-1 bg-[#696969]/50 text-[#D1D1D1]/70 text-xs rounded-full capitalize border border-[#D1D1D1]/10">
-                        {item.type}
-                    </span>
-                </div>
-
-                {/* Cover Image */}
-                {item.imageUrl && (
-                    <div className="w-full aspect-square rounded-xl overflow-hidden mb-4 bg-[#696969]/30">
+                {/* Cover Image with Rank Badge Overlay */}
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 bg-[#696969]/30">
+                    {item.imageUrl && (
                         <img
                             src={item.imageUrl}
                             alt={item.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                    )}
+
+                    {/* Small Rank Badge - Overlaid on top-left */}
+                    <div className={`absolute top-2 left-2 w-8 h-8 rounded-md ${getRankColor(rank)} flex items-center justify-center shadow-lg backdrop-blur-sm`}>
+                        <span className="text-black font-bold text-sm">#{rank}</span>
                     </div>
-                )}
+                </div>
 
                 {/* Title & Artist */}
-                <div className="mb-4">
-                    <h3 className="text-xl font-bold text-[#D1D1D1] mb-1 line-clamp-2 group-hover:text-[#FFD1D1] transition-colors">
+                <div className="mb-3">
+                    <h3 className="text-base font-bold text-[#D1D1D1] mb-1 line-clamp-2 group-hover:text-[#FFD1D1] transition-colors">
                         {item.name || item.id}
                     </h3>
                     {item.artist && (
-                        <p className="text-[#D1D1D1]/60 text-sm">
+                        <p className="text-[#D1D1D1]/60 text-sm line-clamp-1">
                             {item.artist}
                         </p>
                     )}
                 </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-3 mt-auto">
+                {/* Inline Stats Row */}
+                <div className="flex items-center gap-3 text-xs text-[#D1D1D1]/70 flex-wrap mt-auto">
                     {/* Rating */}
-                    <div className="bg-[#696969]/30 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Star className="w-4 h-4 fill-[#FFD1D1] text-[#FFD1D1]" />
-                            <span className="text-[#D1D1D1] font-bold text-lg">{item.avgRating.toFixed(1)}</span>
-                        </div>
-                        <p className="text-[#D1D1D1]/50 text-xs">{item.ratingCount} ratings</p>
+                    <div className="flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 fill-[#FFD1D1] text-[#FFD1D1]" />
+                        <span className="font-semibold text-[#D1D1D1]">{item.avgRating.toFixed(1)}</span>
+                        <span className="text-[#D1D1D1]/50">({item.ratingCount})</span>
                     </div>
 
                     {/* Comments */}
-                    <div className="bg-[#696969]/30 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                            <MessageCircle className="w-4 h-4 text-[#FFD1D1]" />
-                            <span className="text-[#D1D1D1] font-bold text-lg">{item.commentCount}</span>
-                        </div>
-                        <p className="text-[#D1D1D1]/50 text-xs">comments</p>
+                    <div className="flex items-center gap-1">
+                        <MessageCircle className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                        <span>{item.commentCount}</span>
                     </div>
 
                     {/* Favorites */}
-                    {item.favoriteCount > 0 && (
-                        <div className="bg-[#696969]/30 rounded-lg p-3">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Heart className="w-4 h-4 text-[#FFD1D1]" />
-                                <span className="text-[#D1D1D1] font-bold text-lg">{item.favoriteCount}</span>
-                            </div>
-                            <p className="text-[#D1D1D1]/50 text-xs">favorites</p>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                        <Heart className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                        <span>{item.favoriteCount}</span>
+                    </div>
 
                     {/* Tags */}
                     {item.tagCount > 0 && (
-                        <div className="bg-[#696969]/30 rounded-lg p-3">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Tag className="w-4 h-4 text-[#FFD1D1]" />
-                                <span className="text-[#D1D1D1] font-bold text-lg">{item.tagCount}</span>
-                            </div>
-                            <p className="text-[#D1D1D1]/50 text-xs">tags</p>
+                        <div className="flex items-center gap-1">
+                            <Tag className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                            <span>{item.tagCount}</span>
                         </div>
                     )}
                 </div>

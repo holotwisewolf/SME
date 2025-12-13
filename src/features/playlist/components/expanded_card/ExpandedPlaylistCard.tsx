@@ -66,6 +66,16 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [isEditingEnabled, setIsEditingEnabled] = useState(false);
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isOwner, setIsOwner] = useState(false);
+
+    // Check if current user is the owner
+    useEffect(() => {
+        const checkOwnership = async () => {
+            const session = await getSession();
+            setIsOwner(session?.user?.id === playlist.user_id);
+        };
+        checkOwnership();
+    }, [playlist.user_id]);
 
     const handleUserRating = async (rating: number) => {
         try {
@@ -325,6 +335,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                     isEditingEnabled={isEditingEnabled}
                     onRatingUpdate={handleRatingUpdate}
                     trackCount={tracks.length}
+                    isOwner={isOwner}
                 />
 
                 {/* Right Column */}
@@ -388,6 +399,8 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                                 tags={tags}
                                 setTags={setTags}
                                 isEditingEnabled={isEditingEnabled}
+                                isOwner={isOwner}
+                                creatorName={creatorName}
                                 onDescriptionChange={(newDescription) => {
                                     // Update the playlist object to reflect the new description
                                     playlist.description = newDescription;
@@ -419,6 +432,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                                 onDelete={handleDeletePlaylist}
                                 color={playlistColor}
                                 onColorChange={handleColorChange}
+                                isOwner={isOwner}
                             />
                         )}
                     </div>
