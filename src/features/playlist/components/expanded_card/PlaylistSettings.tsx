@@ -29,6 +29,7 @@ interface PlaylistSettingsProps {
     onDelete?: () => void;
     color?: string;
     onColorChange: (color: string) => void;
+    isOwner?: boolean;
 }
 
 const PRESET_COLORS = [
@@ -54,7 +55,8 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
     onPublicStatusChange,
     onDelete,
     color,
-    onColorChange
+    onColorChange,
+    isOwner = false
 }) => {
     const { showError } = useError();
 
@@ -101,60 +103,66 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
                 </div>
 
                 {/* --- Edit --- */}
-                <div>
-                    <h3 className="text-white font-medium mb-2">Edit</h3>
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                            <span className="text-gray-300 text-sm">Enable Editing Mode</span>
-                            <button
-                                onClick={() => setIsEditingEnabled(!isEditingEnabled)}
-                                className={`w-10 h-6 rounded-full relative transition-colors ${isEditingEnabled ? 'bg-[#1DB954]' : 'bg-gray-600'}`}
-                            >
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isEditingEnabled ? 'right-1' : 'left-1'}`}></div>
-                            </button>
-                        </div>
+                {isOwner && (
+                    <div>
+                        <h3 className="text-white font-medium mb-2">Edit</h3>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                                <span className="text-gray-300 text-sm">Enable Editing Mode</span>
+                                <button
+                                    onClick={() => setIsEditingEnabled(!isEditingEnabled)}
+                                    className={`w-10 h-6 rounded-full relative transition-colors ${isEditingEnabled ? 'bg-[#1DB954]' : 'bg-gray-600'}`}
+                                >
+                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isEditingEnabled ? 'right-1' : 'left-1'}`}></div>
+                                </button>
+                            </div>
 
-                        <div className="p-3 bg-white/5 rounded-lg">
-                            <span className="text-gray-300 text-sm block mb-3">Playlist Color</span>
-                            <div className="flex flex-wrap gap-2">
-                                {PRESET_COLORS.map((presetColor) => (
-                                    <button
-                                        key={presetColor}
-                                        onClick={() => onColorChange(presetColor)}
-                                        className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ${color === presetColor ? 'ring-2 ring-white scale-110' : ''}`}
-                                        style={{ backgroundColor: presetColor }}
-                                        title={presetColor}
-                                    />
-                                ))}
+                            <div className="p-3 bg-white/5 rounded-lg">
+                                <span className="text-gray-300 text-sm block mb-3">Playlist Color</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {PRESET_COLORS.map((presetColor) => (
+                                        <button
+                                            key={presetColor}
+                                            onClick={() => onColorChange(presetColor)}
+                                            className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ${color === presetColor ? 'ring-2 ring-white scale-110' : ''}`}
+                                            style={{ backgroundColor: presetColor }}
+                                            title={presetColor}
+                                        />
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* --- Privacy --- */}
-                <div>
-                    <h3 className="text-white font-medium mb-2">Privacy</h3>
-                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                        <span className="text-gray-300 text-sm">Public Playlist</span>
-                        <button
-                            onClick={handlePublicToggle}
-                            className={`w-10 h-6 rounded-full relative transition-colors ${isPublic ? 'bg-[#1DB954]' : 'bg-gray-600'}`}
-                        >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isPublic ? 'right-1' : 'left-1'}`}></div>
-                        </button>
+                {isOwner && (
+                    <div>
+                        <h3 className="text-white font-medium mb-2">Privacy</h3>
+                        <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <span className="text-gray-300 text-sm">Public Playlist</span>
+                            <button
+                                onClick={handlePublicToggle}
+                                className={`w-10 h-6 rounded-full relative transition-colors ${isPublic ? 'bg-[#1DB954]' : 'bg-gray-600'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isPublic ? 'right-1' : 'left-1'}`}></div>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* --- Danger Zone --- */}
-                <div>
-                    <h3 className="text-white font-medium mb-2">Danger Zone</h3>
-                    <button
-                        onClick={onDelete}
-                        className="px-4 py-2 border border-solid border-red-500/50 text-red-500 rounded-lg hover:bg-red-500/10 transition-colors text-sm w-full text-left"
-                    >
-                        Delete Playlist
-                    </button>
-                </div>
+                {isOwner && onDelete && (
+                    <div>
+                        <h3 className="text-white font-medium mb-2">Danger Zone</h3>
+                        <button
+                            onClick={onDelete}
+                            className="px-4 py-2 border border-solid border-red-500/50 text-red-500 rounded-lg hover:bg-red-500/10 transition-colors text-sm w-full text-left"
+                        >
+                            Delete Playlist
+                        </button>
+                    </div>
+                )}
 
             </div>
         </div>

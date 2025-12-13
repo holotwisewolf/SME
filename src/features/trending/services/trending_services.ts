@@ -378,74 +378,85 @@ export async function getRecentActivity(limit = 10): Promise<any[]> {
         const activities: any[] = [];
 
         // Fetch recent ratings
-        const { data: ratings } = await supabase
-            .from('ratings')
-            .select('id, item_id, item_type, rating, created_at, profiles(username)')
-            .order('created_at', { ascending: false })
-            .limit(limit);
+        try {
+            const { data: ratings } = await supabase
+                .from('ratings')
+                .select('id, item_id, item_type, rating, created_at, user_id')
+                .order('created_at', { ascending: false })
+                .limit(limit);
 
-        if (ratings) {
-            ratings.forEach(rating => {
-                activities.push({
-                    id: rating.id,
-                    type: 'rating',
-                    user: (rating.profiles as any)?.username || 'Unknown',
-                    itemId: rating.item_id,
-                    itemType: rating.item_type,
-                    value: rating.rating,
-                    timestamp: rating.created_at,
+            if (ratings) {
+                ratings.forEach(rating => {
+                    activities.push({
+                        id: rating.id,
+                        type: 'rating',
+                        user: rating.user_id?.substring(0, 8) || 'Unknown',
+                        itemId: rating.item_id,
+                        itemType: rating.item_type,
+                        value: rating.rating,
+                        timestamp: rating.created_at,
+                    });
                 });
-            });
+            }
+        } catch (error) {
+            console.error('Error fetching ratings:', error);
         }
 
         // Fetch recent comments
-        const { data: comments } = await supabase
-            .from('comments')
-            .select('id, item_id, item_type, comment_text, created_at, profiles(username)')
-            .order('created_at', { ascending: false })
-            .limit(limit);
+        try {
+            const { data: comments } = await supabase
+                .from('comments')
+                .select('id, item_id, item_type, content, created_at, user_id')
+                .order('created_at', { ascending: false })
+                .limit(limit);
 
-        if (comments) {
-            comments.forEach(comment => {
-                activities.push({
-                    id: comment.id,
-                    type: 'comment',
-                    user: (comment.profiles as any)?.username || 'Unknown',
-                    itemId: comment.item_id,
-                    itemType: comment.item_type,
-                    preview: comment.comment_text?.substring(0, 50) + (comment.comment_text?.length > 50 ? '...' : ''),
-                    timestamp: comment.created_at,
+            if (comments) {
+                comments.forEach(comment => {
+                    activities.push({
+                        id: comment.id,
+                        type: 'comment',
+                        user: comment.user_id?.substring(0, 8) || 'Unknown',
+                        itemId: comment.item_id,
+                        itemType: comment.item_type,
+                        preview: comment.content?.substring(0, 50) + (comment.content?.length > 50 ? '...' : ''),
+                        timestamp: comment.created_at,
+                    });
                 });
-            });
+            }
+        } catch (error) {
+            console.error('Error fetching comments:', error);
         }
 
         // Fetch recent favorites
-        const { data: favorites } = await supabase
-            .from('favourites')
-            .select('id, item_id, item_type, created_at, profiles(username)')
-            .order('created_at', { ascending: false })
-            .limit(limit);
+        try {
+            const { data: favorites } = await supabase
+                .from('favorites')
+                .select('id, item_id, item_type, created_at, user_id')
+                .order('created_at', { ascending: false })
+                .limit(limit);
 
-        if (favorites) {
-            favorites.forEach(fav => {
-                activities.push({
-                    id: fav.id,
-                    type: 'favorite',
-                    user: (fav.profiles as any)?.username || 'Unknown',
-                    itemId: fav.item_id,
-                    itemType: fav.item_type,
-                    timestamp: fav.created_at,
+            if (favorites) {
+                favorites.forEach(fav => {
+                    activities.push({
+                        id: fav.id,
+                        type: 'favorite',
+                        user: fav.user_id?.substring(0, 8) || 'Unknown',
+                        itemId: fav.item_id,
+                        itemType: fav.item_type,
+                        timestamp: fav.created_at,
+                    });
                 });
-            });
+            }
+        } catch (error) {
+            console.error('Error fetching favorites:', error);
         }
 
         // Sort all activities by timestamp and limit
         return activities
             .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
             .slice(0, limit);
-
     } catch (error) {
-        console.error('Error fetching recent activity:', error);
+        console.error('Error in getRecentActivity:', error);
         return [];
     }
 }

@@ -20,6 +20,7 @@ interface PlaylistHeaderProps {
     isEditingEnabled: boolean;
     onRatingUpdate: () => void;
     trackCount: number;
+    isOwner?: boolean;
 }
 
 export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
@@ -38,7 +39,8 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     handleTitleUpdate,
     isEditingEnabled,
     onRatingUpdate,
-    trackCount
+    trackCount,
+    isOwner = true
 }) => {
     const { showError } = useError();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -269,7 +271,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                         </div>
                     )}
                 </div>
-                <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Rated by You</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">{isOwner ? 'Rated by You' : `Rated by ${creatorName}`}</span>
             </div>
 
             {/* Tags Container (Flexible Wrap) */}

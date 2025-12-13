@@ -8,15 +8,17 @@ import { Star, MessageCircle, Heart, Tag } from 'lucide-react';
 interface TrendingRowProps {
     item: TrendingItem;
     rank: number;
+    onClick?: () => void;
 }
 
-const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank }) => {
+const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
     return (
         <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.2, delay: (rank - 4) * 0.03 }}
             className="bg-[#292929] rounded-lg p-4 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30 hover:bg-[#696969]/20 transition-all cursor-pointer group"
+            onClick={onClick}
         >
             <div className="flex items-center gap-4">
                 {/* Rank */}

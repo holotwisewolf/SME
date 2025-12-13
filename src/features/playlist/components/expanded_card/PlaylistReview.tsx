@@ -14,6 +14,8 @@ interface PlaylistReviewProps {
     setTags: (tags: string[]) => void;
     onDescriptionChange?: (newDescription: string) => void;
     isEditingEnabled?: boolean;
+    isOwner?: boolean;
+    creatorName?: string;
 }
 
 export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
@@ -22,7 +24,9 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
     tags,
     setTags,
     onDescriptionChange,
-    isEditingEnabled = true
+    isEditingEnabled = true,
+    isOwner = true,
+    creatorName = 'Creator'
 }) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
@@ -112,7 +116,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
             <div className="flex items-center justify-between mb-2 bg-white/5 p-4 rounded-xl border border-white/5">
                 <div>
                     <h3 className="text-white font-bold text-lg">Rating</h3>
-                    <p className="text-gray-400 text-xs">Based on you</p>
+                    <p className="text-gray-400 text-xs">{isOwner ? 'Based on you' : `Based on ${creatorName}`}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-3xl font-bold text-[white]">
@@ -150,7 +154,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                             }
                         }}
                         readOnly={!isEditingEnabled}
-                        placeholder={isEditingEnabled ? "Write your thoughts on this playlist..." : "No description provided, turn on edit mode to write in here.."}
+                        placeholder={isEditingEnabled ? "Write your thoughts on this playlist..." : (isOwner ? "No description provided, turn on edit mode to write in here.." : "No description provided by the creator.")}
                         className={`w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed ${!isEditingEnabled ? 'cursor-default' : ''}`}
                     />
                 </div>
@@ -159,7 +163,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
             {/* Bottom Row: Tags */}
             <div className="mb-2">
                 <div className="flex items-center justify-between mb-2">
-                    <p className="text-gray-400 text-xs">Personal Tags:</p>
+                    <p className="text-gray-400 text-xs">{isOwner ? 'Personal Tags:' : 'Creator Tags:'}</p>
                     <div className="relative tag-menu-container">
                         <button
                             onClick={() => setIsTagMenuOpen(!isTagMenuOpen)}
