@@ -74,11 +74,6 @@ const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
                         </div>
                     )}
                 </div>
-
-                {/* Type Badge */}
-                <span className="px-2 py-1 bg-[#696969]/50 text-[#D1D1D1]/70 text-xs rounded-full capitalize border border-[#D1D1D1]/10 flex-shrink-0">
-                    {item.type}
-                </span>
             </div>
         </motion.div>
     );

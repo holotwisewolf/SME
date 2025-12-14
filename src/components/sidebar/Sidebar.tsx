@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
             label: 'Discovery',
             subItems: [
                 { path: '/discovery/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-                { path: '/discovery/activity', icon: Activity, label: 'Community Activity' },
+                { path: '/discovery/community-activity', icon: Activity, label: 'Community Activity' },
                 { path: '/discovery/for-you', icon: Sparkles, label: 'For You' }
             ]
         },

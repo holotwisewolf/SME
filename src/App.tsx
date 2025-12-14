@@ -132,7 +132,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="activity"
+                      path="community-activity"
                       element={
                         <PageWrapper>
                           <CommunityActivity />

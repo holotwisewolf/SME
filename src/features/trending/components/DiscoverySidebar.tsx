@@ -1,7 +1,7 @@
 // DiscoverySidebar - Right sidebar with community insights (ENHANCED)
 
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Clock, Activity } from 'lucide-react';
+import { TrendingUp, Clock, Activity, Star, MessageCircle, Heart, Tag, ExternalLink } from 'lucide-react';
 import { getTrendingTags, getRecentActivity, getCommunityQuickStats } from '../services/trending_services';
 
 const DiscoverySidebar: React.FC = () => {
@@ -50,28 +50,28 @@ const DiscoverySidebar: React.FC = () => {
     };
 
     const getActivityIcon = (type: string) => {
+        const iconClass = "w-3.5 h-3.5";
         switch (type) {
-            case 'rating': return '⭐';
-            case 'comment': return '💬';
-            case 'favorite': return '❤️';
-            case 'tag': return '🏷️';
-            default: return '•';
+            case 'rating': return <Star className={`${iconClass} text-[#FFD1D1] fill-[#FFD1D1]`} />;
+            case 'comment': return <MessageCircle className={`${iconClass} text-[#FFD1D1]`} />;
+            case 'favorite': return <Heart className={`${iconClass} text-[#FFD1D1] fill-[#FFD1D1]`} />;
+            case 'tag': return <Tag className={`${iconClass} text-[#FFD1D1]`} />;
+            default: return <span className="text-[#D1D1D1]/50">•</span>;
         }
     };
 
     const getActivityText = (activity: any) => {
-        const icon = getActivityIcon(activity.type);
         switch (activity.type) {
             case 'rating':
-                return `${icon} rated ${activity.itemType}`;
+                return `rated ${activity.itemType}`;
             case 'comment':
-                return `${icon} commented on ${activity.itemType}`;
+                return `commented on ${activity.itemType}`;
             case 'favorite':
-                return `${icon} favorited ${activity.itemType}`;
+                return `favorited ${activity.itemType}`;
             case 'tag':
-                return `${icon} tagged ${activity.itemType}`;
+                return `tagged ${activity.itemType}`;
             default:
-                return `${icon} interacted with ${activity.itemType}`;
+                return `interacted with ${activity.itemType}`;
         }
     };
 
@@ -112,9 +112,18 @@ const DiscoverySidebar: React.FC = () => {
 
             {/* Community Pulse - Enhanced */}
             <div className="bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-3">
-                    <Clock className="w-4 h-4 text-[#FFD1D1]" />
-                    <h3 className="text-sm font-bold text-[#D1D1D1]">Community Pulse</h3>
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[#FFD1D1]" />
+                        <h3 className="text-sm font-bold text-[#D1D1D1]">Community Pulse</h3>
+                    </div>
+                    <a
+                        href="/discovery/community-activity"
+                        className="text-[#D1D1D1]/60 hover:text-[#FFD1D1] transition-colors"
+                        title="View full activity"
+                    >
+                        <ExternalLink className="w-4 h-4" />
+                    </a>
                 </div>
 
                 {loading ? (
@@ -123,20 +132,23 @@ const DiscoverySidebar: React.FC = () => {
                     </div>
                 ) : recentActivity.length > 0 ? (
                     <>
-                        <div className="space-y-2 max-h-48 overflow-y-auto">
-                            {recentActivity.map((activity) => (
-                                <div key={activity.id} className="text-xs border-b border-[#D1D1D1]/5 pb-2 last:border-0">
-                                    <p className="text-[#D1D1D1]/80">
-                                        <span className="text-[#FFD1D1] font-medium">@{activity.user}</span>
-                                        {' '}
-                                        <span className="text-[#D1D1D1]/60">{getActivityText(activity)}</span>
-                                    </p>
-                                    {activity.preview && (
-                                        <p className="text-[#D1D1D1]/50 italic mt-1 line-clamp-1">"{activity.preview}"</p>
-                                    )}
-                                    <p className="text-[#D1D1D1]/40 mt-1">{getRelativeTime(activity.timestamp)}</p>
-                                </div>
-                            ))}
+                        <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
+                            <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
+                                {recentActivity.map((activity) => (
+                                    <div key={activity.id} className="text-xs border-b border-[#D1D1D1]/5 pb-2 last:border-0">
+                                        <p className="text-[#D1D1D1]/80 flex items-center gap-1.5">
+                                            {getActivityIcon(activity.type)}
+                                            <span className="text-[#FFD1D1] font-medium">@{activity.user}</span>
+                                            {' '}
+                                            <span className="text-[#D1D1D1]/60">{getActivityText(activity)}</span>
+                                        </p>
+                                        {activity.preview && (
+                                            <p className="text-[#D1D1D1]/50 italic mt-1 line-clamp-1">"{activity.preview}"</p>
+                                        )}
+                                        <p className="text-[#D1D1D1]/40 mt-1">{getRelativeTime(activity.timestamp)}</p>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                         <p className="text-xs text-[#D1D1D1]/40 mt-2">
                             Real-time community activity
@@ -187,6 +199,15 @@ const DiscoverySidebar: React.FC = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: #FFD1D1;
           border-radius: 2px;
+        }
+        
+        /* Hide scrollbar but keep functionality */
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
         </div>
