@@ -1,7 +1,9 @@
 import React from 'react';
 import { MoreOptionsIcon } from '../../../../../components/ui/MoreOptionsIcon';
+import type { SpotifyTrack } from '../../../../spotify/type/spotify_types';
 
 interface TrackReviewProps {
+    track: SpotifyTrack;
     userRating: number;
     review: string;
     setReview: (review: string) => void;
@@ -16,7 +18,15 @@ interface TrackReviewProps {
     removeTag: (tag: string) => void;
 }
 
+// Helper function to format duration from ms to mm:ss
+const formatDuration = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
 export const TrackReview: React.FC<TrackReviewProps> = ({
+    track,
     userRating,
     review,
     setReview,
@@ -67,17 +77,28 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                 </div>
             </div>
 
-            {/* Middle Row: Description */}
+            {/* Middle Row: Track Info */}
             <div className="flex-1 flex flex-col min-h-[120px]">
-                <p className="text-gray-400 text-xs mb-2">Description</p>
-                <div className="bg-white/5 rounded-lg border border-white/5 flex-1 flex flex-col overflow-hidden">
-                    <textarea
-                        value={review}
-                        onChange={(e) => setReview(e.target.value)}
-                        readOnly={!isEditingEnabled}
-                        placeholder={isEditingEnabled ? "Write your thoughts on this track..." : "No description provided, turn on edit mode to write in here.."}
-                        className={`w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed ${!isEditingEnabled ? 'cursor-default' : ''}`}
-                    />
+                <p className="text-gray-400 text-xs mb-2">Track Info</p>
+                <div className="bg-white/5 rounded-lg border border-white/5 flex-1 flex flex-col overflow-hidden p-4">
+                    <div className="space-y-2 text-sm">
+                        <div>
+                            <span className="text-gray-500">Artist:</span>
+                            <span className="text-white ml-2">{track.artists?.map((a: any) => a.name).join(', ') || 'Unknown'}</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-500">Album:</span>
+                            <span className="text-white ml-2">{track.album?.name || 'Unknown'}</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-500">Duration:</span>
+                            <span className="text-white ml-2">{formatDuration(track.duration_ms)}</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-500">Release Date:</span>
+                            <span className="text-white ml-2">{track.album?.release_date ? new Date(track.album.release_date).toLocaleDateString() : 'Unknown'}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 

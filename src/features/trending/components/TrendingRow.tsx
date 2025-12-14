@@ -27,15 +27,19 @@ const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
                 </div>
 
                 {/* Thumbnail */}
-                {item.imageUrl && (
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#696969]/30 flex-shrink-0">
+                <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#696969]/30 flex-shrink-0">
+                    {item.imageUrl ? (
                         <img
                             src={item.imageUrl}
                             alt={item.name}
                             className="w-full h-full object-cover"
                         />
-                    </div>
-                )}
+                    ) : item.color ? (
+                        <div className="w-full h-full" style={{ backgroundColor: item.color + '80' }} />
+                    ) : (
+                        <div className="w-full h-full bg-[#696969]/30" />
+                    )}
+                </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
@@ -59,20 +63,16 @@ const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
                     </div>
 
                     {/* Comments */}
-                    {item.commentCount > 0 && (
-                        <div className="flex items-center gap-1">
-                            <MessageCircle className="w-3.5 h-3.5 text-[#FFD1D1]" />
-                            <span>{item.commentCount}</span>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                        <MessageCircle className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                        <span>{item.commentCount || 0}</span>
+                    </div>
 
                     {/* Favorites */}
-                    {item.favoriteCount > 0 && (
-                        <div className="flex items-center gap-1">
-                            <Heart className="w-3.5 h-3.5 text-[#FFD1D1]" />
-                            <span>{item.favoriteCount}</span>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                        <Heart className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                        <span>{item.favoriteCount || 0}</span>
+                    </div>
                 </div>
             </div>
         </motion.div>

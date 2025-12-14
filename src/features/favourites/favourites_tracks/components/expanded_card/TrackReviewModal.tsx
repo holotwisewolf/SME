@@ -223,6 +223,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
 
                         {activeTab === 'review' && (
                             <TrackReview
+                                track={track}
                                 userRating={userRating}
                                 review={review}
                                 setReview={setReview}

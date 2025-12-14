@@ -16,6 +16,7 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
     const [currentIndex, setCurrentIndex] = useState(0);
     const [tracks, setTracks] = useState<any[]>([]);
     const [loadingTracks, setLoadingTracks] = useState(false);
+    const [resetKey, setResetKey] = useState(0); // Key to force timer reset
 
     // Auto-rotate carousel every 10 seconds
     useEffect(() => {
@@ -23,7 +24,7 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
             setCurrentIndex((prev) => (prev + 1) % topThree.length);
         }, 10000); // Changed to 10 seconds
         return () => clearInterval(interval);
-    }, [topThree.length]);
+    }, [topThree.length, resetKey]); // Reset when resetKey changes
 
     const currentItem = topThree[currentIndex];
 
@@ -59,6 +60,14 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
         const minutes = Math.floor(ms / 60000);
         const seconds = Math.floor((ms % 60000) / 1000);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    // Format large numbers (1000+ → 1k+)
+    const formatCount = (count: number) => {
+        if (count >= 1000) {
+            return `${Math.floor(count / 1000)}k+`;
+        }
+        return count.toString();
     };
 
     // Get rank badge color
@@ -139,7 +148,7 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                                         </span>
                                     </div>
                                     <p className="text-[#D1D1D1]/60 text-xs uppercase tracking-wide">
-                                        Rated by Community
+                                        Rated by {formatCount(currentItem.ratingCount)} {currentItem.ratingCount === 1 ? 'user' : 'users'}
                                     </p>
                                 </div>
 
@@ -156,10 +165,6 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                                     <div className="flex items-center gap-1">
                                         <MessageCircle className="w-3.5 h-3.5" />
                                         <span>{currentItem.commentCount || 0}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                                        <span>{currentItem.ratingCount || 0}</span>
                                     </div>
                                 </div>
                             </div>
@@ -243,7 +248,10 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                 {topThree.map((_, index) => (
                     <button
                         key={index}
-                        onClick={() => setCurrentIndex(index)}
+                        onClick={() => {
+                            setCurrentIndex(index);
+                            setResetKey(prev => prev + 1); // Reset the timer
+                        }}
                         className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex
                             ? 'bg-[#FFD1D1] w-6'
                             : 'bg-[#D1D1D1]/30 hover:bg-[#D1D1D1]/50'

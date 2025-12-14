@@ -31,6 +31,9 @@ function getTimeThreshold(timeRange: TimeRange): string | null {
  */
 function getSortClause(sortBy: SortBy): { column: string; ascending: boolean } {
     switch (sortBy) {
+        case 'trending':
+            // Sort by sum of all activity counts
+            return { column: '(favorite_count + rating_count + comment_count + tag_count)', ascending: false };
         case 'top-rated':
             return { column: 'average_rating', ascending: false };
         case 'most-ratings':
@@ -112,12 +115,16 @@ async function getTrendingItems(
             query = query.gte('average_rating', filters.minRating);
         }
 
-        // Apply sorting
-        const sortClause = getSortClause(filters.sortBy);
-        query = query.order(sortClause.column, { ascending: sortClause.ascending, nullsFirst: false });
+        // For 'trending' sort, we need to sort client-side
+        // For other sorts, apply sorting in the query
+        if (filters.sortBy !== 'trending') {
+            const sortClause = getSortClause(filters.sortBy);
+            query = query.order(sortClause.column, { ascending: sortClause.ascending, nullsFirst: false });
+        }
 
-        // Limit results
-        query = query.limit(limit);
+        // Limit results (fetch more for trending to sort client-side)
+        const fetchLimit = filters.sortBy === 'trending' ? limit * 2 : limit;
+        query = query.limit(fetchLimit);
 
         const { data, error } = await query;
 
@@ -137,7 +144,7 @@ async function getTrendingItems(
         }
 
         // Map to TrendingItem format
-        const trendingItems: TrendingItem[] = filteredData.map(item => ({
+        let trendingItems: TrendingItem[] = filteredData.map(item => ({
             id: item.item_id,
             type: item.item_type as ItemType,
             name: '', // Will be populated from Spotify API or playlists table
@@ -147,6 +154,17 @@ async function getTrendingItems(
             favoriteCount: item.favorite_count || 0,
             tagCount: item.tag_count || 0,
         }));
+
+        // Sort by trending (total activity) if needed
+        if (filters.sortBy === 'trending') {
+            trendingItems = trendingItems
+                .sort((a, b) => {
+                    const totalA = a.favoriteCount + a.ratingCount + a.commentCount + a.tagCount;
+                    const totalB = b.favoriteCount + b.ratingCount + b.commentCount + b.tagCount;
+                    return totalB - totalA; // Descending order
+                })
+                .slice(0, limit); // Apply limit after sorting
+        }
 
         // Enrich with metadata (name, artist, image)
         return await enrichWithMetadata(trendingItems);
@@ -192,14 +210,35 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
         const playlistIds = playlists.map(p => p.id);
         const { data: playlistData } = await supabase
             .from('playlists')
-            .select('id, title, description, color')
-            .in('id', playlistIds);
+            .select('id, title, description, color, is_public')
+            .in('id', playlistIds)
+            .eq('is_public', true); // Only fetch public playlists
 
         if (playlistData) {
+            // Check which playlists have images in storage
+            const imageChecks = await Promise.all(
+                playlistData.map(async (meta) => {
+                    const { data, error } = await supabase.storage
+                        .from('playlists')
+                        .list('', { search: meta.id });
+
+                    const hasImage = data && data.length > 0 && !error;
+                    return { id: meta.id, hasImage };
+                })
+            );
+
+            const imageMap = new Map(imageChecks.map(check => [check.id, check.hasImage]));
+
             playlists.forEach(playlist => {
                 const meta = playlistData.find(p => p.id === playlist.id);
                 if (meta) {
                     playlist.name = meta.title;
+                    playlist.color = meta.color || undefined;
+
+                    // Only set imageUrl if image actually exists in storage
+                    if (imageMap.get(meta.id)) {
+                        playlist.imageUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
+                    }
                 }
             });
         }
@@ -219,11 +258,21 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
                         track.name = spotifyTrack.name;
                         track.artist = spotifyTrack.artists?.[0]?.name;
                         track.imageUrl = spotifyTrack.album?.images?.[0]?.url;
+                    } else {
+                        // Fallback: use ID as name if Spotify data not found
+                        console.warn(`No Spotify data found for track: ${track.id}`);
+                        track.name = `Track ${track.id}`;
                     }
                 });
             }
         } catch (error) {
             console.error('Error fetching track metadata from Spotify:', error);
+            // Fallback: use IDs as names for all tracks
+            tracks.forEach(track => {
+                if (!track.name) {
+                    track.name = `Track ${track.id}`;
+                }
+            });
         }
     }
 
@@ -241,15 +290,29 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
                         album.name = spotifyAlbum.name;
                         album.artist = spotifyAlbum.artists?.[0]?.name;
                         album.imageUrl = spotifyAlbum.images?.[0]?.url;
+                    } else {
+                        // Fallback: use ID as name if Spotify data not found
+                        console.warn(`No Spotify data found for album: ${album.id}`);
+                        album.name = `Album ${album.id}`;
                     }
                 });
             }
         } catch (error) {
             console.error('Error fetching album metadata from Spotify:', error);
+            // Fallback: use IDs as names for all albums
+            albums.forEach(album => {
+                if (!album.name) {
+                    album.name = `Album ${album.id}`;
+                }
+            });
         }
     }
 
-    return items;
+    // Filter out items that didn't get valid metadata
+    return items.filter(item => {
+        // Only include items that have a valid name (not empty, not fallback)
+        return item.name && !item.name.startsWith('Track ') && !item.name.startsWith('Album ');
+    });
 }
 
 /**

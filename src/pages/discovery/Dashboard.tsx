@@ -1,6 +1,7 @@
 // Dashboard Page - Main community discovery dashboard
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import HeroCard from '../../features/trending/components/HeroCard';
 import FeaturedBanner from '../../features/trending/components/FeaturedBanner';
 import TrendingRow from '../../features/trending/components/TrendingRow';
@@ -27,6 +28,10 @@ const Dashboard: React.FC = () => {
     });
     const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
     const [selectedItem, setSelectedItem] = useState<{ id: string; type: 'track' | 'album' } | null>(null);
+    const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+    const [hoveringScrollIndicator, setHoveringScrollIndicator] = useState(false);
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+    const allTrendingRef = React.useRef<HTMLHeadingElement>(null);
 
     // Fetch trending items when tab or filters change
     useEffect(() => {
@@ -105,7 +110,7 @@ const Dashboard: React.FC = () => {
             {/* Page Title */}
             <div className="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 className="text-4xl font-bold text-[#D1D1D1] tracking-tight">Dashboard</h1>
+                    <h1 className="text-4xl font-bold text-[#FFD1D1] tracking-tight">Dashboard</h1>
                     <p className="text-[#D1D1D1]/60 mt-2">Discover what's popular in the community</p>
                 </div>
 
@@ -139,9 +144,9 @@ const Dashboard: React.FC = () => {
                     <TrendingFilters filters={filters} onFiltersChange={setFilters} />
 
                     {/* Center Content */}
-                    <div className="flex-1 flex flex-col min-w-0 bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-6">
-                        {/* Tab Navigation */}
-                        <div className="flex items-center justify-between mb-6">
+                    <div className="flex-1 flex flex-col min-w-0 bg-[#292929] border border-[#D1D1D1]/10 rounded-xl overflow-hidden">
+                        {/* Tab Navigation - Fixed Header */}
+                        <div className="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-4">
                             <div className="flex gap-3">
                                 {tabs.map((tab) => (
                                     <button
@@ -157,7 +162,7 @@ const Dashboard: React.FC = () => {
                                 ))}
                             </div>
 
-                            {/* Sort Dropdown - Moved from filters */}
+                            {/* Sort Dropdown */}
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-[#D1D1D1]/60">Sort by:</span>
                                 <select
@@ -165,6 +170,7 @@ const Dashboard: React.FC = () => {
                                     onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as any })}
                                     className="bg-[#1a1a1a] border border-[#D1D1D1]/20 text-[#D1D1D1] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#FFD1D1]/50 cursor-pointer"
                                 >
+                                    <option value="trending">Trending</option>
                                     <option value="top-rated">Top Rated</option>
                                     <option value="most-ratings">Most Ratings</option>
                                     <option value="most-commented">Most Comments</option>
@@ -175,81 +181,124 @@ const Dashboard: React.FC = () => {
                             </div>
                         </div>
 
-                        {loading ? (
-                            <div className="flex items-center justify-center h-64">
-                                <LoadingSpinner />
-                            </div>
-                        ) : trendingItems.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-64 text-center">
-                                <p className="text-[#D1D1D1]/60 text-lg mb-2">No trending items found</p>
-                                <p className="text-[#D1D1D1]/40 text-sm">Try adjusting your filters</p>
-                                <div className="flex gap-2 mt-4">
-                                    <button
-                                        onClick={() => setFilters({ timeRange: 'week', sortBy: 'top-rated' })}
-                                        className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
-                                    >
-                                        Reset Filters
-                                    </button>
-                                    <button
-                                        onClick={() => setFilters({ ...filters, minRating: undefined })}
-                                        className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
-                                    >
-                                        Remove Rating Filter
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab(activeTab === 'tracks' ? 'playlists' : 'tracks')}
-                                        className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
-                                    >
-                                        Switch to {activeTab === 'tracks' ? 'Playlists' : 'Tracks'}
-                                    </button>
+                        {/* Content Area */}
+                        <div className="flex-1 flex flex-col min-h-0 p-6">
+                            {loading ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <LoadingSpinner />
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                                {/* Top 3 Items - Different display based on tab */}
-                                {topThree.length > 0 && (
-                                    <>
-                                        {activeTab === 'tracks' ? (
-                                            /* Tracks: Show vertical grid of HeroCards */
-                                            <div className="grid grid-cols-3 gap-4 mb-6">
-                                                {topThree.map((item, index) => (
-                                                    <HeroCard
-                                                        key={item.id}
-                                                        item={item}
-                                                        rank={index + 1}
-                                                        onClick={() => handleCardClick(item)}
-                                                    />
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            /* Playlists/Albums: Show FeaturedBanner */
-                                            <FeaturedBanner
-                                                topItem={topThree[0]}
-                                                topThree={topThree}
-                                                onItemClick={handleCardClick}
-                                            />
-                                        )}
-                                    </>
-                                )}
-
-                                {/* Remaining Items - Rows */}
-                                {remaining.length > 0 && (
-                                    <div>
-                                        <h2 className="text-lg font-bold text-[#D1D1D1] mb-4">All Trending</h2>
-                                        <div className="space-y-2">
-                                            {remaining.map((item, index) => (
-                                                <TrendingRow
-                                                    key={item.id}
-                                                    item={item}
-                                                    rank={index + 4}
-                                                    onClick={() => handleCardClick(item)}
-                                                />
-                                            ))}
-                                        </div>
+                            ) : trendingItems.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-64 text-center">
+                                    <p className="text-[#D1D1D1]/60 text-lg mb-2">No trending items found</p>
+                                    <p className="text-[#D1D1D1]/40 text-sm">Try adjusting your filters</p>
+                                    <div className="flex gap-2 mt-4">
+                                        <button
+                                            onClick={() => setFilters({ timeRange: 'week', sortBy: 'top-rated' })}
+                                            className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
+                                        >
+                                            Reset Filters
+                                        </button>
+                                        <button
+                                            onClick={() => setFilters({ ...filters, minRating: undefined })}
+                                            className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
+                                        >
+                                            Remove Rating Filter
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab(activeTab === 'tracks' ? 'playlists' : 'tracks')}
+                                            className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
+                                        >
+                                            Switch to {activeTab === 'tracks' ? 'Playlists' : 'Tracks'}
+                                        </button>
                                     </div>
-                                )}
-                            </div>
-                        )}
+                                </div>
+                            ) : (
+                                <div className="flex-1 relative flex flex-col min-h-0">
+                                    {/* Scrollable Content - Hidden Scrollbar */}
+                                    <div
+                                        ref={scrollContainerRef}
+                                        className="flex-1 overflow-y-auto scrollbar-hide pr-2"
+                                        onScroll={(e) => {
+                                            const target = e.currentTarget;
+                                            // Show indicator when at top, hide after minimal scroll
+                                            const hasScrolled = target.scrollTop > 50;
+                                            setShowScrollIndicator(!hasScrolled);
+                                        }}
+                                    >
+                                        {/* Top 3 Items - Different display based on tab */}
+                                        {topThree.length > 0 && (
+                                            <>
+                                                {activeTab === 'tracks' ? (
+                                                    /* Tracks: Show vertical grid of HeroCards */
+                                                    <div className="grid grid-cols-3 gap-4 mb-6">
+                                                        {topThree.map((item, index) => (
+                                                            <HeroCard
+                                                                key={item.id}
+                                                                item={item}
+                                                                rank={index + 1}
+                                                                onClick={() => handleCardClick(item)}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    /* Playlists/Albums: Show FeaturedBanner */
+                                                    <FeaturedBanner
+                                                        topItem={topThree[0]}
+                                                        topThree={topThree}
+                                                        onItemClick={handleCardClick}
+                                                    />
+                                                )}
+                                            </>
+                                        )}
+
+                                        {/* Scroll Indicator - Overlayed at Bottom of Banner */}
+                                        <motion.div
+                                            initial={{ opacity: 0.3 }}
+                                            animate={{ opacity: showScrollIndicator && remaining.length > 0 ? (hoveringScrollIndicator ? 0.8 : 0.3) : 0 }}
+                                            transition={{ duration: 0.4, ease: 'easeOut' }}
+                                            className="absolute bottom-0 left-0 right-0 cursor-pointer z-20"
+                                            onClick={() => {
+                                                allTrendingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                            }}
+                                            onMouseEnter={() => setHoveringScrollIndicator(true)}
+                                            onMouseLeave={() => setHoveringScrollIndicator(false)}
+                                            style={{ pointerEvents: showScrollIndicator ? 'auto' : 'none' }}
+                                        >
+                                            {/* Soft Glow Effect on Bottom Edge */}
+                                            <motion.div
+                                                animate={{ opacity: hoveringScrollIndicator && showScrollIndicator ? 0.3 : 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="absolute -bottom-2 left-0 right-0 h-16 bg-gradient-to-b from-white/20 to-transparent blur-xl pointer-events-none"
+                                            />
+
+                                            {/* Arrow Icon */}
+                                            <div className="flex justify-center">
+                                                <svg viewBox="0 0 16 16" width="24" height="24" fill="white">
+                                                    <path d="M13.2929 8.70714L8.00001 14L2.70712 8.70714L1.29291 10.1214L8.00001 16.8285L14.7071 10.1214L13.2929 8.70714Z" />
+                                                </svg>
+                                            </div>
+                                        </motion.div>
+
+                                        {/* Remaining Items - Rows */}
+                                        {remaining.length > 0 && (
+                                            <div>
+                                                <h2 ref={allTrendingRef} className="text-lg font-bold text-[#D1D1D1] mb-4">Rankings</h2>
+                                                <div className="space-y-2">
+                                                    {remaining.map((item, index) => (
+                                                        <TrendingRow
+                                                            key={item.id}
+                                                            item={item}
+                                                            rank={index + 4}
+                                                            onClick={() => handleCardClick(item)}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Right Sidebar - Discovery */}

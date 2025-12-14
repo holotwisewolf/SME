@@ -5,6 +5,7 @@ import type { ItemType } from '../../../types/global';
 export type TimeRange = 'week' | 'month' | 'all-time';
 
 export type SortBy =
+    | 'trending'            // Most overall activity (sum of all counts)
     | 'top-rated'           // Highest average rating
     | 'most-ratings'        // Most rating count
     | 'most-commented'      // Most comment count
@@ -28,6 +29,7 @@ export interface TrendingItem {
     name: string;
     artist?: string;           // For tracks and albums
     imageUrl?: string;
+    color?: string;            // For playlists without images
 
     // Stats from item_stats table
     ratingCount: number;
