@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import HeroCard from '../../features/trending/components/HeroCard';
+import FeaturedBanner from '../../features/trending/components/FeaturedBanner';
 import TrendingRow from '../../features/trending/components/TrendingRow';
 import TrendingCard from '../../features/trending/components/TrendingCard';
 import TrendingFilters from '../../features/trending/components/TrendingFilters';
@@ -138,7 +139,7 @@ const Dashboard: React.FC = () => {
                     <TrendingFilters filters={filters} onFiltersChange={setFilters} />
 
                     {/* Center Content */}
-                    <div className="flex-1 flex flex-col min-w-0">
+                    <div className="flex-1 flex flex-col min-w-0 bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-6">
                         {/* Tab Navigation */}
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex gap-3">
@@ -148,7 +149,7 @@ const Dashboard: React.FC = () => {
                                         onClick={() => setActiveTab(tab.value)}
                                         className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${activeTab === tab.value
                                             ? 'bg-[#FFD1D1] text-black border border-[#FFD1D1]'
-                                            : 'bg-[#292929] text-[#D1D1D1]/70 hover:text-[#D1D1D1] border border-[#D1D1D1]/20 hover:border-[#FFD1D1]/30'
+                                            : 'bg-[#1a1a1a] text-[#D1D1D1]/70 hover:text-[#D1D1D1] border border-[#D1D1D1]/20 hover:border-[#FFD1D1]/30'
                                             }`}
                                     >
                                         {tab.label}
@@ -162,7 +163,7 @@ const Dashboard: React.FC = () => {
                                 <select
                                     value={filters.sortBy}
                                     onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as any })}
-                                    className="bg-[#292929] border border-[#D1D1D1]/20 text-[#D1D1D1] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#FFD1D1]/50 cursor-pointer"
+                                    className="bg-[#1a1a1a] border border-[#D1D1D1]/20 text-[#D1D1D1] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#FFD1D1]/50 cursor-pointer"
                                 >
                                     <option value="top-rated">Top Rated</option>
                                     <option value="most-ratings">Most Ratings</option>
@@ -179,56 +180,56 @@ const Dashboard: React.FC = () => {
                                 <LoadingSpinner />
                             </div>
                         ) : trendingItems.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-64 text-center px-8">
-                                <div className="w-16 h-16 rounded-full bg-[#FFD1D1]/20 flex items-center justify-center mb-4">
-                                    <svg className="w-8 h-8 text-[#D1D1D1]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                    </svg>
-                                </div>
-                                <p className="text-xl font-semibold text-[#D1D1D1] mb-2">No items match your filters</p>
-                                <p className="text-sm text-[#D1D1D1]/50 mb-4">Try adjusting your search criteria</p>
-
-                                {/* Actionable Suggestions */}
-                                <div className="flex flex-col gap-2 mt-4">
-                                    <p className="text-xs text-[#D1D1D1]/60 mb-2">Try:</p>
-                                    <div className="flex flex-wrap gap-2 justify-center">
-                                        <button
-                                            onClick={() => setFilters({ timeRange: 'all-time', sortBy: 'top-rated' })}
-                                            className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
-                                        >
-                                            View All Time
-                                        </button>
-                                        <button
-                                            onClick={() => setFilters({ ...filters, minRating: undefined })}
-                                            className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
-                                        >
-                                            Remove Rating Filter
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveTab(activeTab === 'tracks' ? 'playlists' : 'tracks')}
-                                            className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
-                                        >
-                                            Switch to {activeTab === 'tracks' ? 'Playlists' : 'Tracks'}
-                                        </button>
-                                    </div>
+                            <div className="flex flex-col items-center justify-center h-64 text-center">
+                                <p className="text-[#D1D1D1]/60 text-lg mb-2">No trending items found</p>
+                                <p className="text-[#D1D1D1]/40 text-sm">Try adjusting your filters</p>
+                                <div className="flex gap-2 mt-4">
+                                    <button
+                                        onClick={() => setFilters({ timeRange: 'week', sortBy: 'top-rated' })}
+                                        className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
+                                    >
+                                        Reset Filters
+                                    </button>
+                                    <button
+                                        onClick={() => setFilters({ ...filters, minRating: undefined })}
+                                        className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
+                                    >
+                                        Remove Rating Filter
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab(activeTab === 'tracks' ? 'playlists' : 'tracks')}
+                                        className="px-3 py-1.5 bg-[#292929] border border-[#FFD1D1]/30 text-[#D1D1D1] text-xs rounded-lg hover:bg-[#FFD1D1]/10 transition-colors"
+                                    >
+                                        Switch to {activeTab === 'tracks' ? 'Playlists' : 'Tracks'}
+                                    </button>
                                 </div>
                             </div>
                         ) : (
                             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                                {/* Hero Cards - Top 3 */}
+                                {/* Top 3 Items - Different display based on tab */}
                                 {topThree.length > 0 && (
-                                    <div className="mb-6">
-                                        <div className="grid grid-cols-3 gap-4">
-                                            {topThree.map((item, index) => (
-                                                <HeroCard
-                                                    key={item.id}
-                                                    item={item}
-                                                    rank={index + 1}
-                                                    onClick={() => handleCardClick(item)}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
+                                    <>
+                                        {activeTab === 'tracks' ? (
+                                            /* Tracks: Show vertical grid of HeroCards */
+                                            <div className="grid grid-cols-3 gap-4 mb-6">
+                                                {topThree.map((item, index) => (
+                                                    <HeroCard
+                                                        key={item.id}
+                                                        item={item}
+                                                        rank={index + 1}
+                                                        onClick={() => handleCardClick(item)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            /* Playlists/Albums: Show FeaturedBanner */
+                                            <FeaturedBanner
+                                                topItem={topThree[0]}
+                                                topThree={topThree}
+                                                onItemClick={handleCardClick}
+                                            />
+                                        )}
+                                    </>
                                 )}
 
                                 {/* Remaining Items - Rows */}

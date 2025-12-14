@@ -90,16 +90,18 @@ const DiscoverySidebar: React.FC = () => {
                     </div>
                 ) : trendingTags.length > 0 ? (
                     <>
-                        <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                            {trendingTags.map((tag) => (
-                                <button
-                                    key={tag.name}
-                                    className="px-2 py-1 bg-[#696969]/30 hover:bg-[#FFD1D1]/20 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/40 rounded-full text-xs text-[#D1D1D1] transition-all duration-200 cursor-pointer"
-                                    title="Click to filter"
-                                >
-                                    #{tag.name} ({tag.count})
-                                </button>
-                            ))}
+                        <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
+                            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                                {trendingTags.map((tag) => (
+                                    <button
+                                        key={tag.name}
+                                        className="px-2 py-1 bg-[#696969]/30 hover:bg-[#FFD1D1]/20 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/40 rounded-full text-xs text-white transition-all duration-200 cursor-pointer"
+                                        title="Click to filter"
+                                    >
+                                        #{tag.name} ({tag.count})
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                         <p className="text-xs text-[#D1D1D1]/40 mt-2">
                             Click a tag to filter results
@@ -171,18 +173,20 @@ const DiscoverySidebar: React.FC = () => {
                         <div className="w-4 h-4 border-2 border-[#FFD1D1] border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-[#D1D1D1]/60">Trending Items</span>
-                            <span className="text-sm font-bold text-[#FFD1D1]">{stats.totalItems.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-[#D1D1D1]/60">Active Members</span>
-                            <span className="text-sm font-bold text-[#FFD1D1]">{stats.activeUsers.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-[#D1D1D1]/60">New This Week</span>
-                            <span className="text-sm font-bold text-[#FFD1D1]">{stats.thisWeek.toLocaleString()}</span>
+                    <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-[#D1D1D1]/60">Trending Items</span>
+                                <span className="text-sm font-bold text-[#FFD1D1]">{stats.totalItems.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-[#D1D1D1]/60">Active Members</span>
+                                <span className="text-sm font-bold text-[#FFD1D1]">{stats.activeUsers.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-[#D1D1D1]/60">New This Week</span>
+                                <span className="text-sm font-bold text-[#FFD1D1]">{stats.thisWeek.toLocaleString()}</span>
+                            </div>
                         </div>
                     </div>
                 )}

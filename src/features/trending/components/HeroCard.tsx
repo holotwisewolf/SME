@@ -12,17 +12,17 @@ interface HeroCardProps {
 }
 
 const HeroCard: React.FC<HeroCardProps> = ({ item, rank, onClick }) => {
-    // Rank badge colors
+    // Rank badge colors - matching FeaturedBanner
     const getRankColor = (rank: number) => {
         switch (rank) {
             case 1:
-                return 'bg-[#FFD700]/90'; // Gold
+                return { text: 'text-red-500', bg: 'bg-red-500/10' }; // Red
             case 2:
-                return 'bg-[#C0C0C0]/90'; // Silver
+                return { text: 'text-purple-500', bg: 'bg-purple-500/10' }; // Purple
             case 3:
-                return 'bg-[#CD7F32]/90'; // Bronze
+                return { text: 'text-blue-500', bg: 'bg-blue-500/10' }; // Blue
             default:
-                return 'bg-[#FFD1D1]/90';
+                return { text: 'text-[#FFD1D1]', bg: 'bg-[#FFD1D1]/10' };
         }
     };
 
@@ -31,7 +31,7 @@ const HeroCard: React.FC<HeroCardProps> = ({ item, rank, onClick }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, delay: rank * 0.1 }}
-            className="bg-[#292929] rounded-xl p-4 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#FFD1D1]/10 cursor-pointer group"
+            className="bg-[#1a1a1a] rounded-xl p-4 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#FFD1D1]/10 cursor-pointer group"
             onClick={onClick}
         >
             <div className="flex flex-col h-full">
@@ -45,9 +45,13 @@ const HeroCard: React.FC<HeroCardProps> = ({ item, rank, onClick }) => {
                         />
                     )}
 
-                    {/* Small Rank Badge - Overlaid on top-left */}
-                    <div className={`absolute top-2 left-2 w-8 h-8 rounded-md ${getRankColor(rank)} flex items-center justify-center shadow-lg backdrop-blur-sm`}>
-                        <span className="text-black font-bold text-sm">#{rank}</span>
+                    {/* Glassmorphic Rank Badge - Overlaid on top-left */}
+                    <div className="absolute top-2 left-2 z-10">
+                        <div className={`flex items-center justify-center h-8 px-3 ${getRankColor(rank).bg} backdrop-blur-md rounded-xl transition-colors duration-300`}>
+                            <span className={`${getRankColor(rank).text} font-bold text-sm`}>
+                                #{rank}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
