@@ -9,7 +9,6 @@ interface TrackHeaderProps {
     tags: string[];
     newTag: string;
     setNewTag: (tag: string) => void;
-    isEditingEnabled: boolean;
     handleRatingClick: (rating: number) => void;
     handleAddTag: (e: React.KeyboardEvent) => void;
     removeTag: (tag: string) => void;
@@ -23,7 +22,6 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
     tags,
     newTag,
     setNewTag,
-    isEditingEnabled,
     handleRatingClick,
     handleAddTag,
     removeTag
@@ -67,8 +65,7 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
                         <button
                             key={star}
                             onClick={() => handleRatingClick(star)}
-                            disabled={!isEditingEnabled}
-                            className={`focus:outline-none transition-transform ${isEditingEnabled ? 'hover:scale-110 cursor-pointer' : 'cursor-default'}`}
+                            className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
                         >
                             <svg
                                 className={`w-5 h-5 ${star <= (userRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
@@ -88,16 +85,6 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
             <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>
-                    {isEditingEnabled && (
-                        <input
-                            type="text"
-                            value={newTag}
-                            onChange={(e) => setNewTag(e.target.value)}
-                            onKeyDown={handleAddTag}
-                            placeholder="+ Add"
-                            className="px-2 py-0.5 bg-transparent border-b border-white/10 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-white/30 w-20 transition-all focus:w-28"
-                        />
-                    )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {tags.length > 0 ? (
@@ -107,14 +94,12 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
                                 className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors flex items-center gap-1 group"
                             >
                                 #{tag}
-                                {isEditingEnabled && (
-                                    <button
-                                        onClick={() => removeTag(tag)}
-                                        className="ml-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        ×
-                                    </button>
-                                )}
+                                <button
+                                    onClick={() => removeTag(tag)}
+                                    className="ml-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    ×
+                                </button>
                             </span>
                         ))
                     ) : (

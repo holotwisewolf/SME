@@ -11,9 +11,12 @@ import DiscoverySidebar from '../../features/trending/components/DiscoverySideba
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { getTrendingTracks, getTrendingAlbums, getTrendingPlaylists } from '../../features/trending/services/trending_services';
 import { ExpandedPlaylistCard } from '../../features/playlist/components/expanded_card/ExpandedPlaylistCard';
+import { TrackReviewModal } from '../../features/favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { ItemDetailModal } from '../../features/trending/components/ItemDetailModal';
+import { getTrackDetails } from '../../features/spotify/services/spotify_services';
 import { supabase } from '../../lib/supabaseClient';
 import type { TrendingItem, TrendingFilters as TrendingFiltersType } from '../../features/trending/types/trending';
+import type { SpotifyTrack } from '../../features/spotify/type/spotify_types';
 
 type TabType = 'tracks' | 'albums' | 'playlists';
 
@@ -27,6 +30,7 @@ const Dashboard: React.FC = () => {
         sortBy: 'top-rated',
     });
     const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
+    const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
     const [selectedItem, setSelectedItem] = useState<{ id: string; type: 'track' | 'album' } | null>(null);
     const [showScrollIndicator, setShowScrollIndicator] = useState(true);
     const [hoveringScrollIndicator, setHoveringScrollIndicator] = useState(false);
@@ -99,9 +103,25 @@ const Dashboard: React.FC = () => {
             } catch (error) {
                 console.error('Error fetching playlist:', error);
             }
-        } else if (item.type === 'track' || item.type === 'album') {
-            // Show simple detail modal for tracks and albums
-            setSelectedItem({ id: item.id, type: item.type as 'track' | 'album' });
+        } else if (item.type === 'track') {
+            console.log('Track clicked:', item.id);
+            try {
+                // Fetch full track data from Spotify
+                const trackData = await getTrackDetails(item.id);
+                console.log('Track data fetched:', trackData);
+                if (trackData) {
+                    setSelectedTrack(trackData);
+                } else {
+                    console.error('No track data returned');
+                }
+            } catch (error) {
+                console.error('Error fetching track:', error);
+                // Fallback to simple modal if track fetch fails
+                setSelectedItem({ id: item.id, type: 'track' });
+            }
+        } else if (item.type === 'album') {
+            // Show simple detail modal for albums
+            setSelectedItem({ id: item.id, type: 'album' });
         }
     };
 
@@ -386,7 +406,15 @@ const Dashboard: React.FC = () => {
                 />
             )}
 
-            {/* Item Detail Modal - For Tracks and Albums */}
+            {/* Track Review Modal */}
+            {selectedTrack && (
+                <TrackReviewModal
+                    track={selectedTrack}
+                    onClose={() => setSelectedTrack(null)}
+                />
+            )}
+
+            {/* Item Detail Modal - For Albums */}
             {selectedItem && (
                 <ItemDetailModal
                     itemId={selectedItem.id}

@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MoreOptionsIcon } from '../../../../../components/ui/MoreOptionsIcon';
+import { getPreMadeTags, assignTagToItem } from '../../../../tags/services/tag_services';
+import type { Tag } from '../../../../tags/type/tag_types';
 import type { SpotifyTrack } from '../../../../spotify/type/spotify_types';
+import { useSuccess } from '../../../../../context/SuccessContext';
+import { useError } from '../../../../../context/ErrorContext';
 
 interface TrackReviewProps {
     track: SpotifyTrack;
@@ -12,7 +16,6 @@ interface TrackReviewProps {
     setNewTag: (tag: string) => void;
     isTagMenuOpen: boolean;
     setIsTagMenuOpen: (open: boolean) => void;
-    isEditingEnabled: boolean;
     handleRatingClick: (rating: number) => void;
     handleAddTag: (e: React.KeyboardEvent) => void;
     removeTag: (tag: string) => void;
@@ -35,11 +38,66 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
     setNewTag,
     isTagMenuOpen,
     setIsTagMenuOpen,
-    isEditingEnabled,
     handleRatingClick,
     handleAddTag,
     removeTag
 }) => {
+    const { showSuccess } = useSuccess();
+    const { showError } = useError();
+    const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+
+    useEffect(() => {
+        loadAvailableTags();
+    }, []);
+
+    // Close tag menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (isTagMenuOpen && !target.closest('.tag-menu-container')) {
+                setIsTagMenuOpen(false);
+            }
+        };
+
+        if (isTagMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isTagMenuOpen, setIsTagMenuOpen]);
+
+    const loadAvailableTags = async () => {
+        try {
+            const tagsData = await getPreMadeTags();
+            setAvailableTags(tagsData);
+        } catch (error) {
+            console.error('Error loading tags:', error);
+        }
+    };
+
+    const handleAddPresetTag = async (tag: Tag) => {
+        if (!track) return;
+        try {
+            await assignTagToItem(track.id, 'track' as 'track' | 'album' | 'playlist', tag.id);
+            // Optimistic update - add tag name to tags array
+            if (!tags.includes(tag.name)) {
+                // Directly add to tags via parent's state
+                const event = {
+                    key: 'Enter',
+                    preventDefault: () => { }
+                } as React.KeyboardEvent;
+                setNewTag(tag.name);
+                handleAddTag(event);
+            }
+            setIsTagMenuOpen(false);
+            showSuccess(`Tag #${tag.name} added`);
+        } catch (error) {
+            console.error('Error adding tag:', error);
+            showError('Failed to add tag');
+        }
+    };
     return (
         <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 gap-2 overflow-hidden">
             {/* Top Row: Rating */}
@@ -50,7 +108,7 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-3xl font-bold text-[white]">
-                        {userRating || 0}
+                        {userRating > 0 ? userRating : 'Not Rated'}
                     </span>
                     <div className="flex flex-col">
                         <div className="flex text-yellow-400">
@@ -58,8 +116,7 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                                 <button
                                     key={star}
                                     onClick={() => handleRatingClick(star)}
-                                    disabled={!isEditingEnabled}
-                                    className={`focus:outline-none transition-transform ${isEditingEnabled ? 'hover:scale-110 cursor-pointer' : 'cursor-default'}`}
+                                    className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
                                 >
                                     <svg
                                         className={`w-4 h-4 ${star <= userRating ? 'fill-current' : 'text-gray-600 fill-none'}`}
@@ -108,23 +165,52 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                     <p className="text-gray-400 text-xs">Personal Tags:</p>
                     <div className="relative tag-menu-container">
                         <button
-                            onClick={() => isEditingEnabled && setIsTagMenuOpen(!isTagMenuOpen)}
-                            disabled={!isEditingEnabled}
-                            className={`p-1 rounded-full transition-colors ${isEditingEnabled ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'text-gray-600 cursor-default'}`}
+                            onClick={() => setIsTagMenuOpen(!isTagMenuOpen)}
+                            className="p-1 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
                         >
                             <MoreOptionsIcon size={14} orientation="horizontal" />
                         </button>
 
-                        {isTagMenuOpen && isEditingEnabled && (
-                            <div className="absolute right-0 bottom-full mb-2 bg-[#2a2a2a] p-2 rounded border border-white/10 z-50">
-                                <input
-                                    autoFocus
-                                    className="bg-black/50 text-white text-xs p-1 rounded outline-none border border-white/10"
-                                    placeholder="Add tag..."
-                                    value={newTag}
-                                    onChange={e => setNewTag(e.target.value)}
-                                    onKeyDown={handleAddTag}
-                                />
+                        {isTagMenuOpen && (
+                            <div className="absolute right-0 bottom-full mb-2 w-48 bg-[#2a2a2a] border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                <div className="px-3 py-2 border-b border-white/5 bg-white/5">
+                                    <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">Add Tags</span>
+                                </div>
+
+                                {/* Custom Tag Input */}
+                                <div className="px-3 py-2 border-b border-white/5">
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={newTag}
+                                        onChange={e => setNewTag(e.target.value)}
+                                        onKeyDown={handleAddTag}
+                                        placeholder="Press Enter to add"
+                                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
+                                    />
+                                </div>
+
+                                {/* Preseeded Tags */}
+                                <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                                    {availableTags.filter(t => !tags.includes(t.name)).length > 0 ? (
+                                        availableTags
+                                            .filter(t => !tags.includes(t.name))
+                                            .map(tag => (
+                                                <button
+                                                    key={tag.id}
+                                                    onClick={() => handleAddPresetTag(tag)}
+                                                    className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                                >
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                                    {tag.name}
+                                                </button>
+                                            ))
+                                    ) : (
+                                        <div className="px-3 py-2 text-xs text-gray-500 italic">
+                                            No new tags available
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -132,12 +218,21 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                 <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-hidden flex items-center">
                     {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                            {tags.map(tag => (
-                                <span key={tag} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded-full flex items-center gap-1 transition-colors">
-                                    #{tag}
-                                    {isEditingEnabled && (
-                                        <button onClick={() => removeTag(tag)} className="hover:text-red-400">×</button>
-                                    )}
+                            {tags.map((tag, index) => (
+                                <span
+                                    key={index}
+                                    className="group relative text-xs bg-white/10 text-gray-300 px-2 py-1 rounded-full hover:bg-white/20 transition-colors cursor-pointer"
+                                >
+                                    <span className="group-hover:opacity-0 transition-opacity">#{tag}</span>
+                                    <button
+                                        onClick={() => removeTag(tag)}
+                                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-200"
+                                        title="Remove tag"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
                                 </span>
                             ))}
                         </div>

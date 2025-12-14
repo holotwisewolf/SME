@@ -4,7 +4,7 @@ import { searchTracks } from '../services/spotify_services';
 import { TrackPreviewAudio } from '../components/TrackPreviewAudio';
 import { ResultMenuDropdown } from '../components/ResultMenuDropdown';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
-import { TrackDetailModal } from '../components/TrackDetailModal';
+import { TrackReviewModal } from '../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { useTrackPreview } from '../hooks/useTrackPreview';
 import { addToFavourites } from '../../favourites/services/favourites_services';
 import type { SpotifyTrack } from '../type/spotify_types';
@@ -167,13 +167,11 @@ export function TracksFullPage() {
                 )}
             </div>
 
-            {/* Track Detail Modal */}
+            {/* Track Review Modal */}
             {selectedTrack && (
-                <TrackDetailModal
+                <TrackReviewModal
                     track={selectedTrack}
                     onClose={() => setSelectedTrack(null)}
-                    onAddToFavourites={handleAddToFavourites}
-                    onAddToPlaylist={(trackId) => handleAddToPlaylist(trackId, selectedTrack.name)}
                 />
             )}
 

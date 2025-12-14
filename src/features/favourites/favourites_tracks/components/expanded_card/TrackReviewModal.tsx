@@ -53,7 +53,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     const [comments, setComments] = useState<any[]>([]);
 
     // UI States
-    const [isEditingEnabled, setIsEditingEnabled] = useState(false);
     const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
     const [newTag, setNewTag] = useState('');
     const [newComment, setNewComment] = useState('');
@@ -92,8 +91,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
 
     // Handlers
     const handleRatingClick = async (newRating: number) => {
-        if (!isEditingEnabled) return;
-
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
@@ -110,7 +107,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     };
 
     const handleAddTag = (e: React.KeyboardEvent) => {
-        if (!isEditingEnabled) return;
         if (e.key === 'Enter' && newTag.trim()) {
             if (!tags.includes(newTag.trim())) {
                 setTags([...tags, newTag.trim()]);
@@ -120,7 +116,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     };
 
     const removeTag = (tagToRemove: string) => {
-        if (!isEditingEnabled) return;
         setTags(tags.filter(tag => tag !== tagToRemove));
     };
 
@@ -194,7 +189,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                     tags={tags}
                     newTag={newTag}
                     setNewTag={setNewTag}
-                    isEditingEnabled={isEditingEnabled}
                     handleRatingClick={handleRatingClick}
                     handleAddTag={handleAddTag}
                     removeTag={removeTag}
@@ -232,7 +226,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                                 setNewTag={setNewTag}
                                 isTagMenuOpen={isTagMenuOpen}
                                 setIsTagMenuOpen={setIsTagMenuOpen}
-                                isEditingEnabled={isEditingEnabled}
                                 handleRatingClick={handleRatingClick}
                                 handleAddTag={handleAddTag}
                                 removeTag={removeTag}
@@ -254,8 +247,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                         {activeTab === 'settings' && (
                             <TrackSettings
                                 track={track}
-                                isEditingEnabled={isEditingEnabled}
-                                setIsEditingEnabled={setIsEditingEnabled}
                                 handleCopyLink={handleCopyLink}
                                 handleRemoveFromFavourites={handleRemoveFromFavourites}
                             />

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchAlbums, getAlbumDetails } from '../services/spotify_services';
 import { addToFavourites } from '../../favourites/services/favourites_services';
-import { TrackDetailModal } from '../components/TrackDetailModal';
+import { TrackReviewModal } from '../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import type { SpotifyAlbum, SpotifyTrack } from '../type/spotify_types';
 import { AlbumDetailModal } from '../components/AlbumDetailModal';
@@ -346,13 +346,11 @@ export function AlbumsFullPage() {
                 )}
             </div>
 
-            {/* Track Detail Modal */}
+            {/* Track Review Modal */}
             {selectedTrack && (
-                <TrackDetailModal
+                <TrackReviewModal
                     track={selectedTrack}
                     onClose={() => setSelectedTrack(null)}
-                    onAddToFavourites={(id) => handleAddToFavourites(id, 'track')}
-                    onAddToPlaylist={handleAddToPlaylist}
                 />
             )}
 

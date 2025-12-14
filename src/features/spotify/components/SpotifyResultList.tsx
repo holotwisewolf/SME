@@ -6,7 +6,7 @@ import SpotifyAlbumItem from './SpotifyAlbumItem';
 import SpotifyArtistItem from './SpotifyArtistItem';
 import { TrackPreviewAudio } from './TrackPreviewAudio';
 import { ResultMenuDropdown } from './ResultMenuDropdown';
-import { TrackDetailModal } from './TrackDetailModal';
+import { TrackReviewModal } from '../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { PlaylistSelectCard } from './PlaylistSelectCard';
 import { ArtistDetailModal } from './ArtistDetailModal';
 import { AlbumDetailModal } from './AlbumDetailModal';
@@ -304,13 +304,11 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 />
             )}
 
-            {/* Track Detail Modal */}
+            {/* Track Review Modal */}
             {selectedTrack && (
-                <TrackDetailModal
+                <TrackReviewModal
                     track={selectedTrack}
                     onClose={() => setSelectedTrack(null)}
-                    onAddToFavourites={handleAddToFavourites}
-                    onAddToPlaylist={(trackId) => handleAddToPlaylist(trackId, selectedTrack.name)}
                 />
             )}
 
