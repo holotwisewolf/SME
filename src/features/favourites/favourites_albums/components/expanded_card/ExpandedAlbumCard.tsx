@@ -296,7 +296,8 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
             {/* Playlist Selection Modal */}
             {playlistModalTrack && (
                 <PlaylistSelectCard
-                    track={playlistModalTrack}
+                    trackIds={playlistModalTrack.trackIds}
+                    trackName={playlistModalTrack.name}
                     onClose={() => setPlaylistModalTrack(null)}
                 />
             )}
