@@ -9,7 +9,7 @@ interface AlbumHeaderProps {
     userRating: number | null;
     tags: string[];
     onRatingUpdate: () => void;
-    isEditingEnabled: boolean;
+    userName?: string;
 }
 
 export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
@@ -19,7 +19,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     userRating,
     tags: initialTags,
     onRatingUpdate,
-    isEditingEnabled
+    userName = 'You'
 }) => {
     const [tags, setTags] = useState<string[]>(initialTags);
     const [newTag, setNewTag] = useState('');
@@ -30,7 +30,6 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     }, [initialTags]);
 
     const handleRate = async (rating: number) => {
-        if (!isEditingEnabled) return;
         try {
             if (userRating === rating) {
                 // Toggle off (delete rating)
@@ -46,7 +45,6 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     };
 
     const handleAddTag = async (e: React.KeyboardEvent) => {
-        if (!isEditingEnabled) return;
         if (e.key === 'Enter' && newTag.trim()) {
             const tagToAdd = newTag.trim();
             if (tags.includes(tagToAdd)) {
@@ -67,7 +65,6 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     };
 
     const handleRemoveTag = async (tagToRemove: string) => {
-        if (!isEditingEnabled) return;
         try {
             // Optimistic update
             setTags(tags.filter(t => t !== tagToRemove));
@@ -86,7 +83,6 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     }, [userRating]);
 
     const handleNumericRate = async (rating: number) => {
-        if (!isEditingEnabled) return;
         try {
             await updateItemRating(albumId, 'album', rating);
             onRatingUpdate();
@@ -143,8 +139,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
                         <button
                             key={star}
                             onClick={() => handleRate(star)}
-                            disabled={!isEditingEnabled}
-                            className={`focus:outline-none transition-transform ${isEditingEnabled ? 'hover:scale-110 cursor-pointer' : 'cursor-default'}`}
+                            className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
                         >
                             <svg
                                 className={`w-5 h-5 ${star <= (userRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
@@ -156,58 +151,25 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
                             </svg>
                         </button>
                     ))}
-                    {isEditingEnabled && (
-                        <div className="flex items-center gap-2 ml-2">
-                            <input
-                                type="number"
-                                min="0"
-                                max="5"
-                                step="0.1"
-                                value={tempRating}
-                                onChange={(e) => setTempRating(e.target.value)}
-                                onBlur={handleNumericSubmit}
-                                onKeyDown={(e) => e.key === 'Enter' && handleNumericSubmit()}
-                                className="w-12 px-0 py-0.5 bg-transparent border-b border-white/20 text-sm text-white focus:outline-none focus:border-[#1DB954] text-center font-medium appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                placeholder="-"
-                            />
-                            <span className="text-gray-500 text-sm font-light">/ 5</span>
-                        </div>
-                    )}
                 </div>
-                <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Rated by You</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+                    {userRating && userRating > 0 ? `Rated by ${userName}` : `Not yet rated by ${userName}`}
+                </span>
             </div>
 
             {/* Tags Container */}
             <div className="flex-1">
                 <div className="flex items-center gap-2 mb-3">
                     <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>
-                    {isEditingEnabled && (
-                        <input
-                            type="text"
-                            value={newTag}
-                            onChange={(e) => setNewTag(e.target.value)}
-                            onKeyDown={handleAddTag}
-                            placeholder="+ Add"
-                            className="px-2 py-0.5 bg-transparent border-b border-white/10 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-white/30 w-20 transition-all focus:w-28"
-                        />
-                    )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {tags.length > 0 ? (
                         tags.map((tag, index) => (
                             <span
                                 key={index}
-                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors flex items-center gap-1 group"
+                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors"
                             >
                                 #{tag}
-                                {isEditingEnabled && (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
-                                        className="ml-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        ×
-                                    </button>
-                                )}
                             </span>
                         ))
                     ) : (

@@ -1,19 +1,17 @@
 import React from 'react';
-import { ExternalLink, Copy } from 'lucide-react';
+import { ExternalLink, Copy, FolderPlus } from 'lucide-react';
 import { useSuccess } from '../../../../../context/SuccessContext';
 
 interface AlbumSettingsProps {
     albumSpotifyUrl?: string;
     onRemove: () => void;
-    isEditingEnabled: boolean;
-    setIsEditingEnabled: (enabled: boolean) => void;
+    onImportToPlaylist?: () => void;
 }
 
 export const AlbumSettings: React.FC<AlbumSettingsProps> = ({
     albumSpotifyUrl,
     onRemove,
-    isEditingEnabled,
-    setIsEditingEnabled
+    onImportToPlaylist
 }) => {
     const { showSuccess } = useSuccess();
 
@@ -59,21 +57,16 @@ export const AlbumSettings: React.FC<AlbumSettingsProps> = ({
                                 <span className="text-gray-300">Copy Spotify Link</span>
                             </div>
                         </button>
-                    </div>
-                </div>
 
-                {/* --- Edit --- */}
-                <div>
-                    <h3 className="text-white font-medium mb-2">Edit</h3>
-                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                        <span className="text-gray-300 text-sm">Enable Editing Mode</span>
                         <button
-                            onClick={() => setIsEditingEnabled(!isEditingEnabled)}
-                            className={`w-10 h-6 rounded-full relative transition-colors ${isEditingEnabled ? 'bg-[#1DB954]' : 'bg-gray-600'
-                                }`}
+                            onClick={onImportToPlaylist}
+                            disabled={!onImportToPlaylist}
+                            className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isEditingEnabled ? 'right-1' : 'left-1'
-                                }`}></div>
+                            <div className="flex items-center gap-3">
+                                <FolderPlus className="w-5 h-5 text-[#1DB954]" />
+                                <span className="text-gray-300">Import to Playlist</span>
+                            </div>
                         </button>
                     </div>
                 </div>

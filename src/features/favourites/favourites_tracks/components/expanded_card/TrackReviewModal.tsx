@@ -11,6 +11,7 @@ import { TrackHeader } from './TrackHeader';
 import { TrackReview } from './TrackReview';
 import { TrackCommunity } from './TrackCommunity';
 import { TrackSettings } from './TrackSettings';
+import { PlaylistSelectCard } from '../../../../spotify/components/PlaylistSelectCard';
 
 interface TrackReviewModalProps {
     track: SpotifyTrack;
@@ -57,6 +58,8 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     const [newTag, setNewTag] = useState('');
     const [newComment, setNewComment] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
+    const [userName, setUserName] = useState('You');
+    const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -78,6 +81,14 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                 getItemComments(track.id, 'track')
             ]);
 
+            // Fetch user profile for display name
+            const { data: profileData } = await supabase
+                .from('profiles')
+                .select('display_name, username')
+                .eq('id', user.id)
+                .single();
+
+            setUserName(profileData?.display_name || profileData?.username || 'You');
             setUserRating(userRatingData?.rating || 0);
             setTags(tagsData.map(tag => tag.name));
             setRatingData(globalRatingData);
@@ -144,19 +155,21 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     };
 
     const handleRemoveFromFavourites = async () => {
-        if (window.confirm("Are you sure you want to remove this track from your favourites?")) {
-            try {
-                await removeFromFavourites(track.id, 'track');
-                if (onRemove) onRemove();
-                onClose();
-            } catch (error) {
-                console.error("Error removing track:", error);
-            }
+        try {
+            await removeFromFavourites(track.id, 'track');
+            onRemove?.();
+            onClose();
+        } catch (error) {
+            console.error('Error removing from favourites:', error);
         }
     };
 
+    const handleOpenPlaylistModal = () => {
+        setShowPlaylistModal(true); // Just show playlist modal on top
+    };
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -169,6 +182,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
                 className="relative w-full max-w-5xl h-[515px] bg-[#1e1e1e] rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row z-10 border border-white/5"
             >
                 {/* Close Button */}
@@ -192,6 +206,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                     handleRatingClick={handleRatingClick}
                     handleAddTag={handleAddTag}
                     removeTag={removeTag}
+                    userName={userName}
                 />
 
                 {/* Right Column: Tabs Content */}
@@ -249,11 +264,21 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                                 track={track}
                                 handleCopyLink={handleCopyLink}
                                 handleRemoveFromFavourites={handleRemoveFromFavourites}
+                                onOpenPlaylistModal={handleOpenPlaylistModal}
                             />
                         )}
                     </div>
                 </div>
             </motion.div>
+
+            {/* Playlist Selection Modal - Rendered at parent level */}
+            {showPlaylistModal && (
+                <PlaylistSelectCard
+                    trackId={track.id}
+                    trackName={track.name}
+                    onClose={() => setShowPlaylistModal(false)}
+                />
+            )}
         </div>
     );
 };

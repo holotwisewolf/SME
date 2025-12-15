@@ -13,6 +13,8 @@ import { AlbumSettings } from './AlbumSettings';
 import { AlbumReview } from './AlbumReview';
 import ExpandButton from '../../../../../components/ui/ExpandButton';
 import { AlbumTrackDetailModal } from './AlbumTrackDetailModal';
+import { supabase } from '../../../../../lib/supabaseClient';
+import { PlaylistSelectCard } from '../../../../spotify/components/PlaylistSelectCard';
 
 interface ExpandedAlbumCardProps {
     albumId: string;
@@ -34,14 +36,15 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
     const [tags, setTags] = useState<string[]>([]);
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [userRating, setUserRating] = useState<number | null>(null);
+    const [userName, setUserName] = useState('You');
     const [comments, setComments] = useState<any[]>([]);
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [isEditingEnabled, setIsEditingEnabled] = useState(false);
 
     // Interaction States
     const [newComment, setNewComment] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
+    const [playlistModalTrack, setPlaylistModalTrack] = useState<{ name: string; trackIds: string[] } | null>(null);
 
     const filteredTracks = tracks.filter(track =>
         (track.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -55,21 +58,41 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
     const loadData = async () => {
         setLoading(true);
         try {
-            const [albumData, tracksData, tagsData, ratingRes, userRatingRes, commentsData] = await Promise.all([
+            const { data: { user } } = await supabase.auth.getUser();
+            const [albumData, tracksData, commentsData] = await Promise.all([
                 getAlbum(albumId),
                 getAlbumTracks(albumId),
-                getItemTags(albumId, 'album'),
-                getItemRating(albumId, 'album'),
-                getUserItemRating(albumId, 'album'),
                 getItemComments(albumId, 'album')
             ]);
 
             setAlbum(albumData);
             setTracks(tracksData.items || tracksData || []);
+            setComments(commentsData);
+
+            // Fetch tags and ratings after albumData is available
+            const [tagsData, ratingRes, userRatingRes] = await Promise.all([
+                getItemTags(albumId, 'album'),
+                getItemRating(albumId, 'album'),
+                user ? getUserItemRating(albumId, 'album') : Promise.resolve(null) // Only fetch user rating if user is logged in
+            ]);
+
             setTags(tagsData.map(tag => tag.name));
             setRatingData(ratingRes);
             setUserRating(userRatingRes);
-            setComments(commentsData);
+
+            // Fetch user profile for display name if user is logged in
+            if (user) {
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('display_name, username')
+                    .eq('id', user.id)
+                    .single();
+
+                setUserName(profileData?.display_name || profileData?.username || 'You');
+            } else {
+                setUserName('You'); // Default if not logged in
+            }
+
         } catch (error) {
             console.error('Error loading album details:', error);
             showError('Failed to load album details');
@@ -122,6 +145,17 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
         }
     };
 
+    const handleImportToPlaylist = () => {
+        if (tracks.length > 0) {
+            const trackIds = tracks.map((t: any) => t.id).filter(Boolean);
+            setPlaylistModalTrack({
+                name: album?.name || 'Album',
+                trackIds: trackIds
+            });
+        }
+    };
+
+
     const handleTrackClick = (track: any) => {
         setSelectedTrack(track);
     };
@@ -160,7 +194,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                     userRating={userRating}
                     tags={tags}
                     onRatingUpdate={handleRatingUpdate}
-                    isEditingEnabled={isEditingEnabled}
+                    userName={userName}
                 />
 
                 {/* Right Column */}
@@ -222,7 +256,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                                 userRating={userRating}
                                 tags={tags}
                                 setTags={setTags}
-                                isEditingEnabled={isEditingEnabled}
+                                onRatingUpdate={handleRatingUpdate}
                             />
                         )}
 
@@ -242,8 +276,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                             <AlbumSettings
                                 albumSpotifyUrl={album.external_urls?.spotify}
                                 onRemove={handleRemoveFromFavourites}
-                                isEditingEnabled={isEditingEnabled}
-                                setIsEditingEnabled={setIsEditingEnabled}
+                                onImportToPlaylist={handleImportToPlaylist}
                             />
                         )}
                     </div>
@@ -259,6 +292,14 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                     />
                 )
             }
+
+            {/* Playlist Selection Modal */}
+            {playlistModalTrack && (
+                <PlaylistSelectCard
+                    track={playlistModalTrack}
+                    onClose={() => setPlaylistModalTrack(null)}
+                />
+            )}
         </div >
     );
 };

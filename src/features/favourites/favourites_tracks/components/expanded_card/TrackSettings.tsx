@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Copy, ExternalLink, Trash2, Heart, FolderPlus } from 'lucide-react';
 import { checkIsFavourite, addToFavourites } from '../../../services/favourites_services';
-import { PlaylistSelectCard } from '../../../../spotify/components/PlaylistSelectCard';
 import { useSuccess } from '../../../../../context/SuccessContext';
 import type { SpotifyTrack } from '../../../../spotify/type/spotify_types';
 
@@ -9,16 +8,17 @@ interface TrackSettingsProps {
     track: SpotifyTrack;
     handleCopyLink: () => void;
     handleRemoveFromFavourites: () => void;
+    onOpenPlaylistModal?: () => void;
 }
 
 export const TrackSettings: React.FC<TrackSettingsProps> = ({
     track,
     handleCopyLink,
-    handleRemoveFromFavourites
+    handleRemoveFromFavourites,
+    onOpenPlaylistModal
 }) => {
     const { showSuccess } = useSuccess();
     const [isFavorited, setIsFavorited] = useState(false);
-    const [showPlaylistModal, setShowPlaylistModal] = useState(false);
     const [showFavoriteTooltip, setShowFavoriteTooltip] = useState(false);
 
     useEffect(() => {
@@ -53,7 +53,7 @@ export const TrackSettings: React.FC<TrackSettingsProps> = ({
 
                         {/* Add to Playlist */}
                         <button
-                            onClick={() => setShowPlaylistModal(true)}
+                            onClick={() => onOpenPlaylistModal?.()}
                             className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors group mb-3"
                         >
                             <div className="flex items-center gap-3">
@@ -129,15 +129,6 @@ export const TrackSettings: React.FC<TrackSettingsProps> = ({
                     </div>
                 </div>
             </div>
-
-            {/* Playlist Selection Modal */}
-            {showPlaylistModal && (
-                <PlaylistSelectCard
-                    trackId={track.id}
-                    trackName={track.name}
-                    onClose={() => setShowPlaylistModal(false)}
-                />
-            )}
         </>
     );
 };

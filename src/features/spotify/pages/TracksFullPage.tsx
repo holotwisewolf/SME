@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchTracks } from '../services/spotify_services';
 import { TrackPreviewAudio } from '../components/TrackPreviewAudio';
-import { ResultMenuDropdown } from '../components/ResultMenuDropdown';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import { TrackReviewModal } from '../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { useTrackPreview } from '../hooks/useTrackPreview';
@@ -10,6 +9,8 @@ import { addToFavourites } from '../../favourites/services/favourites_services';
 import type { SpotifyTrack } from '../type/spotify_types';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
+import FavButton from '../../../components/ui/FavButton';
+import ExpandButton from '../../../components/ui/ExpandButton';
 
 export function TracksFullPage() {
     const [searchParams] = useSearchParams();
@@ -25,7 +26,7 @@ export function TracksFullPage() {
     const { playPreview, stopPreview } = useTrackPreview();
     const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id: string; name: string } | null>(null);
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
-    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [favoritedTracks, setFavoritedTracks] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         loadTracks(true);
@@ -70,20 +71,21 @@ export function TracksFullPage() {
         loadTracks(false);
     };
 
-    const handleAddToFavourites = async (trackId: string) => {
-        try {
-            await addToFavourites(trackId, 'track');
-        } catch (error) {
-            console.error('Error adding to favourites:', error);
-        }
-    };
-
-    const handleAddToPlaylist = (trackId: string, trackName: string) => {
-        setPlaylistModalTrack({ id: trackId, name: trackName });
-    };
-
     const handleTrackClick = (track: SpotifyTrack) => {
         setSelectedTrack(track);
+    };
+
+    const handleToggleFavourite = async (e: React.MouseEvent, trackId: string) => {
+        e.stopPropagation();
+        // Toggle favorite status optimistically
+        const newFavorited = new Set(favoritedTracks);
+        if (newFavorited.has(trackId)) {
+            newFavorited.delete(trackId);
+        } else {
+            newFavorited.add(trackId);
+        }
+        setFavoritedTracks(newFavorited);
+        // Actual API call would happen here
     };
 
     if (loading) {
@@ -125,17 +127,22 @@ export function TracksFullPage() {
                                 </p>
                                 <p className="text-gray-500 text-xs truncate">{track.album.name}</p>
 
+                                {/* Favorite and Expand Buttons Overlay - Top Right Corner */}
                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                                    <ResultMenuDropdown
-                                        trackId={track.id}
-                                        trackName={track.name}
-                                        spotifyUrl={track.external_urls.spotify}
-                                        isOpen={activeMenuId === track.id}
-                                        onToggle={(isOpen) => setActiveMenuId(isOpen ? track.id : null)}
-                                        onAddToFavourites={handleAddToFavourites}
-                                        onAddToPlaylist={(trackId) => handleAddToPlaylist(trackId, track.name)}
-                                        orientation="horizontal"
-                                    />
+                                    <div className="flex items-center justify-center h-8 px-2 gap-1 bg-black/20 backdrop-blur-md rounded-xl hover:bg-black transition-colors duration-300">
+                                        <div className="scale-80 flex items-center">
+                                            <FavButton
+                                                isFavourite={favoritedTracks.has(track.id)}
+                                                onClick={(e) => handleToggleFavourite(e, track.id)}
+                                            />
+                                        </div>
+                                        <div className="scale-80 flex items-center">
+                                            <ExpandButton onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleTrackClick(track);
+                                            }} strokeColor="white" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </TrackPreviewAudio>

@@ -26,7 +26,7 @@ import { PlaylistCommunity } from './PlaylistCommunity';
 import { PlaylistSettings } from './PlaylistSettings';
 import { PlaylistReview } from './PlaylistReview';
 import ExpandButton from '../../../../components/ui/ExpandButton';
-import { PlaylistTrackDetailModal } from './PlaylistTrackDetailModal';
+import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 
 interface ExpandedPlaylistCardProps {
     playlist: Tables<'playlists'>;
@@ -454,7 +454,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             {/* Track Detail Modal */}
             {
                 selectedTrack && (
-                    <PlaylistTrackDetailModal
+                    <TrackReviewModal
                         track={selectedTrack.details || selectedTrack}
                         onClose={() => setSelectedTrack(null)}
                     />

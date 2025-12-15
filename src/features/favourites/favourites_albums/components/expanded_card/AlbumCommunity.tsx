@@ -29,7 +29,9 @@ export const AlbumCommunity: React.FC<AlbumCommunityProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-3xl font-bold text-[white]">
-                        {Number.isInteger(ratingData.average) ? ratingData.average : ratingData.average.toFixed(1)}
+                        {ratingData.average > 0
+                            ? (Number.isInteger(ratingData.average) ? ratingData.average : ratingData.average.toFixed(1))
+                            : 'Not Rated'}
                     </span>
                     <div className="flex flex-col">
                         <div className="flex text-yellow-400">

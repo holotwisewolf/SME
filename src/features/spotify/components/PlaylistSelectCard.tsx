@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getUserPlaylists, createPlaylist, addTrackToPlaylist, addTracksToPlaylist, type CreatePlaylistRequest } from '../../playlist/services/playlist_services';
 import type { Tables } from '../../../types/supabase';
+import { useError } from '../../../context/ErrorContext';
 
 interface PlaylistSelectCardProps {
     trackId?: string;
@@ -18,10 +19,24 @@ export function PlaylistSelectCard({
     const [playlists, setPlaylists] = useState<Tables<'playlists'>[]>([]);
     const [newPlaylistName, setNewPlaylistName] = useState('New Playlist');
     const [loading, setLoading] = useState(false);
+    const { showError } = useError();
 
     useEffect(() => {
         loadPlaylists();
     }, []);
+
+    // Close modal when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('.playlist-select-modal')) {
+                onClose();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
 
     const loadPlaylists = async () => {
         try {
@@ -66,8 +81,14 @@ export function PlaylistSelectCard({
                 await addTrackToPlaylist({ playlistId, trackId });
             }
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error adding to playlist:', error);
+            // Check if it's a duplicate track error
+            if (error?.message?.includes('already exists') || error?.message?.includes('duplicate')) {
+                showError('This track is already in the playlist');
+            } else {
+                showError('Failed to add track to playlist');
+            }
         } finally {
             setLoading(false);
         }
@@ -75,12 +96,12 @@ export function PlaylistSelectCard({
 
     return (
         // Backdrop with blur effect
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[60] px-4">
             {/* UPDATED CARD STYLES:
                 - w-[400px]: This sets the width to exactly 400px, matching the other modal.
                 - bg-[#1f1f1f]/95: Slightly transparent background.
             */}
-            <div className="relative w-[400px] max-w-full bg-[#1f1f1f]/95 rounded-lg shadow-2xl border border-[#333] p-6">
+            <div className="playlist-select-modal relative w-[400px] max-w-full bg-[#1f1f1f]/95 rounded-lg shadow-2xl border border-[#333] p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold text-white">Add to Playlist</h2>
                     <button

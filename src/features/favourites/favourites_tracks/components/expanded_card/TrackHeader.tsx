@@ -12,6 +12,7 @@ interface TrackHeaderProps {
     handleRatingClick: (rating: number) => void;
     handleAddTag: (e: React.KeyboardEvent) => void;
     removeTag: (tag: string) => void;
+    userName?: string;
 }
 
 export const TrackHeader: React.FC<TrackHeaderProps> = ({
@@ -24,7 +25,8 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
     setNewTag,
     handleRatingClick,
     handleAddTag,
-    removeTag
+    removeTag,
+    userName = 'You'
 }) => {
     return (
         <div className="w-full md:w-[35%] p-5 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto hidden-scrollbar">
@@ -78,7 +80,9 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
                         </button>
                     ))}
                 </div>
-                <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Rated by You</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+                    {userRating > 0 ? `Rated by ${userName}` : `Not yet rated by ${userName}`}
+                </span>
             </div>
 
             {/* Tags Container */}
