@@ -12,7 +12,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { getTrendingTracks, getTrendingAlbums, getTrendingPlaylists } from '../../features/trending/services/trending_services';
 import { ExpandedPlaylistCard } from '../../features/playlist/components/expanded_card/ExpandedPlaylistCard';
 import { TrackReviewModal } from '../../features/favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
-import { ItemDetailModal } from '../../features/trending/components/ItemDetailModal';
+import { ExpandedAlbumCard } from '../../features/favourites/favourites_albums/components/expanded_card/ExpandedAlbumCard';
 import { getTrackDetails } from '../../features/spotify/services/spotify_services';
 import { supabase } from '../../lib/supabaseClient';
 import type { TrendingItem, TrendingFilters as TrendingFiltersType } from '../../features/trending/types/trending';
@@ -31,7 +31,7 @@ const Dashboard: React.FC = () => {
     });
     const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
-    const [selectedItem, setSelectedItem] = useState<{ id: string; type: 'track' | 'album' } | null>(null);
+    const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
     const [showScrollIndicator, setShowScrollIndicator] = useState(true);
     const [hoveringScrollIndicator, setHoveringScrollIndicator] = useState(false);
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -49,13 +49,13 @@ const Dashboard: React.FC = () => {
 
             switch (activeTab) {
                 case 'tracks':
-                    items = await getTrendingTracks(filters);
+                    items = await getTrendingTracks(filters, 20);
                     break;
                 case 'albums':
-                    items = await getTrendingAlbums(filters);
+                    items = await getTrendingAlbums(filters, 20);
                     break;
                 case 'playlists':
-                    items = await getTrendingPlaylists(filters);
+                    items = await getTrendingPlaylists(filters, 20);
                     break;
             }
 
@@ -116,12 +116,10 @@ const Dashboard: React.FC = () => {
                 }
             } catch (error) {
                 console.error('Error fetching track:', error);
-                // Fallback to simple modal if track fetch fails
-                setSelectedItem({ id: item.id, type: 'track' });
             }
         } else if (item.type === 'album') {
-            // Show simple detail modal for albums
-            setSelectedItem({ id: item.id, type: 'album' });
+            // Show expanded album card
+            setSelectedAlbum(item.id);
         }
     };
 
@@ -414,12 +412,11 @@ const Dashboard: React.FC = () => {
                 />
             )}
 
-            {/* Item Detail Modal - For Albums */}
-            {selectedItem && (
-                <ItemDetailModal
-                    itemId={selectedItem.id}
-                    itemType={selectedItem.type}
-                    onClose={() => setSelectedItem(null)}
+            {/* Expanded Album Card */}
+            {selectedAlbum && (
+                <ExpandedAlbumCard
+                    albumId={selectedAlbum}
+                    onClose={() => setSelectedAlbum(null)}
                 />
             )}
         </div>
