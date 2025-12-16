@@ -3,8 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Clock, Activity, Star, MessageCircle, Heart, Tag, ExternalLink } from 'lucide-react';
 import { getTrendingTags, getRecentActivity, getCommunityQuickStats } from '../services/trending_services';
+import type { TrendingFilters } from '../types/trending';
 
-const DiscoverySidebar: React.FC = () => {
+interface DiscoverySidebarProps {
+    filters?: TrendingFilters;
+    onFiltersChange?: (filters: TrendingFilters) => void;
+}
+
+const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersChange }) => {
     const [trendingTags, setTrendingTags] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalItems: 0, activeUsers: 0, thisWeek: 0 });
@@ -75,6 +81,21 @@ const DiscoverySidebar: React.FC = () => {
         }
     };
 
+    const handleTagClick = (tagName: string) => {
+        if (!onFiltersChange || !filters) return;
+
+        const currentTags = filters.tags || [];
+
+        // Toggle tag - if already selected, remove it; otherwise add it
+        if (currentTags.includes(tagName)) {
+            const newTags = currentTags.filter(t => t !== tagName);
+            onFiltersChange({ ...filters, tags: newTags });
+        } else {
+            const newTags = [...currentTags, tagName];
+            onFiltersChange({ ...filters, tags: newTags });
+        }
+    };
+
     return (
         <div className="w-80 flex-shrink-0 space-y-4 sticky top-20 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pr-2">
             {/* Trending Tags - Compact */}
@@ -92,15 +113,22 @@ const DiscoverySidebar: React.FC = () => {
                     <>
                         <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
                             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                                {trendingTags.map((tag) => (
-                                    <button
-                                        key={tag.name}
-                                        className="px-2 py-1 bg-[#696969]/30 hover:bg-[#FFD1D1]/20 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/40 rounded-full text-xs text-white transition-all duration-200 cursor-pointer"
-                                        title="Click to filter"
-                                    >
-                                        #{tag.name} ({tag.count})
-                                    </button>
-                                ))}
+                                {trendingTags.map((tag) => {
+                                    const isActive = filters?.tags?.includes(tag.name) || false;
+                                    return (
+                                        <button
+                                            key={tag.name}
+                                            onClick={() => handleTagClick(tag.name)}
+                                            className={`px-2 py-1 border rounded-full text-xs transition-all duration-200 cursor-pointer ${isActive
+                                                    ? 'bg-[#FFD1D1]/30 border-[#FFD1D1] text-white font-semibold'
+                                                    : 'bg-[#696969]/30 hover:bg-[#FFD1D1]/20 border-[#D1D1D1]/10 hover:border-[#FFD1D1]/40 text-white'
+                                                }`}
+                                            title={isActive ? 'Click to remove filter' : 'Click to filter'}
+                                        >
+                                            #{tag.name} ({tag.count})
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                         <p className="text-xs text-[#D1D1D1]/40 mt-2">

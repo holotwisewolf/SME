@@ -107,7 +107,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* Right Sidebar - Discovery */}
-            <DiscoverySidebar />
+            <DiscoverySidebar filters={filters} onFiltersChange={onFiltersChange} />
         </div>
     );
 };

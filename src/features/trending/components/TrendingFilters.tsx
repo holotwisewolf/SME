@@ -26,6 +26,13 @@ const TrendingFilters: React.FC<TrendingFiltersProps> = ({ filters, onFiltersCha
         loadAvailableTags();
     }, []);
 
+    // Sync selectedTags with filters.tags when filters change externally (e.g., from sidebar)
+    useEffect(() => {
+        if (filters.tags && JSON.stringify(filters.tags) !== JSON.stringify(selectedTags)) {
+            setSelectedTags(filters.tags);
+        }
+    }, [filters.tags]);
+
     // Close tag menu when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

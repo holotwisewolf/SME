@@ -11,8 +11,8 @@ interface UseScrollIndicatorReturn {
 }
 
 export function useScrollIndicator(
-    scrollContainerRef: RefObject<HTMLDivElement>,
-    allTrendingRef: RefObject<HTMLHeadingElement>,
+    scrollContainerRef: RefObject<HTMLDivElement | null>,
+    allTrendingRef: RefObject<HTMLHeadingElement | null>,
     hasContent: boolean
 ): UseScrollIndicatorReturn {
     const [showIndicator, setShowIndicator] = useState(true);
