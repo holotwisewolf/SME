@@ -172,7 +172,17 @@ async function getTrendingItems(
         }
 
         // Enrich with metadata (name, artist, image)
-        return await enrichWithMetadata(trendingItems);
+        let enrichedItems = await enrichWithMetadata(trendingItems);
+
+        // Filter by name/title if searchQuery is provided
+        if (filters.searchQuery && filters.searchQuery.trim()) {
+            const searchLower = filters.searchQuery.toLowerCase().trim();
+            enrichedItems = enrichedItems.filter(item =>
+                item.name.toLowerCase().includes(searchLower)
+            );
+        }
+
+        return enrichedItems;
 
     } catch (error) {
         console.error('Error in getTrendingItems:', error);
