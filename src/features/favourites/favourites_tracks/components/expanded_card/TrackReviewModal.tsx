@@ -3,10 +3,12 @@ import { motion } from 'framer-motion';
 import type { SpotifyTrack } from '../../../../spotify/type/spotify_types';
 import { submitPersonalRating, getPersonalRating } from '../../../../ratings/services/rating_services';
 import { removeFromFavourites } from '../../../services/favourites_services';
+import { deleteItemRating } from '../../../services/item_services';
 import { getItemComments, createComment } from '../../../../comments/services/comment_services';
 import { getItemTags } from '../../../../tags/services/tag_services';
 import { supabase } from '../../../../../lib/supabaseClient';
 import { useError } from '../../../../../context/ErrorContext';
+import { useSuccess } from '../../../../../context/SuccessContext';
 import ExpandButton from '../../../../../components/ui/ExpandButton';
 import { TrackHeader } from './TrackHeader';
 import { TrackReview } from './TrackReview';
@@ -44,6 +46,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     onRemove
 }) => {
     const { showError } = useError();
+    const { showSuccess } = useSuccess();
     const [activeTab, setActiveTab] = useState<'review' | 'community' | 'settings'>('review');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -111,8 +114,16 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                 return;
             }
 
-            setUserRating(newRating);
-            await submitPersonalRating(user.id, track.id, 'track', newRating);
+            if (userRating === newRating) {
+                // Toggle off (delete rating)
+                await deleteItemRating(track.id, 'track');
+                setUserRating(0); // Set to 0 to indicate no rating
+                showSuccess('Rating removed');
+            } else {
+                setUserRating(newRating);
+                await submitPersonalRating(user.id, track.id, 'track', newRating);
+                showSuccess(`Rated ${newRating}/5`);
+            }
 
             // Refresh global rating
             const updatedRatingData = await getTrackRating(track.id);

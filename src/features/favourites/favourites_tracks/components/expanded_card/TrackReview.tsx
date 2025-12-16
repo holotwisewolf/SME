@@ -185,6 +185,7 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                                         value={newTag}
                                         onChange={e => setNewTag(e.target.value)}
                                         onKeyDown={handleAddTag}
+                                        onMouseDown={(e) => e.stopPropagation()}
                                         placeholder="Press Enter to add"
                                         className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
                                     />
