@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchAlbums, getAlbumDetails } from '../services/spotify_services';
-import { addToFavourites } from '../../favourites/services/favourites_services';
+import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../favourites/services/favourites_services';
 import { TrackReviewModal } from '../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import type { SpotifyAlbum, SpotifyTrack } from '../type/spotify_types';
@@ -53,6 +53,9 @@ export function AlbumsFullPage() {
 
     // control Album Modal status
     const [selectedAlbum, setSelectedAlbum] = useState<SpotifyAlbum | null>(null);
+    
+    // Track favorited albums
+    const [favoritedAlbums, setFavoritedAlbums] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         loadAlbums(true);
@@ -133,6 +136,14 @@ export function AlbumsFullPage() {
                 }
             }
             setAlbumsWithTracks(tracksMap);
+            
+            // Check which albums are favorited
+            const favSet = new Set<string>();
+            for (const album of results) {
+                const isFav = await checkIsFavourite(album.id, 'album');
+                if (isFav) favSet.add(album.id);
+            }
+            setFavoritedAlbums(favSet);
         } catch (error) {
             console.error('Error loading albums:', error);
         } finally {
@@ -172,11 +183,24 @@ export function AlbumsFullPage() {
 
     const handleAddToFavourites = async (id: string, type: 'track' | 'album' = 'track') => {
         try {
-            await addToFavourites(id, type);
-            showSuccess(`${type === 'album' ? 'Album' : 'Track'} added to favorites!`);
+            const isFavorited = favoritedAlbums.has(id);
+            
+            if (isFavorited) {
+                await removeFromFavourites(id, type);
+                setFavoritedAlbums(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(id);
+                    return newSet;
+                });
+                showSuccess(`${type === 'album' ? 'Album' : 'Track'} removed from favorites!`);
+            } else {
+                await addToFavourites(id, type);
+                setFavoritedAlbums(prev => new Set(prev).add(id));
+                showSuccess(`${type === 'album' ? 'Album' : 'Track'} added to favorites!`);
+            }
         } catch (error) {
-            console.error('Error adding to favourites:', error);
-            showError(`Failed to add ${type} to favorites`);
+            console.error('Error toggling favourites:', error);
+            showError(`Failed to update ${type} favorites`);
         }
     };
 
@@ -251,9 +275,17 @@ export function AlbumsFullPage() {
                                                         handleAddToFavourites(album.id, 'album');
                                                     }}
                                                     className="p-1.5 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/10"
-                                                    title="Add to Favourites"
+                                                    title={favoritedAlbums.has(album.id) ? "Remove from Favourites" : "Add to Favourites"}
                                                 >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg 
+                                                        className={`w-5 h-5 transition-all ${
+                                                            favoritedAlbums.has(album.id) 
+                                                                ? 'fill-red-500 text-red-500' 
+                                                                : 'fill-none'
+                                                        }`} 
+                                                        stroke="currentColor" 
+                                                        viewBox="0 0 24 24"
+                                                    >
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                                     </svg>
                                                 </button>

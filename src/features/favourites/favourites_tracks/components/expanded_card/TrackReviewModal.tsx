@@ -221,6 +221,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                     handleAddTag={handleAddTag}
                     removeTag={removeTag}
                     userName={userName}
+                    onClose={onClose}
                 />
 
                 {/* Right Column: Tabs Content */}

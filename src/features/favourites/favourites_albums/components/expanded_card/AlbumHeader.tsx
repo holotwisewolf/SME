@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { updateItemRating, deleteItemRating } from '../../../services/item_services';
 import { addItemTag, removeItemTag } from '../../../services/item_services';
 
@@ -10,6 +11,7 @@ interface AlbumHeaderProps {
     tags: string[];
     onRatingUpdate: () => void;
     userName?: string;
+    onClose?: () => void;
 }
 
 export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
@@ -19,8 +21,10 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     userRating,
     tags: initialTags,
     onRatingUpdate,
-    userName = 'You'
+    userName = 'You',
+    onClose
 }) => {
+    const navigate = useNavigate();
     const [tags, setTags] = useState<string[]>(initialTags);
     const [newTag, setNewTag] = useState('');
 
@@ -108,7 +112,18 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
                     {album.name}
                 </h2>
                 <p className="text-sm text-gray-400">
-                    by <span className="text-white">{album.artists?.[0]?.name || 'Unknown Artist'}</span>
+                    by <span
+                        className="text-white hover:underline cursor-pointer transition-colors hover:text-[#FFD1D1]"
+                        onClick={() => {
+                            const artistName = album.artists?.[0]?.name;
+                            if (artistName) {
+                                if (onClose) onClose();
+                                navigate(`/artistsfullpage?search=${encodeURIComponent(artistName)}`);
+                            }
+                        }}
+                    >
+                        {album.artists?.[0]?.name || 'Unknown Artist'}
+                    </span>
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                     {album.release_date ? new Date(album.release_date).getFullYear() : ''} • {album.total_tracks} tracks

@@ -93,9 +93,19 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                 setUserName('You'); // Default if not logged in
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error loading album details:', error);
-            showError('Failed to load album details');
+
+            // Check if it's a 404 error (album not found)
+            if (error?.message?.includes('404') || error?.message?.includes('not found')) {
+                showError('This album is no longer available on Spotify');
+                // Close the modal after a short delay
+                setTimeout(() => {
+                    if (onClose) onClose();
+                }, 2000);
+            } else {
+                showError('Failed to load album details');
+            }
         } finally {
             setLoading(false);
         }
@@ -195,6 +205,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                     tags={tags}
                     onRatingUpdate={handleRatingUpdate}
                     userName={userName}
+                    onClose={onClose}
                 />
 
                 {/* Right Column */}

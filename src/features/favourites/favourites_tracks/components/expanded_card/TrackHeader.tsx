@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { SpotifyTrack } from '../../../../spotify/type/spotify_types';
 
 interface TrackHeaderProps {
@@ -13,6 +14,7 @@ interface TrackHeaderProps {
     handleAddTag: (e: React.KeyboardEvent) => void;
     removeTag: (tag: string) => void;
     userName?: string;
+    onClose?: () => void;
 }
 
 export const TrackHeader: React.FC<TrackHeaderProps> = ({
@@ -26,10 +28,13 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
     handleRatingClick,
     handleAddTag,
     removeTag,
-    userName = 'You'
+    userName = 'You',
+    onClose
 }) => {
+    const navigate = useNavigate();
+
     return (
-        <div className="w-full md:w-[35%] p-5 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto hidden-scrollbar">
+        <div className="w-full md:w-[35%] p-6 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
 
             {/* Metadata */}
             <div>
@@ -39,8 +44,19 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
                 <p className="text-xs text-gray-500 mt-1">
                     {track.album.name}
                 </p>
-                <p className="text-sm text-gray-400 mt-1">
-                    By <span className="text-white">{track.artists.map((a: any) => a.name).join(', ')}</span>
+                <p className="text-sm text-gray-400">
+                    By <span
+                        className="text-white hover:underline cursor-pointer transition-colors hover:text-[#FFD1D1]"
+                        onClick={() => {
+                            const artistName = track.artists?.[0]?.name;
+                            if (artistName) {
+                                if (onClose) onClose();
+                                navigate(`/artistsfullpage?search=${encodeURIComponent(artistName)}`);
+                            }
+                        }}
+                    >
+                        {track.artists.map((a: any) => a.name).join(', ')}
+                    </span>
                 </p>
             </div>
 
