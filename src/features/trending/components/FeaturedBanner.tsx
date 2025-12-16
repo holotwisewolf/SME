@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { TrendingItem } from '../types/trending';
 import { Star, Music, Heart, MessageCircle, Tag } from 'lucide-react';
 import { fetchPlaylistTracksWithDetails } from '../../playlist/services/playlist_services';
+import { getAlbumTracks } from '../../spotify/services/spotify_services';
 
 interface FeaturedBannerProps {
     topItem: TrendingItem;
@@ -42,12 +43,36 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                 } finally {
                     setLoadingTracks(false);
                 }
+            } else if (currentItem.type === 'album') {
+                setLoadingTracks(true);
+                try {
+                    const data = await getAlbumTracks(currentItem.id);
+                    // Map album tracks to the structure expected by the renderer
+                    // Album tracks endpoint doesn't return images, use album's
+                    const validTracks = data?.items?.map((track: any) => ({
+                        details: {
+                            name: track.name,
+                            artists: track.artists,
+                            duration_ms: track.duration_ms,
+                            album: {
+                                images: [{ url: currentItem.imageUrl }]
+                            }
+                        },
+                        spotify_track_id: track.id
+                    })) || [];
+                    setTracks(validTracks);
+                } catch (error) {
+                    console.error('Error fetching album tracks:', error);
+                    setTracks([]);
+                } finally {
+                    setLoadingTracks(false);
+                }
             } else {
-                // For non-playlist items, show mock data
+                // For other items, show mock data
                 setTracks([
-                    { details: { name: 'Track 1', artists: [{ name: 'Artist Name' }], duration_ms: 258000 }, spotify_track_id: '1' },
-                    { details: { name: 'Track 2', artists: [{ name: 'Artist Name' }], duration_ms: 125000 }, spotify_track_id: '2' },
-                    { details: { name: 'Track 3', artists: [{ name: 'Artist Name' }], duration_ms: 239000 }, spotify_track_id: '3' }
+                    { details: { name: 'Top Track 1', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 200000 }, spotify_track_id: '1' },
+                    { details: { name: 'Top Track 2', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 180000 }, spotify_track_id: '2' },
+                    { details: { name: 'Top Track 3', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 240000 }, spotify_track_id: '3' }
                 ]);
             }
         };
