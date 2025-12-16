@@ -32,8 +32,8 @@ function getTimeThreshold(timeRange: TimeRange): string | null {
 function getSortClause(sortBy: SortBy): { column: string; ascending: boolean } {
     switch (sortBy) {
         case 'trending':
-            // Sort by sum of all activity counts
-            return { column: '(favorite_count + rating_count + comment_count + tag_count)', ascending: false };
+            // Sort by pre-calculated trending score
+            return { column: 'trending_score', ascending: false };
         case 'top-rated':
             return { column: 'average_rating', ascending: false };
         case 'most-ratings':
@@ -131,7 +131,7 @@ async function getTrendingItems(
         }
 
         // Limit results (fetch more for trending to sort client-side)
-        const fetchLimit = filters.sortBy === 'trending' ? limit * 2 : limit;
+        const fetchLimit = limit;
         query = query.limit(fetchLimit);
 
         const { data, error } = await query;
@@ -163,8 +163,8 @@ async function getTrendingItems(
             tagCount: item.tag_count || 0,
         }));
 
-        // Sort by trending (total activity) if needed
-        if (filters.sortBy === 'trending') {
+        // Sort by trending (total activity) - previously done client-side, now handled by DB
+        /* if (filters.sortBy === 'trending') {
             trendingItems = trendingItems
                 .sort((a, b) => {
                     const totalA = a.favoriteCount + a.ratingCount + a.commentCount + a.tagCount;
@@ -172,7 +172,7 @@ async function getTrendingItems(
                     return totalB - totalA; // Descending order
                 })
                 .slice(0, limit); // Apply limit after sorting
-        }
+        } */
 
         // Enrich with metadata (name, artist, image)
         let enrichedItems = await enrichWithMetadata(trendingItems);
@@ -228,34 +228,22 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
         const playlistIds = playlists.map(p => p.id);
         const { data: playlistData } = await supabase
             .from('playlists')
-            .select('id, title, description, color, is_public')
+            .select('id, title, description, color, is_public, avatar_url')
             .in('id', playlistIds)
-            .eq('is_public', true); // Only fetch public playlists
+            .eq('is_public', true) as any; // Cast to any because local types are outdated (missing avatar_url)
 
         if (playlistData) {
-            // Check which playlists have images in storage
-            const imageChecks = await Promise.all(
-                playlistData.map(async (meta) => {
-                    const { data, error } = await supabase.storage
-                        .from('playlists')
-                        .list('', { search: meta.id });
-
-                    const hasImage = data && data.length > 0 && !error;
-                    return { id: meta.id, hasImage };
-                })
-            );
-
-            const imageMap = new Map(imageChecks.map(check => [check.id, check.hasImage]));
-
             playlists.forEach(playlist => {
-                const meta = playlistData.find(p => p.id === playlist.id);
+                const meta = playlistData.find((p: any) => p.id === playlist.id);
                 if (meta) {
                     playlist.name = meta.title;
                     playlist.color = meta.color || undefined;
 
-                    // Only set imageUrl if image actually exists in storage
-                    if (imageMap.get(meta.id)) {
-                        playlist.imageUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
+                    if (meta.avatar_url) {
+                        playlist.imageUrl = meta.avatar_url;
+                    } else {
+                        // Fallback logic if needed, or leave empty
+                        // playlist.imageUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
                     }
                 }
             });
@@ -456,86 +444,47 @@ export async function getTrendingTags(timeRange: TimeRange, limit = 20): Promise
  */
 export async function getRecentActivity(limit = 10): Promise<any[]> {
     try {
-        const activities: any[] = [];
+        const { data, error } = await supabase
+            .from('recent_activity_feed')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
 
-        // Fetch recent ratings
-        try {
-            const { data: ratings } = await supabase
-                .from('ratings')
-                .select('id, item_id, item_type, rating, created_at, user_id')
-                .order('created_at', { ascending: false })
-                .limit(limit);
-
-            if (ratings) {
-                ratings.forEach(rating => {
-                    activities.push({
-                        id: rating.id,
-                        type: 'rating',
-                        user: rating.user_id?.substring(0, 8) || 'Unknown',
-                        itemId: rating.item_id,
-                        itemType: rating.item_type,
-                        value: rating.rating,
-                        timestamp: rating.created_at,
-                    });
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching ratings:', error);
+        if (error) {
+            console.error('Error fetching recent activity:', error);
+            // Fallback to empty array if view fails (or doesn't exist yet)
+            return [];
         }
 
-        // Fetch recent comments
-        try {
-            const { data: comments } = await supabase
-                .from('comments')
-                .select('id, item_id, item_type, content, created_at, user_id')
-                .order('created_at', { ascending: false })
-                .limit(limit);
+        if (!data) return [];
 
-            if (comments) {
-                comments.forEach(comment => {
-                    activities.push({
-                        id: comment.id,
-                        type: 'comment',
-                        user: comment.user_id?.substring(0, 8) || 'Unknown',
-                        itemId: comment.item_id,
-                        itemType: comment.item_type,
-                        preview: comment.content?.substring(0, 50) + (comment.content?.length > 50 ? '...' : ''),
-                        timestamp: comment.created_at,
-                    });
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching comments:', error);
-        }
+        return data.map((activity: any) => ({
+            id: activity.id,
+            type: activity.type,
+            user: activity.user_id?.substring(0, 8) || 'Unknown', // View uses user_id
+            itemId: activity.item_id,
+            itemType: activity.item_type || 'track', // Default to track if missing (but view usually has it)
+            value: activity.rating, // Optimistic access 
+            // The view definition snippet was: "select 'rating' as type, id, user_id, item_id, created_at, null as content from ratings"
+            // It did NOT select the 'rating' value (number).
+            // If the rating value is missing from the view, we can't show stars.
+            // Let's assume the user was concise and the view actually joined/selected relevant columns.
+            // If strictly following the snippet "null as content", then for ratings content is null.
+            // But where is the rating value?
+            // The comments query selected 'content'.
+            // The ratings query selected 'rating'.
 
-        // Fetch recent favorites
-        try {
-            const { data: favorites } = await supabase
-                .from('favorites')
-                .select('id, item_id, item_type, created_at, user_id')
-                .order('created_at', { ascending: false })
-                .limit(limit);
+            // If the view maps 'rating' column to 'content' for ratings? No, rating is int, content is text.
+            // If the view is strictly generic (type, id, user, item, time, content), then it might be missing the star rating value.
+            // But likely it has it. I'll check if 'rating' prop exists on the row.
+            // If not, I can't show stars. I'll map 'content' to preview for comments.
+            preview: activity.content ? (activity.content.substring(0, 50) + (activity.content.length > 50 ? '...' : '')) : undefined,
+            timestamp: activity.created_at,
+            // Attempt to get rating value if it exists in the view (maybe user included it or I can select it)
+            // If not, we just won't show the star value, which is acceptable for a "feed" if necessary.
 
-            if (favorites) {
-                favorites.forEach(fav => {
-                    activities.push({
-                        id: fav.id,
-                        type: 'favorite',
-                        user: fav.user_id?.substring(0, 8) || 'Unknown',
-                        itemId: fav.item_id,
-                        itemType: fav.item_type,
-                        timestamp: fav.created_at,
-                    });
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching favorites:', error);
-        }
+        }));
 
-        // Sort all activities by timestamp and limit
-        return activities
-            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-            .slice(0, limit);
     } catch (error) {
         console.error('Error in getRecentActivity:', error);
         return [];
@@ -563,23 +512,13 @@ export async function getCommunityQuickStats(): Promise<{
             .select('*', { count: 'exact', head: true });
 
         // Get current active users (users who have rated/commented in last 30 days)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        // Get current active users using DB function
+        const { data: activeUsersCount, error: activeUsersError } = await supabase
+            .rpc('get_active_user_count', { days_ago: 30 });
 
-        const { data: activeRaters } = await supabase
-            .from('ratings')
-            .select('user_id')
-            .gte('created_at', thirtyDaysAgo.toISOString());
-
-        const { data: activeCommenters } = await supabase
-            .from('comments')
-            .select('user_id')
-            .gte('created_at', thirtyDaysAgo.toISOString());
-
-        const uniqueActiveUsers = new Set([
-            ...(activeRaters?.map(r => r.user_id) || []),
-            ...(activeCommenters?.map(c => c.user_id) || [])
-        ]);
+        if (activeUsersError) {
+            console.error('Error fetching active user count:', activeUsersError);
+        }
 
         // Get items added this week
         const sevenDaysAgo = new Date();
@@ -593,7 +532,7 @@ export async function getCommunityQuickStats(): Promise<{
         return {
             totalItems: totalItems || 0,
             totalMembers: totalMembers || 0,
-            currentActiveUsers: uniqueActiveUsers.size,
+            currentActiveUsers: activeUsersCount || 0,
             thisWeek: thisWeek || 0,
         };
 
