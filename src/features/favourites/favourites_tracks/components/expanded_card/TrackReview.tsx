@@ -9,8 +9,6 @@ import { useError } from '../../../../../context/ErrorContext';
 interface TrackReviewProps {
     track: SpotifyTrack;
     userRating: number;
-    review: string;
-    setReview: (review: string) => void;
     tags: string[];
     newTag: string;
     setNewTag: (tag: string) => void;
@@ -19,6 +17,7 @@ interface TrackReviewProps {
     handleRatingClick: (rating: number) => void;
     handleAddTag: (e: React.KeyboardEvent) => void;
     removeTag: (tag: string) => void;
+    userName?: string;
 }
 
 // Helper function to format duration from ms to mm:ss
@@ -31,8 +30,6 @@ const formatDuration = (ms: number) => {
 export const TrackReview: React.FC<TrackReviewProps> = ({
     track,
     userRating,
-    review,
-    setReview,
     tags,
     newTag,
     setNewTag,
@@ -40,7 +37,8 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
     setIsTagMenuOpen,
     handleRatingClick,
     handleAddTag,
-    removeTag
+    removeTag,
+    userName = 'You'
 }) => {
     const { showSuccess } = useSuccess();
     const { showError } = useError();
@@ -104,7 +102,7 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
             <div className="flex items-center justify-between mb-2 bg-white/5 p-4 rounded-xl border border-white/5">
                 <div>
                     <h3 className="text-white font-bold text-lg">Rating</h3>
-                    <p className="text-gray-400 text-xs">Based on you</p>
+                    <p className="text-gray-400 text-xs">Based on {userName}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-3xl font-bold text-[white]">
@@ -192,7 +190,7 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                                 </div>
 
                                 {/* Preseeded Tags */}
-                                <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                                <div className="max-h-32 overflow-y-auto subtle-scrollbar">
                                     {availableTags.filter(t => !tags.includes(t.name)).length > 0 ? (
                                         availableTags
                                             .filter(t => !tags.includes(t.name))
@@ -216,7 +214,7 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                         )}
                     </div>
                 </div>
-                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-hidden flex items-center">
+                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-y-auto subtle-scrollbar flex items-center">
                     {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {tags.map((tag, index) => (

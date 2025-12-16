@@ -65,8 +65,7 @@ export async function addTrackToPlaylist(request: { playlistId: string; trackId:
         .maybeSingle();
 
     if (existing) {
-        console.log('Track already in playlist');
-        return;
+        throw new Error('Track already in playlist');
     }
 
     // 2. Get current max position (Use maybeSingle for empty playlists)

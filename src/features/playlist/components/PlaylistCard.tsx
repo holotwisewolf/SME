@@ -58,9 +58,9 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
         };
         loadPreviewTracks();
     }, [
-        playlist.id, 
-        lastUpdated, 
-        refreshTrigger 
+        playlist.id,
+        lastUpdated,
+        refreshTrigger
     ]);
 
     const handleFavourite = async () => {
@@ -84,7 +84,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onDelete, lastUpd
         <>
             <div
                 ref={setNodeRef}
-                className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 ${isInlineExpanded ? 'min-h-[20rem] max-h-[28rem] h-auto' : 'h-80'} ${isOver ? 'ring-2 ring-white/50 bg-[#2a2a2a] shadow-[0_0_15px_rgba(255,255,255,0.3)]' : ''}`}
+                className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] ${isInlineExpanded ? 'min-h-[20rem] max-h-[28rem] h-auto' : 'h-80'} ${isOver ? 'ring-2 ring-white/50 bg-[#2a2a2a] shadow-[0_0_15px_rgba(255,255,255,0.3)]' : ''}`}
             >
                 {/* Header */}
                 <div className="flex justify-between items-start mb-4 px-1">

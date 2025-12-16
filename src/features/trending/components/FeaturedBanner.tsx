@@ -18,6 +18,12 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
     const [tracks, setTracks] = useState<any[]>([]);
     const [loadingTracks, setLoadingTracks] = useState(false);
     const [resetKey, setResetKey] = useState(0); // Key to force timer reset
+    const [imgError, setImgError] = useState(false);
+
+    // Reset image error state when item changes
+    useEffect(() => {
+        setImgError(false);
+    }, [currentIndex, topThree]);
 
     // Auto-rotate carousel every 10 seconds
     useEffect(() => {
@@ -108,7 +114,7 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
     return (
         <div className="mb-6">
             <div
-                className="relative bg-[#1a1a1a] rounded-xl border border-[#D1D1D1]/10 overflow-hidden cursor-pointer"
+                className="relative bg-[#1a1a1a] rounded-xl border border-[#D1D1D1]/10 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-[0_0_10px_rgba(255,209,209,0.1)] hover:border-[white]/20"
                 onClick={() => onItemClick(currentItem)}
             >
                 <AnimatePresence mode="wait">
@@ -134,14 +140,23 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
 
                                 {/* Image with Rank Badge */}
                                 <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-[#292929]/50 mb-3 group flex items-center justify-center">
-                                    {currentItem.imageUrl ? (
+
+                                    {currentItem.imageUrl && !imgError ? (
                                         <img
                                             src={currentItem.imageUrl}
                                             alt={currentItem.name}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onError={() => setImgError(true)}
+                                        />
+                                    ) : currentItem.color ? (
+                                        <div
+                                            className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+                                            style={{ backgroundColor: currentItem.color }}
                                         />
                                     ) : (
-                                        <Music className="w-12 h-12 text-[#D1D1D1]/20" />
+                                        <div className="w-full h-full flex items-center justify-center bg-[#292929]">
+                                            <Music className="w-12 h-12 text-[#D1D1D1]/20" />
+                                        </div>
                                     )}
 
                                     {/* Rank Badge Overlay - Top Left */}

@@ -12,6 +12,8 @@ interface TrendingRowProps {
 }
 
 const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
+    const [imgError, setImgError] = React.useState(false);
+
     return (
         <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -28,14 +30,15 @@ const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
 
                 {/* Thumbnail */}
                 <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#696969]/30 flex-shrink-0">
-                    {item.imageUrl ? (
+                    {item.imageUrl && !imgError ? (
                         <img
                             src={item.imageUrl}
                             alt={item.name}
                             className="w-full h-full object-cover"
+                            onError={() => setImgError(true)}
                         />
                     ) : item.color ? (
-                        <div className="w-full h-full" style={{ backgroundColor: item.color + '80' }} />
+                        <div className="w-full h-full" style={{ backgroundColor: item.color }} />
                     ) : (
                         <div className="w-full h-full bg-[#696969]/30" />
                     )}

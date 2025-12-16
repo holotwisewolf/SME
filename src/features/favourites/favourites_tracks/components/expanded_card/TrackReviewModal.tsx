@@ -15,7 +15,7 @@ import { TrackReview } from './TrackReview';
 import { TrackCommunity } from './TrackCommunity';
 import { TrackSettings } from './TrackSettings';
 import { PlaylistSelectCard } from '../../../../spotify/components/PlaylistSelectCard';
-import { createPortal } from 'react-dom'; 
+import { createPortal } from 'react-dom';
 
 interface TrackReviewModalProps {
     track: SpotifyTrack;
@@ -54,7 +54,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
 
     // Data States
     const [userRating, setUserRating] = useState<number>(0);
-    const [review, setReview] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [comments, setComments] = useState<any[]>([]);
@@ -261,8 +260,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                             <TrackReview
                                 track={track}
                                 userRating={userRating}
-                                review={review}
-                                setReview={setReview}
                                 tags={tags}
                                 newTag={newTag}
                                 setNewTag={setNewTag}
@@ -271,6 +268,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                                 handleRatingClick={handleRatingClick}
                                 handleAddTag={handleAddTag}
                                 removeTag={removeTag}
+                                userName={userName}
                             />
                         )}
 

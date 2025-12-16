@@ -224,29 +224,48 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
     const albums = items.filter(item => item.type === 'album');
 
     // Fetch playlist metadata from database
+    // Fetch playlist metadata from database (with batching)
     if (playlists.length > 0) {
         const playlistIds = playlists.map(p => p.id);
-        const { data: playlistData } = await supabase
-            .from('playlists')
-            .select('id, title, description, color, is_public, avatar_url')
-            .in('id', playlistIds)
-            .eq('is_public', true) as any; // Cast to any because local types are outdated (missing avatar_url)
+        const BATCH_SIZE = 10; // Supabase URL limit safety - 20 proved too high
+        const batches = [];
 
-        if (playlistData) {
-            playlists.forEach(playlist => {
-                const meta = playlistData.find((p: any) => p.id === playlist.id);
-                if (meta) {
-                    playlist.name = meta.title;
-                    playlist.color = meta.color || undefined;
+        for (let i = 0; i < playlistIds.length; i += BATCH_SIZE) {
+            batches.push(playlistIds.slice(i, i + BATCH_SIZE));
+        }
 
-                    if (meta.avatar_url) {
-                        playlist.imageUrl = meta.avatar_url;
-                    } else {
-                        // Fallback logic if needed, or leave empty
-                        // playlist.imageUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
+        try {
+            const batchResults = await Promise.all(
+                batches.map(batchIds =>
+                    supabase
+                        .from('playlists')
+                        .select('id, title, description, color, is_public')
+                        .in('id', batchIds)
+                        .eq('is_public', true)
+                        .then(res => ({ data: res.data as any, error: res.error }))
+                )
+            );
+
+            // Combine results/handle errors per batch if needed (though Promise.all fails fast usually)
+            const allPlaylistData = batchResults.flatMap(res => res.data || []);
+
+            if (allPlaylistData.length > 0) {
+                playlists.forEach(playlist => {
+                    const meta = allPlaylistData.find((p: any) => p.id === playlist.id);
+                    if (meta) {
+                        playlist.name = meta.title;
+                        playlist.color = meta.color || undefined;
+
+                        // Fallback logic since avatar_url column might not exist
+                        const { data: publicUrlData } = supabase.storage.from('playlists').getPublicUrl(playlist.id);
+                        if (publicUrlData) {
+                            playlist.imageUrl = publicUrlData.publicUrl;
+                        }
                     }
-                }
-            });
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching playlist metadata batches:', error);
         }
     }
 

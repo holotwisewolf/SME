@@ -14,6 +14,7 @@ interface AlbumReviewProps {
     tags: string[];
     setTags: (tags: string[]) => void;
     onRatingUpdate: () => void;
+    userName?: string;
 }
 
 export const AlbumReview: React.FC<AlbumReviewProps> = ({
@@ -22,7 +23,8 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
     userRating,
     tags,
     setTags,
-    onRatingUpdate
+    onRatingUpdate,
+    userName = 'You'
 }) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
@@ -143,7 +145,7 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
             <div className="flex items-center justify-between mb-2 bg-white/5 p-4 rounded-xl border border-white/5">
                 <div>
                     <h3 className="text-white font-bold text-lg">Rating</h3>
-                    <p className="text-gray-400 text-xs">Based on you</p>
+                    <p className="text-gray-400 text-xs">Based on {userName}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-3xl font-bold text-[white]">
@@ -233,7 +235,7 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
                                 </div>
 
                                 {/* Preseeded Tags */}
-                                <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                                <div className="max-h-32 overflow-y-auto subtle-scrollbar">
                                     {availableTags.filter(t => !tags.includes(t.name)).length > 0 ? (
                                         availableTags
                                             .filter(t => !tags.includes(t.name))
@@ -257,7 +259,7 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
                         )}
                     </div>
                 </div>
-                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-hidden flex items-center">
+                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-y-auto subtle-scrollbar flex items-center">
                     {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {tags.map((tag, index) => (

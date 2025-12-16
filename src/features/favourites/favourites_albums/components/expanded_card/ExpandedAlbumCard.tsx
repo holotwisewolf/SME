@@ -12,7 +12,7 @@ import { AlbumCommunity } from './AlbumCommunity';
 import { AlbumSettings } from './AlbumSettings';
 import { AlbumReview } from './AlbumReview';
 import ExpandButton from '../../../../../components/ui/ExpandButton';
-import { AlbumTrackDetailModal } from './AlbumTrackDetailModal';
+import { TrackReviewModal } from '../../../favourites_tracks/components/expanded_card/TrackReviewModal';
 import { supabase } from '../../../../../lib/supabaseClient';
 import { PlaylistSelectCard } from '../../../../spotify/components/PlaylistSelectCard';
 
@@ -268,6 +268,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                                 tags={tags}
                                 setTags={setTags}
                                 onRatingUpdate={handleRatingUpdate}
+                                userName={userName}
                             />
                         )}
 
@@ -294,11 +295,14 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                 </div >
             </div >
 
-            {/* Track Detail Modal */}
+            {/* Track Review Modal (Expanded Card) */}
             {
                 selectedTrack && (
-                    <AlbumTrackDetailModal
-                        track={selectedTrack}
+                    <TrackReviewModal
+                        track={{
+                            ...selectedTrack,
+                            album: selectedTrack.album || album // Ensure album context is passed for connection/images
+                        }}
                         onClose={() => setSelectedTrack(null)}
                     />
                 )

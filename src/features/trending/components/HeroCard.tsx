@@ -31,7 +31,7 @@ const HeroCard: React.FC<HeroCardProps> = ({ item, rank, onClick }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, delay: rank * 0.1 }}
-            className="bg-[#1a1a1a] rounded-xl p-4 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#FFD1D1]/10 cursor-pointer group"
+            className="bg-[#1a1a1a] rounded-xl p-4 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30 transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,209,209,0.15)] cursor-pointer group"
             onClick={onClick}
         >
             <div className="flex flex-col h-full">

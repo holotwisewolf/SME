@@ -254,7 +254,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
             {/* Bottom Row: Tags */}
             <div className="mb-2">
                 <div className="flex items-center justify-between mb-2">
-                    <p className="text-gray-400 text-xs">Your Tags:</p>
+                    <p className="text-gray-400 text-xs">{isEditingEnabled ? 'Your Tags:' : 'Creator Tags:'}</p>
                     <div className="relative tag-menu-container">
                         <button
                             onClick={() => setIsTagMenuOpen(!isTagMenuOpen)}
@@ -282,7 +282,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                                     />
                                 </div>
 
-                                <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                                <div className="max-h-32 overflow-y-auto subtle-scrollbar">
                                     {availableTags.filter(t => !tags.includes(t.name)).length > 0 ? (
                                         availableTags
                                             .filter(t => !tags.includes(t.name))
@@ -306,7 +306,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                         )}
                     </div>
                 </div>
-                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-hidden flex items-center">
+                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-y-auto subtle-scrollbar flex items-center">
                     {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {tags.map((tag, index) => (

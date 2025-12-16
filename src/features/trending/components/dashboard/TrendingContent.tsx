@@ -41,7 +41,7 @@ const TrendingContent: React.FC<TrendingContentProps> = ({
             {/* Scrollable Content - Hidden Scrollbar */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto scrollbar-hide pr-2"
+                className="flex-1 overflow-y-auto scrollbar-hide"
                 onScroll={onScroll}
             >
                 {/* Top 3 Items - Different display based on tab */}
