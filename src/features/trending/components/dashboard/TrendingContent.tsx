@@ -1,6 +1,6 @@
 // TrendingContent - Main content area displaying top 3 and rankings
 
-import React, { RefObject } from 'react';
+import React, { type RefObject } from 'react';
 import HeroCard from '../HeroCard';
 import FeaturedBanner from '../FeaturedBanner';
 import TrendingRow from '../TrendingRow';

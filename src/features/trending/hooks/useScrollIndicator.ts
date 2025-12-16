@@ -1,6 +1,6 @@
 // useScrollIndicator - Custom hook for managing scroll indicator state and behavior
 
-import { useState, useEffect, RefObject } from 'react';
+import { useState, useEffect, type RefObject } from 'react';
 
 interface UseScrollIndicatorReturn {
     showIndicator: boolean;

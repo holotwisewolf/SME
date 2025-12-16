@@ -547,7 +547,8 @@ export async function getRecentActivity(limit = 10): Promise<any[]> {
  */
 export async function getCommunityQuickStats(): Promise<{
     totalItems: number;
-    activeUsers: number;
+    totalMembers: number;
+    currentActiveUsers: number;
     thisWeek: number;
 }> {
     try {
@@ -556,7 +557,12 @@ export async function getCommunityQuickStats(): Promise<{
             .from('item_stats')
             .select('*', { count: 'exact', head: true });
 
-        // Get active users (users who have rated/commented in last 30 days)
+        // Get total members (all users in profiles table)
+        const { count: totalMembers } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true });
+
+        // Get current active users (users who have rated/commented in last 30 days)
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -570,7 +576,7 @@ export async function getCommunityQuickStats(): Promise<{
             .select('user_id')
             .gte('created_at', thirtyDaysAgo.toISOString());
 
-        const uniqueUsers = new Set([
+        const uniqueActiveUsers = new Set([
             ...(activeRaters?.map(r => r.user_id) || []),
             ...(activeCommenters?.map(c => c.user_id) || [])
         ]);
@@ -586,7 +592,8 @@ export async function getCommunityQuickStats(): Promise<{
 
         return {
             totalItems: totalItems || 0,
-            activeUsers: uniqueUsers.size,
+            totalMembers: totalMembers || 0,
+            currentActiveUsers: uniqueActiveUsers.size,
             thisWeek: thisWeek || 0,
         };
 
@@ -594,7 +601,8 @@ export async function getCommunityQuickStats(): Promise<{
         console.error('Error fetching community stats:', error);
         return {
             totalItems: 0,
-            activeUsers: 0,
+            totalMembers: 0,
+            currentActiveUsers: 0,
             thisWeek: 0,
         };
     }

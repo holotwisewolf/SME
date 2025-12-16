@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MoreOptionsIcon } from '../../../../components/ui/MoreOptionsIcon';
-import { updatePlaylistDescription, updatePlaylistRating } from '../../services/playlist_services';
+import { updatePlaylistDescription, updatePlaylistRating, deletePlaylistRating } from '../../services/playlist_services';
 import { getPreMadeTags, assignTagToItem, createCustomTag, searchTags, removeTagFromItem } from '../../../tags/services/tag_services';
 import type { Tag } from '../../../tags/type/tag_types';
 import { useError } from '../../../../context/ErrorContext';
@@ -157,8 +157,15 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                 return;
             }
 
-            await updatePlaylistRating(playlist.id, rating);
-            showSuccess(`Rated ${rating}/5`);
+            if (userRating === rating) {
+                // Toggle off (delete rating)
+                await deletePlaylistRating(playlist.id);
+                showSuccess('Rating removed');
+            } else {
+                await updatePlaylistRating(playlist.id, rating);
+                showSuccess(`Rated ${rating}/5`);
+            }
+
             // Trigger parent to reload rating data
             window.location.reload(); // Simple reload for now
         } catch (error) {
@@ -269,6 +276,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                                         value={customTagInput}
                                         onChange={(e) => setCustomTagInput(e.target.value)}
                                         onKeyDown={handleAddCustomTag}
+                                        onMouseDown={(e) => e.stopPropagation()}
                                         placeholder="Press Enter to add"
                                         className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
                                     />
