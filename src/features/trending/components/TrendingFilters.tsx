@@ -180,12 +180,12 @@ const TrendingFilters: React.FC<TrendingFiltersProps> = ({ filters, onFiltersCha
                             </button>
 
                             {isTagMenuOpen && (
-                                <div className="absolute right-0 top-full mt-2 w-48 bg-[#2a2a2a] border border-[#D1D1D1]/10 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <div className="px-3 py-2 border-b border-[#D1D1D1]/5 bg-[#D1D1D1]/5">
+                                <div className="absolute right-0 top-full mt-2 w-40 bg-[#2a2a2a] border border-[#D1D1D1]/10 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="px-2.5 py-1.5 border-b border-[#D1D1D1]/5 bg-[#D1D1D1]/5">
                                         <span className="text-xs font-bold text-[#D1D1D1]/80 uppercase tracking-wider">Pre-seeded Tags</span>
                                     </div>
 
-                                    <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
                                         {availableTags.filter(t => !selectedTags.includes(t.name)).length > 0 ? (
                                             availableTags
                                                 .filter(t => !selectedTags.includes(t.name))
@@ -193,14 +193,14 @@ const TrendingFilters: React.FC<TrendingFiltersProps> = ({ filters, onFiltersCha
                                                     <button
                                                         key={tag.id}
                                                         onClick={() => handleAddPresetTag(tag)}
-                                                        className="w-full text-left px-3 py-2 text-sm text-[#D1D1D1]/80 hover:bg-[#D1D1D1]/10 hover:text-[#D1D1D1] transition-colors flex items-center gap-2"
+                                                        className="w-full text-left px-2.5 py-1.5 text-sm text-[#D1D1D1]/80 hover:bg-[#D1D1D1]/10 hover:text-[#D1D1D1] transition-colors flex items-center gap-2"
                                                     >
                                                         <span className="w-1.5 h-1.5 rounded-full bg-[#FFD1D1]"></span>
                                                         {tag.name}
                                                     </button>
                                                 ))
                                         ) : (
-                                            <div className="px-3 py-2 text-xs text-[#D1D1D1]/50 italic">
+                                            <div className="px-2.5 py-1.5 text-xs text-[#D1D1D1]/50 italic">
                                                 All tags already selected
                                             </div>
                                         )}
