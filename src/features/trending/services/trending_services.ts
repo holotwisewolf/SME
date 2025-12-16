@@ -115,6 +115,11 @@ async function getTrendingItems(
             query = query.gte('average_rating', filters.minRating);
         }
 
+        // Filter by minimum rating count
+        if (filters.minRatingCount) {
+            query = query.gte('rating_count', filters.minRatingCount);
+        }
+
         // For 'trending' sort, we need to sort client-side
         // For other sorts, apply sorting in the query
         if (filters.sortBy !== 'trending') {

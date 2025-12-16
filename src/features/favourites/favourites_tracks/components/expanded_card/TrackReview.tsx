@@ -201,7 +201,7 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                                                     onClick={() => handleAddPresetTag(tag)}
                                                     className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
                                                 >
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#FFD1D1]"></span>
                                                     {tag.name}
                                                 </button>
                                             ))

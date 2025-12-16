@@ -20,7 +20,9 @@ export interface TrendingFilters {
     tags?: string[];           // Filter by tag IDs
     genres?: string[];         // Filter by Spotify genres
     minRating?: number;        // Minimum average rating (1-5)
+    minRatingCount?: number;   // Minimum number of user ratings
     activityAge?: number;      // Max days since last activity
+    searchQuery?: string;      // Filter by name/title
 }
 
 export interface TrendingItem {
