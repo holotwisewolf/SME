@@ -14,8 +14,8 @@ interface TrendingContentProps {
     topThree: TrendingItem[];
     remaining: TrendingItem[];
     onItemClick: (item: TrendingItem) => void;
-    scrollContainerRef: RefObject<HTMLDivElement>;
-    allTrendingRef: RefObject<HTMLHeadingElement>;
+    scrollContainerRef: RefObject<HTMLDivElement | null>;
+    allTrendingRef: RefObject<HTMLHeadingElement | null>;
     onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
     showScrollIndicator: boolean;
     isHoveringScrollIndicator: boolean;
