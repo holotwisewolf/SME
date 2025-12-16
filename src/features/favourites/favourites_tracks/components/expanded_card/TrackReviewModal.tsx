@@ -15,6 +15,7 @@ import { TrackReview } from './TrackReview';
 import { TrackCommunity } from './TrackCommunity';
 import { TrackSettings } from './TrackSettings';
 import { PlaylistSelectCard } from '../../../../spotify/components/PlaylistSelectCard';
+import { createPortal } from 'react-dom'; 
 
 interface TrackReviewModalProps {
     track: SpotifyTrack;
@@ -193,7 +194,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
         setShowPlaylistModal(true); // Just show playlist modal on top
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
             <motion.div
                 initial={{ opacity: 0 }}
@@ -305,6 +306,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                     onClose={() => setShowPlaylistModal(false)}
                 />
             )}
-        </div>
+        </div>,
+        document.body
     );
 };
