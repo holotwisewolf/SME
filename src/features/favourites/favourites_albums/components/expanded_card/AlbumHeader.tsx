@@ -105,7 +105,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     };
 
     return (
-        <div className="w-full md:w-[35%] p-6 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
+        <div className="w-full md:w-[35%] p-5 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
             {/* Title & Artist */}
             <div>
                 <h2 className="text-2xl font-bold text-white leading-tight mb-1">
@@ -182,7 +182,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
                         tags.map((tag, index) => (
                             <span
                                 key={index}
-                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors"
+                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors flex items-center gap-1 group"
                             >
                                 #{tag}
                             </span>

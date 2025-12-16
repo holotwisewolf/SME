@@ -34,7 +34,7 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
     const navigate = useNavigate();
 
     return (
-        <div className="w-full md:w-[35%] p-6 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
+        <div className="w-full md:w-[35%] p-5 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
 
             {/* Metadata */}
             <div>
@@ -103,7 +103,7 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
 
             {/* Tags Container */}
             <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3">
                     <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -114,12 +114,6 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
                                 className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors flex items-center gap-1 group"
                             >
                                 #{tag}
-                                <button
-                                    onClick={() => removeTag(tag)}
-                                    className="ml-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    ×
-                                </button>
                             </span>
                         ))
                     ) : (
