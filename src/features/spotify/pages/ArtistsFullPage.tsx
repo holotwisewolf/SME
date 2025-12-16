@@ -86,14 +86,14 @@ export function ArtistsFullPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-[#121212]">
+            <div className="flex items-center justify-center min-h-screen bg-[#696969]">
                 <LoadingSpinner className="w-12 h-12" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#121212] p-8">
+        <div className="min-h-screen bg-[#696969] p-8">
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-4xl font-bold text-white mb-8">
                     {artists.length} Artists for '{artistId ? artists[0]?.name : (search || 'All Artists')}'

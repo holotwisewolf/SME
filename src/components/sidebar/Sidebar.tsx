@@ -72,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
             initial={false}
             animate={isExpanded ? "expanded" : "collapsed"}
             variants={sidebarVariants}
-            className="relative h-screen bg-[#2a2a2e] border-[white] flex flex-col z-50 overflow-visible rounded-br-2xl"
+            className="relative h-screen bg-[#2a2a2e] flex flex-col z-50 overflow-visible"
         >
 
 
