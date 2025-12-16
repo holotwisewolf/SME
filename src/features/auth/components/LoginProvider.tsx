@@ -46,11 +46,11 @@ export const LoginProvider = ({ children }: { children: React.ReactNode }) => {
                 // Check active session
                 const { data: { session } } = await supabase.auth.getSession();
 
-                if (!session) {
-                    console.log("No session found, signing in anonymously...");
-                    const { error } = await supabase.auth.signInAnonymously();
-                    if (error) {
-                        console.error("Anonymous sign-in failed:", error);
+                // Set user if session exists, otherwise null
+                if (mounted) {
+                    setUser(session?.user ?? null);
+                    if (session?.user) {
+                        await fetchProfile(session.user.id);
                     }
                 }
             } catch (error) {
