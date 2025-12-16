@@ -13,7 +13,7 @@ interface DiscoverySidebarProps {
 const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersChange }) => {
     const [trendingTags, setTrendingTags] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
-    const [stats, setStats] = useState({ totalItems: 0, activeUsers: 0, thisWeek: 0 });
+    const [stats, setStats] = useState({ totalItems: 0, totalMembers: 0, currentActiveUsers: 0, thisWeek: 0 });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -120,8 +120,8 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                                             key={tag.name}
                                             onClick={() => handleTagClick(tag.name)}
                                             className={`px-2 py-1 border rounded-full text-xs transition-all duration-200 cursor-pointer ${isActive
-                                                    ? 'bg-[#FFD1D1]/30 border-[#FFD1D1] text-white font-semibold'
-                                                    : 'bg-[#696969]/30 hover:bg-[#FFD1D1]/20 border-[#D1D1D1]/10 hover:border-[#FFD1D1]/40 text-white'
+                                                ? 'bg-[#FFD1D1]/30 border-[#FFD1D1] text-white font-semibold'
+                                                : 'bg-[#696969]/30 hover:bg-[#FFD1D1]/20 border-[#D1D1D1]/10 hover:border-[#FFD1D1]/40 text-white'
                                                 }`}
                                             title={isActive ? 'Click to remove filter' : 'Click to filter'}
                                         >
@@ -208,8 +208,12 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                                 <span className="text-sm font-bold text-[#FFD1D1]">{stats.totalItems.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-xs text-[#D1D1D1]/60">Active Members</span>
-                                <span className="text-sm font-bold text-[#FFD1D1]">{stats.activeUsers.toLocaleString()}</span>
+                                <span className="text-xs text-[#D1D1D1]/60">Total Members</span>
+                                <span className="text-sm font-bold text-[#FFD1D1]">{stats.totalMembers.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-[#D1D1D1]/60">Current Active Users</span>
+                                <span className="text-sm font-bold text-[#FFD1D1]">{stats.currentActiveUsers.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-xs text-[#D1D1D1]/60">New This Week</span>
