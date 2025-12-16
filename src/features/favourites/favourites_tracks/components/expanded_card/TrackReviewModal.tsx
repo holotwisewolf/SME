@@ -6,6 +6,7 @@ import { removeFromFavourites } from '../../../services/favourites_services';
 import { getItemComments, createComment } from '../../../../comments/services/comment_services';
 import { getItemTags } from '../../../../tags/services/tag_services';
 import { supabase } from '../../../../../lib/supabaseClient';
+import { useError } from '../../../../../context/ErrorContext';
 import ExpandButton from '../../../../../components/ui/ExpandButton';
 import { TrackHeader } from './TrackHeader';
 import { TrackReview } from './TrackReview';
@@ -42,6 +43,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     onClose,
     onRemove
 }) => {
+    const { showError } = useError();
     const [activeTab, setActiveTab] = useState<'review' | 'community' | 'settings'>('review');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -104,7 +106,10 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     const handleRatingClick = async (newRating: number) => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            if (!user) {
+                showError('Log in to rate');
+                return;
+            }
 
             setUserRating(newRating);
             await submitPersonalRating(user.id, track.id, 'track', newRating);
@@ -114,11 +119,19 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
             setRatingData(updatedRatingData);
         } catch (error) {
             console.error('Error updating rating:', error);
+            showError('Failed to update rating. Please try again.');
         }
     };
 
-    const handleAddTag = (e: React.KeyboardEvent) => {
+    const handleAddTag = async (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && newTag.trim()) {
+            // Check if user is logged in
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showError('Log in to add tags');
+                return;
+            }
+
             if (!tags.includes(newTag.trim())) {
                 setTags([...tags, newTag.trim()]);
             }
@@ -141,8 +154,9 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
             // Refresh comments
             const updatedComments = await getItemComments(track.id, 'track');
             setComments(updatedComments);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error adding comment:', error);
+            showError(error.message || 'Failed to add comment. Please try again.');
         } finally {
             setCommentLoading(false);
         }

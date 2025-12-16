@@ -5,7 +5,7 @@ import { addToFavourites } from '../../favourites/services/favourites_services';
 import { TrackReviewModal } from '../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import type { SpotifyAlbum, SpotifyTrack } from '../type/spotify_types';
-import { AlbumDetailModal } from '../components/AlbumDetailModal';
+import { ExpandedAlbumCard } from '../../favourites/favourites_albums/components/expanded_card/ExpandedAlbumCard';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import ViewIcon from '../../../components/ui/ViewIcon';
 import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
@@ -154,7 +154,8 @@ export function AlbumsFullPage() {
             album: {
                 id: album.id,
                 name: album.name,
-                images: album.images
+                images: album.images,
+                release_date: album.release_date || ''
             },
             duration_ms: track.duration,
             preview_url: track.previewUrl || null,
@@ -354,13 +355,11 @@ export function AlbumsFullPage() {
                 />
             )}
 
-            {/* Album Detail Modal */}
+            {/* Album Expanded Card */}
             {selectedAlbum && (
-                <AlbumDetailModal
-                    album={selectedAlbum}
+                <ExpandedAlbumCard
+                    albumId={selectedAlbum.id}
                     onClose={() => setSelectedAlbum(null)}
-                    onAddToFavourites={(id) => handleAddToFavourites(id, 'album')}
-                    onImportToPlaylist={handleImportAlbumToPlaylist}
                 />
             )}
 

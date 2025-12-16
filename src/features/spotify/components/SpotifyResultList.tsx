@@ -9,7 +9,7 @@ import { ResultMenuDropdown } from './ResultMenuDropdown';
 import { TrackReviewModal } from '../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { PlaylistSelectCard } from './PlaylistSelectCard';
 import { ArtistDetailModal } from './ArtistDetailModal';
-import { AlbumDetailModal } from './AlbumDetailModal';
+import { ExpandedAlbumCard } from '../../favourites/favourites_albums/components/expanded_card/ExpandedAlbumCard';
 import { useTrackPreview } from '../hooks/useTrackPreview';
 import { useArtistPopup } from '../hooks/useArtistPopup';
 import { addToFavourites } from '../../favourites/services/favourites_services';
@@ -312,13 +312,11 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 />
             )}
 
-            {/* Album Detail Modal */}
+            {/* Album Expanded Card */}
             {selectedAlbum && (
-                <AlbumDetailModal
-                    album={selectedAlbum}
+                <ExpandedAlbumCard
+                    albumId={selectedAlbum.id}
                     onClose={() => setSelectedAlbum(null)}
-                    onAddToFavourites={handleAddAlbumToFavourites}
-                    onImportToPlaylist={(album) => handleImportAlbumToPlaylist(album.id, album.name)}
                 />
             )}
 

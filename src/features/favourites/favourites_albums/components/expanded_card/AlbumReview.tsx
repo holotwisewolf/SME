@@ -5,6 +5,7 @@ import { updateItemRating, deleteItemRating } from '../../../services/item_servi
 import type { Tag } from '../../../../tags/type/tag_types';
 import { useError } from '../../../../../context/ErrorContext';
 import { useSuccess } from '../../../../../context/SuccessContext';
+import { supabase } from '../../../../../lib/supabaseClient';
 
 interface AlbumReviewProps {
     albumId: string;
@@ -77,6 +78,12 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
 
     const handleRatingClick = async (rating: number) => {
         try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showError('Log in to rate');
+                return;
+            }
+
             if (userRating === rating) {
                 // Toggle off (delete rating)
                 await deleteItemRating(albumId, 'album');
@@ -92,6 +99,12 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
 
     const handleAddTag = async (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && newTag.trim()) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showError('Log in to add tags');
+                return;
+            }
+
             const tagToAdd = newTag.trim();
             if (tags.includes(tagToAdd)) {
                 showError('Tag already exists');

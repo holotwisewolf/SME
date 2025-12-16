@@ -6,6 +6,7 @@ import type { Tag } from '../../../tags/type/tag_types';
 import { useError } from '../../../../context/ErrorContext';
 import { useSuccess } from '../../../../context/SuccessContext';
 import type { Tables } from '../../../../types/supabase';
+import { supabase } from '../../../../lib/supabaseClient';
 
 interface PlaylistReviewProps {
     playlist: Tables<'playlists'>;
@@ -109,6 +110,12 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
 
     const handleAddCustomTag = async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && customTagInput.trim()) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showError('Log in to add tags');
+                return;
+            }
+
             const tagName = customTagInput.trim();
 
             // Check if tag already exists in current playlist
@@ -144,6 +151,12 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
 
     const handleStarClick = async (rating: number) => {
         try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showError('Log in to rate');
+                return;
+            }
+
             await updatePlaylistRating(playlist.id, rating);
             showSuccess(`Rated ${rating}/5`);
             // Trigger parent to reload rating data
