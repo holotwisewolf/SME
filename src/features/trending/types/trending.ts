@@ -12,7 +12,8 @@ export type SortBy =
     | 'most-favorited'      // Most favorited
     | 'most-activity'       // Most overall activity (ratings + comments + tags + favorites)
     | 'recently-commented'  // Latest comment timestamp
-    | 'newly-tagged';       // Most recent tag additions
+    | 'newly-tagged'        // Most recent tag additions
+    | 'recently-created';   // Most recently created items
 
 export interface TrendingFilters {
     timeRange: TimeRange;

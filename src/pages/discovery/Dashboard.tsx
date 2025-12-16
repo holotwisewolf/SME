@@ -12,7 +12,7 @@ import type { TrendingFilters } from '../../features/trending/types/trending';
 type TabType = 'tracks' | 'albums' | 'playlists';
 
 const Dashboard: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<TabType>('tracks');
+    const [activeTab, setActiveTab] = useState<TabType>('playlists');
     const [viewMode, setViewMode] = useState<'simple' | 'dashboard'>('dashboard');
     const [filters, setFilters] = useState<TrendingFilters>({
         timeRange: 'week',

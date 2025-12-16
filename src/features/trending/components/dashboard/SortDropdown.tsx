@@ -24,6 +24,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({ sortBy, onSortChange }) => 
                 <option value="most-favorited">Most Favorited</option>
                 <option value="most-activity">Recent Activity</option>
                 <option value="newly-tagged">Newly Tagged</option>
+                <option value="recently-created">Recently Created</option>
             </select>
         </div>
     );

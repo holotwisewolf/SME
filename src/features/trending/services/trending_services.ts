@@ -52,6 +52,9 @@ function getSortClause(sortBy: SortBy): { column: string; ascending: boolean } {
         case 'newly-tagged':
             // Fallback to tag count since we don't have timestamps
             return { column: 'tag_count', ascending: false };
+        case 'recently-created':
+            // Sort by creation timestamp (most recent first)
+            return { column: 'created_at', ascending: false };
         default:
             return { column: 'average_rating', ascending: false };
     }
