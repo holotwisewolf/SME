@@ -24,7 +24,7 @@ import { PlaylistCommunity } from './PlaylistCommunity';
 import { PlaylistSettings } from './PlaylistSettings';
 import { PlaylistReview } from './PlaylistReview';
 import ExpandButton from '../../../../components/ui/ExpandButton';
-import { PlaylistTrackDetailModal } from './PlaylistTrackDetailModal';
+import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal'; // [Resolved] Fix import path
 import type { EnhancedPlaylist } from '../PlaylistDashboard';
 
 interface ExpandedPlaylistCardProps {
@@ -40,9 +40,9 @@ interface ExpandedPlaylistCardProps {
 
 type ActiveTab = 'tracks' | 'review' | 'community' | 'settings';
 
-export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ 
-    playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor, 
-    onPlaylistUpdate 
+export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
+    playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor,
+    onPlaylistUpdate
 }) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
@@ -67,7 +67,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [newComment, setNewComment] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
     const [isEditingEnabled, setIsEditingEnabled] = useState(false);
-    const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
+    const [selectedTrack, setSelectedTrack] = useState<any | null>(null); // [Resolved] Restore state
     const [searchQuery, setSearchQuery] = useState('');
     const [isOwner, setIsOwner] = useState(false);
 
@@ -150,7 +150,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         ]);
         setRatingData(ratingRes);
         setUserRating(userRatingRes);
-        
+
         if (onPlaylistUpdate) {
             onPlaylistUpdate(playlist.id, {
                 rating_avg: ratingRes.average,
@@ -250,7 +250,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     };
 
     const handleTrackClick = (track: any) => {
-        setSelectedTrack(track);
+        setSelectedTrack(track); // [Resolved] Set state to open modal
     };
 
     // Logic to update Dashboard Tags when User Tags change
@@ -346,11 +346,11 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                                 playlist={playlist}
                                 userRating={userRating}
                                 tags={userTags}
-                                setTags={setUserTags} 
+                                setTags={setUserTags}
                                 isEditingEnabled={isEditingEnabled}
                                 userName={currentUserName}
                                 onDescriptionChange={(newDescription) => { playlist.description = newDescription; }}
-                                onTagsUpdate={handleTagsSync} 
+                                onTagsUpdate={handleTagsSync}
                             />
                         )}
 
@@ -365,7 +365,13 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                 </div>
             </div>
 
-            {selectedTrack && <PlaylistTrackDetailModal track={selectedTrack.details || selectedTrack} onClose={() => setSelectedTrack(null)} />}
+            {/* [Resolved] Render Correct Track Modal */}
+            {selectedTrack && (
+                <TrackReviewModal
+                    track={selectedTrack.details || selectedTrack} // Handle both structure types
+                    onClose={() => setSelectedTrack(null)}
+                />
+            )}
         </div>
     );
 };
