@@ -5,13 +5,15 @@ import { TrackPreviewAudio } from '../components/TrackPreviewAudio';
 import { PlaylistSelectCard } from '../components/PlaylistSelectCard';
 import { TrackReviewModal } from '../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { useTrackPreview } from '../hooks/useTrackPreview';
-import { addToFavourites } from '../../favourites/services/favourites_services';
+import { useSidebarBlur } from '../../../hooks/useSidebarBlur';
+import { addToFavourites, removeFromFavourites } from '../../favourites/services/favourites_services';
 import type { SpotifyTrack } from '../type/spotify_types';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
 import FavButton from '../../../components/ui/FavButton';
 import ExpandButton from '../../../components/ui/ExpandButton';
-import { useSidebarBlur } from '../../../hooks/useSidebarBlur';
+import { useSuccess } from '../../../context/SuccessContext';
+import { useError } from '../../../context/ErrorContext';
 
 export function TracksFullPage() {
     const [searchParams] = useSearchParams();
@@ -78,17 +80,40 @@ export function TracksFullPage() {
         setSelectedTrack(track);
     };
 
+    const { showSuccess } = useSuccess();
+    const { showError } = useError();
+
     const handleToggleFavourite = async (e: React.MouseEvent, trackId: string) => {
         e.stopPropagation();
-        // Toggle favorite status optimistically
-        const newFavorited = new Set(favoritedTracks);
-        if (newFavorited.has(trackId)) {
-            newFavorited.delete(trackId);
-        } else {
-            newFavorited.add(trackId);
+        const isFavorited = favoritedTracks.has(trackId);
+
+        // Optimistic update
+        setFavoritedTracks(prev => {
+            const newSet = new Set(prev);
+            if (isFavorited) newSet.delete(trackId);
+            else newSet.add(trackId);
+            return newSet;
+        });
+
+        try {
+            if (isFavorited) {
+                await removeFromFavourites(trackId, 'track');
+                showSuccess('Removed from favorites');
+            } else {
+                await addToFavourites(trackId, 'track');
+                showSuccess('Added to favorites');
+            }
+        } catch (error) {
+            console.error('Error toggling favourite:', error);
+            showError('Failed to update favorites');
+            // Revert on error
+            setFavoritedTracks(prev => {
+                const newSet = new Set(prev);
+                if (isFavorited) newSet.add(trackId);
+                else newSet.delete(trackId);
+                return newSet;
+            });
         }
-        setFavoritedTracks(newFavorited);
-        // Actual API call would happen here
     };
 
     if (loading) {
