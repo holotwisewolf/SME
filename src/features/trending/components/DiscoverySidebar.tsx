@@ -55,32 +55,10 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
         return `${diffDays}d ago`;
     };
 
-    const getActivityIcon = (type: string) => {
-        const iconClass = "w-3.5 h-3.5";
-        switch (type) {
-            case 'rating': return <Star className={`${iconClass} text-[#FFD1D1] fill-[#FFD1D1]`} />;
-            case 'comment': return <MessageCircle className={`${iconClass} text-[#FFD1D1]`} />;
-            case 'favorite': return <Heart className={`${iconClass} text-[#FFD1D1] fill-[#FFD1D1]`} />;
-            case 'tag': return <Tag className={`${iconClass} text-[#FFD1D1]`} />;
-            default: return <span className="text-[#D1D1D1]/50">•</span>;
-        }
-    };
 
-    const getActivityActionText = (type: string) => {
-        switch (type) {
-            case 'rating': return 'rated';
-            case 'comment': return 'commented on';
-            case 'favorite': return 'favourited';
-            case 'tag': return 'tagged';
-            default: return 'interacted with';
-        }
-    };
 
-    // Helper to safely get the star count number
-    const getStarRating = (activity: any) => {
-        const val = activity.rating_value || activity.rating || activity.value;
-        return Number(val) || 0;
-    };
+    // Helper to safely get the star count number (Unused in simple view but kept if needed later, or remove)
+    // const getStarRating = ... (Removed to fix lint)
 
     const handleTagClick = (tagName: string) => {
         if (!onFiltersChange || !filters) return;
@@ -140,18 +118,9 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
 
             {/* Community Pulse */}
             <div className="bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-[#FFD1D1]" />
-                        <h3 className="text-sm font-bold text-[#D1D1D1]">Community Pulse</h3>
-                    </div>
-                    <a
-                        href="/discovery/community-activity"
-                        className="text-[#D1D1D1]/60 hover:text-[#FFD1D1] transition-colors"
-                        title="View full activity"
-                    >
-                        <ExternalLink className="w-4 h-4" />
-                    </a>
+                <div className="flex items-center gap-2 mb-3">
+                    <Clock className="w-4 h-4 text-[#FFD1D1]" />
+                    <h3 className="text-sm font-bold text-[#D1D1D1]">Community Pulse</h3>
                 </div>
 
                 {loading ? (
@@ -159,58 +128,42 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                         <div className="w-4 h-4 border-2 border-[#FFD1D1] border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : recentActivity.length > 0 ? (
-                    <div className="flex flex-col max-h-[420px] overflow-y-auto scrollbar-hide pr-1">
-                        {recentActivity.map((activity, index) => (
-                            <div 
-                                key={activity.id} 
-                                className={`flex gap-3 items-start relative ${index !== recentActivity.length - 1 ? 'border-b border-[#D1D1D1]/10 pb-4 mb-4' : ''}`}
-                            >
-                                {/* Icon Container */}
-                                <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0 border border-[#D1D1D1]/5 shadow-inner">
-                                    {getActivityIcon(activity.type)}
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    {/* Header Line */}
-                                    <div className="text-[13px] leading-tight">
-                                        <span className="text-[#FFD1D1] font-bold">
-                                            @{typeof activity.user === 'object' ? activity.user.display_name : (activity.user_display_name || 'User')}
-                                        </span>
-                                        <span className="text-[#D1D1D1]/50 px-1">
-                                            {getActivityActionText(activity.type)}
-                                        </span>
-                                        <span className="text-[#FFD1D1] font-medium break-words">
-                                            {activity.item_title || activity.track?.title || 'Item'}
-                                        </span>
-                                    </div>
-
-                                    {/* Rating Stars */}
-                                    {activity.type === 'rating' && (
-                                        <div className="flex gap-0.5 mt-1.5 mb-1">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    className={`w-3 h-3 ${i < getStarRating(activity) ? 'text-[#FFD1D1] fill-[#FFD1D1]' : 'text-[#D1D1D1]/10'}`}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Comment Text - UPDATED: Vertical bar, quotes, italics */}
-                                    {activity.content && (
-                                        <p className="text-[13px] text-[#D1D1D1] font-normal italic leading-tight mt-2 mb-1 pl-3 border-l-2 border-[#D1D1D1]/20">
-                                            "{activity.content}"
+                    <>
+                        {/* THE DARK CONTAINER THE USER WANTS */}
+                        <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
+                            <div className="space-y-3 max-h-[420px] overflow-y-auto custom-scrollbar pr-2">
+                                {recentActivity.map((activity) => (
+                                    <div key={activity.id} className="text-sm border-b border-[#D1D1D1]/5 pb-2 last:border-0 last:pb-0">
+                                        <p className="text-[#D1D1D1]/70 leading-relaxed">
+                                            <span className="text-[#FFD1D1] font-medium">
+                                                @{typeof activity.user === 'object' ? (activity.user.display_name || activity.user.username) : (activity.user_display_name || activity.user || 'User')}
+                                            </span>{' '}
+                                            <span className="text-[#D1D1D1]/50">
+                                                {activity.type === 'rating' && `rated ${activity.itemType || 'item'}`}
+                                                {activity.type === 'comment' && `commented on ${activity.itemType || 'item'}`}
+                                                {activity.type === 'favorite' && `favorited ${activity.itemType || 'item'}`}
+                                                {!['rating', 'comment', 'favorite'].includes(activity.type) && 'interacted with item'}
+                                            </span>
+                                            {activity.type === 'rating' && (activity.rating_value || activity.value) && (
+                                                <span className="text-[#FFD1D1] ml-1">({activity.rating_value || activity.value}★)</span>
+                                            )}
                                         </p>
-                                    )}
-
-                                    {/* Timestamp */}
-                                    <p className="text-[11px] text-[#D1D1D1]/30 font-medium tracking-tight mt-0.5">
-                                        {getRelativeTime(activity.timestamp || activity.created_at)}
-                                    </p>
-                                </div>
+                                        {activity.content && (
+                                            <p className="text-[#D1D1D1]/50 text-xs mt-1 italic pl-2 border-l border-[#D1D1D1]/20">
+                                                "{activity.content}"
+                                            </p>
+                                        )}
+                                        <p className="text-[#D1D1D1]/30 text-[10px] mt-1">
+                                            {getRelativeTime(activity.timestamp || activity.created_at)}
+                                        </p>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                        <p className="text-xs text-[#D1D1D1]/40 mt-3">
+                            Real-time community activity
+                        </p>
+                    </>
                 ) : (
                     <p className="text-xs text-[#D1D1D1]/50 text-center py-4">No recent activity</p>
                 )}
