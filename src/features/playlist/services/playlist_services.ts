@@ -1,6 +1,23 @@
 import { supabase } from '../../../lib/supabaseClient';
 import type { Tables } from '../../../types/supabase';
 
+// --- Caching Layer (Prevent 429 Errors) ---
+const spotifyCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 10; // 10 minutes cache
+
+const getFromCache = (trackId: string) => {
+    const cached = spotifyCache.get(trackId);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return cached.data;
+    }
+    return null;
+};
+
+const setCache = (trackId: string, data: any) => {
+    spotifyCache.set(trackId, { data, timestamp: Date.now() });
+};
+// ------------------------------------------
+
 /**
  * Get all playlists for the current user
  */
@@ -28,9 +45,6 @@ export interface CreatePlaylistRequest {
     is_public: boolean;
 }
 
-/**
- * Create a new playlist
- */
 export async function createPlaylist(request: CreatePlaylistRequest): Promise<Tables<'playlists'>> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
@@ -56,7 +70,6 @@ export async function createPlaylist(request: CreatePlaylistRequest): Promise<Ta
  * Add a track to a playlist
  */
 export async function addTrackToPlaylist(request: { playlistId: string; trackId: string }): Promise<void> {
-    // 1. Check if track already exists in playlist (Use maybeSingle to avoid 406 error)
     const { data: existing } = await supabase
         .from('playlist_items')
         .select('id')
@@ -69,7 +82,6 @@ export async function addTrackToPlaylist(request: { playlistId: string; trackId:
         return;
     }
 
-    // 2. Get current max position (Use maybeSingle for empty playlists)
     const { data: maxPosData } = await supabase
         .from('playlist_items')
         .select('position')
@@ -80,7 +92,6 @@ export async function addTrackToPlaylist(request: { playlistId: string; trackId:
 
     const nextPosition = (maxPosData?.position || 0) + 1;
 
-    // 3. Add track
     const { error } = await supabase
         .from('playlist_items')
         .insert({
@@ -96,7 +107,6 @@ export async function addTrackToPlaylist(request: { playlistId: string; trackId:
  * Add multiple tracks to a playlist
  */
 export async function addTracksToPlaylist(request: { playlistId: string; trackIds: string[] }): Promise<void> {
-    // 1. Get current max position (Use maybeSingle)
     const { data: maxPosData } = await supabase
         .from('playlist_items')
         .select('position')
@@ -107,7 +117,6 @@ export async function addTracksToPlaylist(request: { playlistId: string; trackId
 
     const nextPosition = (maxPosData?.position || 0) + 1;
 
-    // 2. Filter out existing tracks to avoid duplicates
     const { data: existing } = await supabase
         .from('playlist_items')
         .select('spotify_track_id')
@@ -119,14 +128,12 @@ export async function addTracksToPlaylist(request: { playlistId: string; trackId
 
     if (newTrackIds.length === 0) return;
 
-    // 3. Prepare inserts
     const inserts = newTrackIds.map((trackId, index) => ({
         playlist_id: request.playlistId,
         spotify_track_id: trackId,
         position: nextPosition + index
     }));
 
-    // 4. Bulk insert
     const { error } = await supabase
         .from('playlist_items')
         .insert(inserts);
@@ -148,8 +155,6 @@ export async function getPlaylistTracks(playlistId: string): Promise<string[]> {
     return data.map(item => item.spotify_track_id);
 }
 
-
-
 /**
  * Delete a playlist
  */
@@ -164,9 +169,9 @@ export async function deletePlaylist(playlistId: string): Promise<void> {
 
 /**
  * Get full track details for a playlist
+ * [Optimized] Uses Cache and Batched Requests
  */
 export async function fetchPlaylistTracksWithDetails(playlistId: string): Promise<any[]> {
-    // 1. Get track IDs from playlist_items
     const { data: items, error } = await supabase
         .from('playlist_items')
         .select('id, spotify_track_id, added_at, position')
@@ -176,27 +181,37 @@ export async function fetchPlaylistTracksWithDetails(playlistId: string): Promis
     if (error) throw error;
     if (!items || items.length === 0) return [];
 
-    // 2. Fetch track details from Spotify
-    const trackIds = items.map(item => item.spotify_track_id);
-    // Batch requests in chunks of 50 (Spotify limit)
-    const chunks = [];
-    for (let i = 0; i < trackIds.length; i += 50) {
-        chunks.push(trackIds.slice(i, i + 50));
-    }
+    const allTrackIds = items.map(item => item.spotify_track_id);
+    
+    // 1. Identify missing tracks
+    const missingIds = allTrackIds.filter(id => !getFromCache(id));
 
-    const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
-    let allTracks: any[] = [];
+    // 2. Fetch missing tracks
+    if (missingIds.length > 0) {
+        const chunks = [];
+        for (let i = 0; i < missingIds.length; i += 50) {
+            chunks.push(missingIds.slice(i, i + 50));
+        }
 
-    for (const chunk of chunks) {
-        const response = await getMultipleTracks(chunk);
-        if (response?.tracks) {
-            allTracks = [...allTracks, ...response.tracks];
+        const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
+        
+        for (const chunk of chunks) {
+            try {
+                const response = await getMultipleTracks(chunk);
+                if (response?.tracks) {
+                    response.tracks.forEach((track: any) => {
+                        if (track) setCache(track.id, track);
+                    });
+                }
+            } catch (err) {
+                console.error("Spotify API Rate Limit or Error:", err);
+            }
         }
     }
 
     // 3. Merge details
     return items.map(item => {
-        const trackDetails = allTracks.find(t => t.id === item.spotify_track_id);
+        const trackDetails = getFromCache(item.spotify_track_id);
         return {
             ...item,
             details: trackDetails
@@ -206,9 +221,9 @@ export async function fetchPlaylistTracksWithDetails(playlistId: string): Promis
 
 /**
  * Get preview tracks for a playlist card
+ * [Optimized] Uses Cache
  */
 export async function getPlaylistPreviewTracks(playlistId: string, limit: number = 20): Promise<any[]> {
-    // 1. Get limited track IDs
     const { data: items, error } = await supabase
         .from('playlist_items')
         .select('spotify_track_id')
@@ -219,12 +234,27 @@ export async function getPlaylistPreviewTracks(playlistId: string, limit: number
     if (error) throw error;
     if (!items || items.length === 0) return [];
 
-    // 2. Fetch details from Spotify
     const trackIds = items.map(item => item.spotify_track_id);
-    const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
+    
+    // 1. Check Cache
+    const missingIds = trackIds.filter(id => !getFromCache(id));
 
-    const response = await getMultipleTracks(trackIds);
-    return response?.tracks || [];
+    // 2. Fetch missing
+    if (missingIds.length > 0) {
+        const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
+        try {
+            const response = await getMultipleTracks(missingIds);
+            if (response?.tracks) {
+                response.tracks.forEach((track: any) => {
+                    if (track) setCache(track.id, track);
+                });
+            }
+        } catch (err) {
+            console.error("Spotify API Error (Preview):", err);
+        }
+    }
+
+    return trackIds.map(id => getFromCache(id)).filter(Boolean);
 }
 
 /**
@@ -233,12 +263,7 @@ export async function getPlaylistPreviewTracks(playlistId: string, limit: number
 export async function getPlaylistTags(playlistId: string): Promise<string[]> {
     const { data, error } = await supabase
         .from('item_tags')
-        .select(`
-            tag_id,
-            tags(
-                name
-            )
-        `)
+        .select(`tag_id, tags(name)`)
         .eq('item_id', playlistId)
         .eq('item_type', 'playlist');
 
@@ -257,14 +282,9 @@ export async function getPlaylistRating(playlistId: string): Promise<{ average: 
         .eq('item_type', 'playlist');
 
     if (error) throw error;
-
     if (!data || data.length === 0) return { average: 0, count: 0 };
-
     const sum = data.reduce((acc, curr) => acc + curr.rating, 0);
-    return {
-        average: sum / data.length,
-        count: data.length
-    };
+    return { average: sum / data.length, count: data.length };
 }
 
 /**
@@ -273,14 +293,7 @@ export async function getPlaylistRating(playlistId: string): Promise<{ average: 
 export async function getPlaylistComments(playlistId: string): Promise<any[]> {
     const { data, error } = await supabase
         .from('comments')
-        .select(`
-            *,
-            profiles(
-                username,
-                display_name,
-                avatar_url
-            )
-        `)
+        .select(`*, profiles(username, display_name, avatar_url)`)
         .eq('item_id', playlistId)
         .eq('item_type', 'playlist')
         .order('created_at', { ascending: false });
@@ -324,7 +337,6 @@ export async function getUserPlaylistRating(playlistId: string): Promise<number 
         .maybeSingle();
 
     if (error) throw error;
-
     return data ? data.rating : null;
 }
 
@@ -355,7 +367,6 @@ export async function reorderPlaylistTracks(tracks: { id: string; position: numb
             .update({ position: track.position })
             .eq('id', track.id)
     );
-
     await Promise.all(updates);
 }
 
@@ -363,19 +374,16 @@ export async function reorderPlaylistTracks(tracks: { id: string; position: numb
  * Upload playlist image
  */
 export async function uploadPlaylistImage(playlistId: string, file: File): Promise<string> {
-    const fileName = `${playlistId}`; // Overwrite existing image
+    const fileName = `${playlistId}`; 
     const filePath = `${fileName}`;
-
     const { error: uploadError } = await supabase.storage
         .from('playlists')
         .upload(filePath, file, { upsert: true });
 
     if (uploadError) throw uploadError;
-
     const { data: { publicUrl } } = supabase.storage
         .from('playlists')
         .getPublicUrl(filePath);
-
     return publicUrl;
 }
 
@@ -386,25 +394,15 @@ export async function addPlaylistTag(playlistId: string, tag: string): Promise<v
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // 1. Check if tag exists (Use maybeSingle)
     let tagId: string;
-    const { data: existingTag } = await supabase
-        .from('tags')
-        .select('id')
-        .eq('name', tag)
-        .maybeSingle();
+    const { data: existingTag } = await supabase.from('tags').select('id').eq('name', tag).maybeSingle();
 
     if (existingTag) {
         tagId = existingTag.id;
     } else {
-        // 2. Create new tag if not exists
         const { data: newTag, error: createError } = await supabase
             .from('tags')
-            .insert({
-                name: tag,
-                type: 'custom',
-                creator_id: user.id
-            })
+            .insert({ name: tag, type: 'custom', creator_id: user.id })
             .select('id')
             .single();
 
@@ -412,37 +410,23 @@ export async function addPlaylistTag(playlistId: string, tag: string): Promise<v
         tagId = newTag.id;
     }
 
-    // 3. Link tag to playlist
-    const { error } = await supabase
-        .from('item_tags')
-        .insert({
-            item_id: playlistId,
-            item_type: 'playlist',
-            tag_id: tagId,
-            user_id: user.id
-        });
+    const { error } = await supabase.from('item_tags').insert({
+        item_id: playlistId,
+        item_type: 'playlist',
+        tag_id: tagId,
+        user_id: user.id
+    });
 
-    if (error) {
-        // Ignore duplicate key error (if tag already added to this playlist)
-        if (error.code === '23505') return;
-        throw error;
-    }
+    if (error && error.code !== '23505') throw error;
 }
 
 /**
  * Remove a tag from a playlist
  */
 export async function removePlaylistTag(playlistId: string, tag: string): Promise<void> {
-    // 1. Get tag ID (Use maybeSingle)
-    const { data: tagData } = await supabase
-        .from('tags')
-        .select('id')
-        .eq('name', tag)
-        .maybeSingle();
+    const { data: tagData } = await supabase.from('tags').select('id').eq('name', tag).maybeSingle();
+    if (!tagData) return;
 
-    if (!tagData) return; // Tag doesn't exist, nothing to remove
-
-    // 2. Remove link
     const { error } = await supabase
         .from('item_tags')
         .delete()
@@ -457,11 +441,7 @@ export async function removePlaylistTag(playlistId: string, tag: string): Promis
  * Update playlist title
  */
 export async function updatePlaylistTitle(playlistId: string, newTitle: string): Promise<void> {
-    const { error } = await supabase
-        .from('playlists')
-        .update({ title: newTitle })
-        .eq('id', playlistId);
-
+    const { error } = await supabase.from('playlists').update({ title: newTitle }).eq('id', playlistId);
     if (error) throw error;
 }
 
@@ -469,11 +449,7 @@ export async function updatePlaylistTitle(playlistId: string, newTitle: string):
  * Update playlist description
  */
 export async function updatePlaylistDescription(playlistId: string, newDescription: string): Promise<void> {
-    const { error } = await supabase
-        .from('playlists')
-        .update({ description: newDescription })
-        .eq('id', playlistId);
-
+    const { error } = await supabase.from('playlists').update({ description: newDescription }).eq('id', playlistId);
     if (error) throw error;
 }
 
@@ -500,11 +476,7 @@ export async function updatePlaylistRating(playlistId: string, rating: number): 
  * Update playlist public status
  */
 export async function updatePlaylistPublicStatus(playlistId: string, isPublic: boolean): Promise<void> {
-    const { error } = await supabase
-        .from('playlists')
-        .update({ is_public: isPublic })
-        .eq('id', playlistId);
-
+    const { error } = await supabase.from('playlists').update({ is_public: isPublic }).eq('id', playlistId);
     if (error) throw error;
 }
 
@@ -512,11 +484,7 @@ export async function updatePlaylistPublicStatus(playlistId: string, isPublic: b
  * Update playlist color
  */
 export async function updatePlaylistColor(playlistId: string, color: string): Promise<void> {
-    const { error } = await supabase
-        .from('playlists')
-        .update({ color: color })
-        .eq('id', playlistId);
-
+    const { error } = await supabase.from('playlists').update({ color: color }).eq('id', playlistId);
     if (error) throw error;
 }
 
@@ -537,13 +505,7 @@ export async function removeTrackFromPlaylist(playlistId: string, trackId: strin
  * Get all available tags (preseeded/system tags)
  */
 export async function getAllTags(): Promise<string[]> {
-    const { data, error } = await supabase
-        .from('tags')
-        .select('name')
-        //.eq('type', 'system') // Commented out to fetch all for now, as I'm not sure of the data
-        .order('name');
-
+    const { data, error } = await supabase.from('tags').select('name').order('name');
     if (error) throw error;
-    // Return unique names
     return Array.from(new Set(data.map(t => t.name)));
 }

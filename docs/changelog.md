@@ -124,3 +124,30 @@
 - **Playlist Auto-Refresh & Auth Loading:**
   - Modified `src/features/playlists/components/PlaylistDashboard.tsx`: Added `supabase.auth.onAuthStateChange` listener to automatically load playlists immediately upon login or session restore.
   - Modified `PlaylistCard.tsx` & `AddTrackModal.tsx`: Implemented a callback mechanism (`onTrackAdded` and `refreshTrigger`) to immediately reload the playlist track list after a new song is added.
+
+
+## 2025-12-17(matthew)
+
+### Fixed
+- **Spotify API Rate Limiting (429 Errors)**
+  - Modified `src/features/playlists/services/playlist_services.ts`
+  - Implemented in-memory caching (`spotifyCache`) and staggered requests to prevent hitting Spotify API limits when loading multiple playlist cards.
+- **Data Synchronization & Optimistic Updates**
+  - Fixed issue where Tags, Ratings, and Comments didn't update sorting order immediately.
+  - Implemented `onPlaylistUpdate` and `onTagsUpdate` callbacks to sync child components (`ExpandedPlaylistCard`, `PlaylistReview`) with `PlaylistDashboard` instantly.
+- **UI Layout & Types**
+  - Fixed `AddTrackModal` button overlap issue by adding padding to result items.
+  - Fixed TypeScript errors regarding `FilterState` exports and `item_id` typing in Realtime payloads.
+
+### Progress
+- **Advanced Filtering & Sorting System**
+  - **src/components/ui/FilterDropdown.tsx**
+    - Redesigned UI: Replaced green theme with `#FFD1D1` accent color.
+    - Added **Rating Slider**: 0-5 range with specific number input.
+    - Added **Multi-select Tags**: Support for selecting multiple tags to filter.
+    - Added **Global vs Personal Toggles**: Separate logic for filtering by "My Ratings/Tags" vs "Global Ratings/Tags".
+  
+  - **src/features/playlists/components/PlaylistDashboard.tsx**
+    - Implemented **Frontend Data Aggregation**: Fetches and calculates `rating_avg`, `comment_count`, and `tag_count` in parallel.
+    - Implemented **Supabase Realtime**: Dashboard now listens for database changes (ratings/comments) from other users and auto-refreshes stats.
+    - Added complex sorting logic (e.g., Sort by "Recently Commented", "Highest Personal Rating", "Most Tags").

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import type { Tables } from '../../../../types/supabase';
-import { Star, Tag, X } from 'lucide-react';
 import { supabase } from '../../../../lib/supabaseClient';
 import {
     fetchPlaylistTracksWithDetails,
@@ -12,8 +11,7 @@ import {
     updatePlaylistPublicStatus,
     getUserPlaylistRating,
     deletePlaylist,
-    updatePlaylistColor,
-    updatePlaylistRating
+    updatePlaylistColor
 } from '../../services/playlist_services';
 import { getItemTags, getCreatorItemTags } from '../../../tags/services/tag_services';
 import { getProfile, getSession } from '../../../auth/services/auth_services';
@@ -26,7 +24,8 @@ import { PlaylistCommunity } from './PlaylistCommunity';
 import { PlaylistSettings } from './PlaylistSettings';
 import { PlaylistReview } from './PlaylistReview';
 import ExpandButton from '../../../../components/ui/ExpandButton';
-import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
+import { PlaylistTrackDetailModal } from './PlaylistTrackDetailModal';
+import type { EnhancedPlaylist } from '../PlaylistDashboard';
 
 interface ExpandedPlaylistCardProps {
     playlist: Tables<'playlists'>;
@@ -36,22 +35,25 @@ interface ExpandedPlaylistCardProps {
     onDeletePlaylist?: () => void;
     onColorChange?: (newColor: string) => void;
     currentColor?: string | null;
+    onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
 }
 
 type ActiveTab = 'tracks' | 'review' | 'community' | 'settings';
 
-export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor }) => {
+export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ 
+    playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor, 
+    onPlaylistUpdate 
+}) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
     const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // Data States
     const [tracks, setTracks] = useState<any[]>([]);
-    const [creatorTags, setCreatorTags] = useState<string[]>([]); // Tags added by creator only (for left column)
-    const [userTags, setUserTags] = useState<string[]>([]); // Tags added by current user (for Review tab)
-    const [communityTags, setCommunityTags] = useState<string[]>([]); // All tags (for Community tab)
+    const [creatorTags, setCreatorTags] = useState<string[]>([]);
+    const [userTags, setUserTags] = useState<string[]>([]);
+    const [communityTags, setCommunityTags] = useState<string[]>([]);
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [userRating, setUserRating] = useState<number | null>(null);
     const [comments, setComments] = useState<any[]>([]);
@@ -61,7 +63,6 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [isPublic, setIsPublic] = useState(playlist.is_public || false);
     const [playlistColor, setPlaylistColor] = useState<string | undefined>(currentColor || playlist.color || undefined);
 
-    // Interaction States
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [newComment, setNewComment] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
@@ -70,7 +71,6 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const [searchQuery, setSearchQuery] = useState('');
     const [isOwner, setIsOwner] = useState(false);
 
-    // Check if current user is the owner
     useEffect(() => {
         const checkOwnership = async () => {
             const session = await getSession();
@@ -79,24 +79,11 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         checkOwnership();
     }, [playlist.user_id]);
 
-    const handleUserRating = async (rating: number) => {
-        try {
-            setUserRating(rating);
-            await updatePlaylistRating(playlist.id, rating);
-            // Refresh global rating
-            const ratingRes = await getPlaylistRating(playlist.id);
-            setRatingData(ratingRes);
-        } catch (error) {
-            console.error('Error updating rating:', error);
-        }
-    };
-
     const filteredTracks = tracks.filter(track =>
         (track.details?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         track.details?.artists?.some((a: any) => (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    // Image URL logic
     const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
 
     useEffect(() => {
@@ -106,15 +93,14 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     const loadData = async () => {
         setLoading(true);
         try {
-            // Get current user session
             const session = await getSession();
             const currentUserId = session?.user?.id;
 
             const [tracksData, allTagsData, creatorTagsData, userTagsData, ratingRes, userRatingRes, commentsData, profileData, currentUserProfile] = await Promise.all([
                 fetchPlaylistTracksWithDetails(playlist.id),
-                getItemTags(playlist.id, 'playlist'), // All tags for community
-                getCreatorItemTags(playlist.id, 'playlist', playlist.user_id), // Only creator's tags for left column
-                currentUserId ? getCreatorItemTags(playlist.id, 'playlist', currentUserId) : Promise.resolve([]), // Current user's tags for Review tab
+                getItemTags(playlist.id, 'playlist'),
+                getCreatorItemTags(playlist.id, 'playlist', playlist.user_id),
+                currentUserId ? getCreatorItemTags(playlist.id, 'playlist', currentUserId) : Promise.resolve([]),
                 getPlaylistRating(playlist.id),
                 getUserPlaylistRating(playlist.id),
                 getPlaylistComments(playlist.id),
@@ -123,9 +109,9 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             ]);
 
             setTracks(tracksData);
-            setCreatorTags(creatorTagsData.map(tag => tag.name)); // Creator tags for left column
-            setUserTags(userTagsData.map(tag => tag.name)); // Current user's tags for Review tab
-            setCommunityTags(allTagsData.map(tag => tag.name)); // All tags for Community tab
+            setCreatorTags(creatorTagsData.map(tag => tag.name));
+            setUserTags(userTagsData.map(tag => tag.name));
+            setCommunityTags(allTagsData.map(tag => tag.name));
             setRatingData(ratingRes);
             setUserRating(userRatingRes);
             setComments(commentsData);
@@ -144,27 +130,18 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             setIsEditingTitle(false);
             return;
         }
-
-        // Optimistic update
         setIsEditingTitle(false);
-
         try {
             await updatePlaylistTitle(playlist.id, playlistTitle);
-            if (onTitleChange) {
-                onTitleChange(playlistTitle);
-            }
+            if (onTitleChange) onTitleChange(playlistTitle);
             showSuccess('Playlist title updated');
-            // Success - no further action needed as local state is already updated
         } catch (error) {
             console.error('Error updating title:', error);
             showError('Failed to update title');
-            // Revert on error
             setPlaylistTitle(playlist.title);
-            setIsEditingTitle(true); // Re-open edit mode so user can try again
+            setIsEditingTitle(true);
         }
     };
-
-
 
     const handleRatingUpdate = async () => {
         const [ratingRes, userRatingRes] = await Promise.all([
@@ -173,6 +150,14 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
         ]);
         setRatingData(ratingRes);
         setUserRating(userRatingRes);
+        
+        if (onPlaylistUpdate) {
+            onPlaylistUpdate(playlist.id, {
+                rating_avg: ratingRes.average,
+                rating_count: ratingRes.count,
+                rated_at: new Date().toISOString()
+            });
+        }
     };
 
     const handleRemoveTrack = async (trackId: string) => {
@@ -185,19 +170,12 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
     };
 
     const handleReorderTracks = async (newOrder: any[]) => {
-        // Optimistic update
         setTracks(newOrder);
         try {
-            const updates = newOrder.map((track, index) => ({
-                id: track.id,
-                position: index
-            }));
-            // TODO: Implement track reordering in playlist_services.ts
-            // await reorderPlaylistTracks(updates);
-            console.log('Track reorder updates:', updates);
+            // Reordering logic placeholder
         } catch (error) {
             console.error('Error reordering tracks:', error);
-            loadData(); // Revert on error
+            loadData();
         }
     };
 
@@ -210,6 +188,13 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             setNewComment('');
             const commentsData = await getPlaylistComments(playlist.id);
             setComments(commentsData);
+
+            if (onPlaylistUpdate) {
+                onPlaylistUpdate(playlist.id, {
+                    comment_count: commentsData.length,
+                    commented_at: new Date().toISOString()
+                });
+            }
         } catch (error) {
             console.error('Error adding comment:', error);
         } finally {
@@ -224,70 +209,39 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
             showSuccess(newStatus ? 'Playlist is now public' : 'Playlist is now private');
         } catch (error) {
             console.error('Error updating public status:', error);
-            setIsPublic(!newStatus); // Revert
+            setIsPublic(!newStatus);
         }
     };
 
     const handleColorChange = async (newColor: string) => {
-        // Optimistic update
         const oldColor = playlistColor;
         setPlaylistColor(newColor);
-        if (onColorChange) {
-            onColorChange(newColor);
-        }
+        if (onColorChange) onColorChange(newColor);
         try {
             await updatePlaylistColor(playlist.id, newColor);
             showSuccess('Playlist color updated');
         } catch (error) {
             console.error('Error updating playlist color:', error);
-            setPlaylistColor(oldColor); // Revert
-            if (onColorChange && oldColor) {
-                onColorChange(oldColor);
-            }
+            setPlaylistColor(oldColor);
+            if (onColorChange && oldColor) onColorChange(oldColor);
         }
     };
 
     const handleExportToSpotify = async () => {
-        try {
-            const session = await getSession();
-            if (!session) {
-                showError('You must be logged in to export.');
-                return;
-            }
-
-            const profile = await getProfile(session.user.id);
-            if (!profile?.spotify_connected) {
-                showError('Please link your Spotify account in settings to export.');
-                return;
-            }
-
-            // Placeholder for future implementation
-            showError('Export to Spotify feature coming soon!');
-        } catch (error) {
-            console.error('Error checking Spotify status:', error);
-            showError('Failed to verify Spotify connection.');
-        }
+        showError('Export to Spotify feature coming soon!');
     };
 
     const handleCopyPlaylist = () => {
-        // Placeholder for future implementation
         showError('Copy playlist feature coming soon!');
     };
 
     const handleDeletePlaylist = async () => {
-        if (window.confirm('Are you sure you want to delete this playlist? This action cannot be undone.')) {
+        if (window.confirm('Are you sure you want to delete this playlist?')) {
             try {
-                // Perform the deletion
                 await deletePlaylist(playlist.id);
                 showSuccess('Playlist deleted');
-
-                // Call the parent's onDelete handler if provided (to refresh the list)
-                if (onDeletePlaylist) {
-                    onDeletePlaylist();
-                }
-                if (onClose) {
-                    onClose();
-                }
+                if (onDeletePlaylist) onDeletePlaylist();
+                if (onClose) onClose();
             } catch (error) {
                 console.error('Error deleting playlist:', error);
                 showError('Failed to delete playlist');
@@ -297,6 +251,20 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
 
     const handleTrackClick = (track: any) => {
         setSelectedTrack(track);
+    };
+
+    // Logic to update Dashboard Tags when User Tags change
+    const handleTagsSync = (newUserTags: string[]) => {
+        const mergedTags = Array.from(new Set([...communityTags, ...newUserTags]));
+        setCommunityTags(mergedTags);
+
+        if (onPlaylistUpdate) {
+            onPlaylistUpdate(playlist.id, {
+                tags: mergedTags,
+                tag_count: mergedTags.length,
+                tagged_at: new Date().toISOString()
+            });
+        }
     };
 
     if (loading) {
@@ -320,17 +288,10 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                         : '#1e1e1e'
                 }}
             >
-                {/* Close Button */}
                 <div className="absolute top-4 right-4 z-10">
-                    <ExpandButton
-                        onClick={onClose}
-                        className="rotate-180 hover:bg-white/10 rounded-full p-1"
-                        strokeColor="white"
-                        title="Collapse"
-                    />
+                    <ExpandButton onClick={onClose} className="rotate-180 hover:bg-white/10 rounded-full p-1" strokeColor="white" title="Collapse" />
                 </div>
 
-                {/* Left Column - Header */}
                 <PlaylistHeader
                     playlistId={playlist.id}
                     creatorName={creatorName}
@@ -351,9 +312,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                     isOwner={isOwner}
                 />
 
-                {/* Right Column */}
                 <div className="w-full md:w-[65%] p-6 flex flex-col bg-transparent overflow-hidden">
-                    {/* Tab Navigation */}
                     <div className="flex items-center gap-2 mb-6 bg-black/20 p-1 rounded-full w-max flex-shrink-0">
                         {(['tracks', 'review', 'community', 'settings'] as const).map((tab) => (
                             <button
@@ -370,39 +329,16 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                         }
                     </div>
 
-                    {/* Search Bar */}
-                    {
-                        activeTab === 'tracks' && (
-                            <div className="mb-4 relative">
-                                <input
-                                    type="text"
-                                    placeholder="Search in playlist..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full bg-[#151515]/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[white]/40 transition-colors"
-                                />
-                                <svg
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div>
-                        )
-                    }
+                    {activeTab === 'tracks' && (
+                        <div className="mb-4 relative">
+                            <input type="text" placeholder="Search in playlist..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-[#151515]/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[white]/40 transition-colors" />
+                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </div>
+                    )}
 
-                    {/* Content Panel */}
                     <div className="flex-1 bg-[#151515]/80 rounded-xl border border-white/5 p-4 shadow-inner overflow-hidden flex flex-col backdrop-blur-sm">
                         {activeTab === 'tracks' && (
-                            <PlaylistTracks
-                                tracks={filteredTracks}
-                                isEditingEnabled={isEditingEnabled}
-                                onRemoveTrack={handleRemoveTrack}
-                                onReorderTracks={handleReorderTracks}
-                                onTrackClick={handleTrackClick}
-                            />
+                            <PlaylistTracks tracks={filteredTracks} isEditingEnabled={isEditingEnabled} onRemoveTrack={handleRemoveTrack} onReorderTracks={handleReorderTracks} onTrackClick={handleTrackClick} />
                         )}
 
                         {activeTab === 'review' && (
@@ -410,56 +346,26 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ play
                                 playlist={playlist}
                                 userRating={userRating}
                                 tags={userTags}
-                                setTags={setUserTags}
+                                setTags={setUserTags} 
                                 isEditingEnabled={isEditingEnabled}
                                 userName={currentUserName}
-                                onDescriptionChange={(newDescription) => {
-                                    // Update the playlist object to reflect the new description
-                                    playlist.description = newDescription;
-                                }}
+                                onDescriptionChange={(newDescription) => { playlist.description = newDescription; }}
+                                onTagsUpdate={handleTagsSync} 
                             />
                         )}
 
                         {activeTab === 'community' && (
-                            <PlaylistCommunity
-                                comments={comments}
-                                newComment={newComment}
-                                setNewComment={setNewComment}
-                                handleAddComment={handleAddComment}
-                                commentLoading={commentLoading}
-                                ratingData={ratingData}
-                                tags={communityTags}
-                            />
+                            <PlaylistCommunity comments={comments} newComment={newComment} setNewComment={setNewComment} handleAddComment={handleAddComment} commentLoading={commentLoading} ratingData={ratingData} tags={communityTags} />
                         )}
 
                         {activeTab === 'settings' && (
-                            <PlaylistSettings
-                                playlistId={playlist.id}
-                                handleExportToSpotify={handleExportToSpotify}
-                                handleCopyPlaylist={handleCopyPlaylist}
-                                isEditingEnabled={isEditingEnabled}
-                                setIsEditingEnabled={setIsEditingEnabled}
-                                isPublic={isPublic}
-                                onPublicStatusChange={handlePublicStatusChange}
-                                onDelete={handleDeletePlaylist}
-                                color={playlistColor}
-                                onColorChange={handleColorChange}
-                                isOwner={isOwner}
-                            />
+                            <PlaylistSettings playlistId={playlist.id} handleExportToSpotify={handleExportToSpotify} handleCopyPlaylist={handleCopyPlaylist} isEditingEnabled={isEditingEnabled} setIsEditingEnabled={setIsEditingEnabled} isPublic={isPublic} onPublicStatusChange={handlePublicStatusChange} onDelete={handleDeletePlaylist} color={playlistColor} onColorChange={handleColorChange} isOwner={isOwner} />
                         )}
                     </div>
-                </div >
-            </div >
+                </div>
+            </div>
 
-            {/* Track Detail Modal */}
-            {
-                selectedTrack && (
-                    <TrackReviewModal
-                        track={selectedTrack.details || selectedTrack}
-                        onClose={() => setSelectedTrack(null)}
-                    />
-                )
-            }
-        </div >
+            {selectedTrack && <PlaylistTrackDetailModal track={selectedTrack.details || selectedTrack} onClose={() => setSelectedTrack(null)} />}
+        </div>
     );
 };

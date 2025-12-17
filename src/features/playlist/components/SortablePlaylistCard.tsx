@@ -3,26 +3,21 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import PlaylistCard from './PlaylistCard';
 import type { Tables } from '../../../types/supabase';
+import type { EnhancedPlaylist } from './PlaylistDashboard'; 
 
 interface SortablePlaylistCardProps {
     playlist: Tables<'playlists'>;
     onDelete?: () => void;
     lastUpdated?: number;
+    isLiked?: boolean;
+    onToggleFavorite?: (id: string, isFav: boolean) => void;
+    onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void; 
 }
 
 export const SortablePlaylistCard: React.FC<SortablePlaylistCardProps> = ({
-    playlist,
-    onDelete,
-    lastUpdated
+    playlist, onDelete, lastUpdated, isLiked, onToggleFavorite, onPlaylistUpdate 
 }) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: playlist.id });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: playlist.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -36,6 +31,9 @@ export const SortablePlaylistCard: React.FC<SortablePlaylistCardProps> = ({
                 playlist={playlist}
                 onDelete={onDelete}
                 lastUpdated={lastUpdated}
+                initialIsLiked={isLiked}
+                onToggleFavorite={onToggleFavorite}
+                onPlaylistUpdate={onPlaylistUpdate} 
             />
         </div>
     );
