@@ -49,7 +49,7 @@ const SimpleView: React.FC<SimpleViewProps> = ({
                         </div>
                     ) : items.length === 0 ? (
                         <EmptyState
-                            title="No trending items found"
+                            title="No items found"
                             description="Try adjusting your filters or check back later"
                             icon={
                                 <svg className="w-8 h-8 text-[#D1D1D1]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">

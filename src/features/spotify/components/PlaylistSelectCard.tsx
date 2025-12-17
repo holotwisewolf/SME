@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getUserPlaylists, createPlaylist, addTrackToPlaylist, addTracksToPlaylist, type CreatePlaylistRequest } from '../../playlist/services/playlist_services';
 import type { Tables } from '../../../types/supabase';
 import { useError } from '../../../context/ErrorContext';
+import { useSuccess } from '../../../context/SuccessContext';
 
 interface PlaylistSelectCardProps {
     trackId?: string;
@@ -20,6 +21,7 @@ export function PlaylistSelectCard({
     const [newPlaylistName, setNewPlaylistName] = useState('New Playlist');
     const [loading, setLoading] = useState(false);
     const { showError } = useError();
+    const { showSuccess } = useSuccess();
 
     useEffect(() => {
         loadPlaylists();
@@ -64,7 +66,8 @@ export function PlaylistSelectCard({
                 await addTrackToPlaylist({ playlistId: newPlaylist.id, trackId });
             }
 
-            onClose();
+            showSuccess(`Created playlist "${newPlaylist.title}"`);
+            // onClose(); // Keep open as requested
         } catch (error) {
             console.error('Error creating playlist:', error);
         } finally {
@@ -77,10 +80,12 @@ export function PlaylistSelectCard({
         try {
             if (trackIds && trackIds.length > 0) {
                 await addTracksToPlaylist({ playlistId, trackIds });
+                showSuccess('Tracks added to playlist');
             } else if (trackId) {
                 await addTrackToPlaylist({ playlistId, trackId });
+                showSuccess('Track added to playlist');
             }
-            onClose();
+            // onClose(); // Keep open as requested
         } catch (error: any) {
             console.error('Error adding to playlist:', error);
             // Check if it's a duplicate track error

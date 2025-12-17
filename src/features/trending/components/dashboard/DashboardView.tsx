@@ -83,7 +83,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         </div>
                     ) : items.length === 0 ? (
                         <EmptyState
-                            title="No trending items found"
+                            title="No items found"
                             description="Try adjusting your filters"
                             actions={emptyStateActions}
                             variant="simple"

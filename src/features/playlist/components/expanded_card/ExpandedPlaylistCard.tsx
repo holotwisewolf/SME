@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { Tables } from '../../../../types/supabase';
 import { supabase } from '../../../../lib/supabaseClient';
 import {
@@ -11,7 +12,8 @@ import {
     updatePlaylistPublicStatus,
     getUserPlaylistRating,
     deletePlaylist,
-    updatePlaylistColor
+    updatePlaylistColor,
+    reorderPlaylistTracks
 } from '../../services/playlist_services';
 import { getItemTags, getCreatorItemTags } from '../../../tags/services/tag_services';
 import { getProfile, getSession } from '../../../auth/services/auth_services';
@@ -170,12 +172,22 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     };
 
     const handleReorderTracks = async (newOrder: any[]) => {
-        setTracks(newOrder);
+        setTracks(newOrder); // Optimistic update
         try {
-            // Reordering logic placeholder
+            const updates = newOrder.map((track, index) => ({
+                id: track.id, // playlist_item id
+                position: index
+            }));
+            await reorderPlaylistTracks(updates);
+            if (onPlaylistUpdate) {
+                // Determine if this looks like a significant update (e.g. first few tracks changed) or just trigger generic update
+                // For now, minimal update to parent if needed, but reorder usually doesn't change metadata displayed on card 
+                // except maybe preview tracks which is separate.
+            }
         } catch (error) {
             console.error('Error reordering tracks:', error);
-            loadData();
+            showError('Failed to save new order');
+            loadData(); // Revert
         }
     };
 
@@ -277,7 +289,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         );
     }
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
             <div
                 className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative h-[515px]"
@@ -372,6 +384,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     onClose={() => setSelectedTrack(null)}
                 />
             )}
-        </div>
+        </div>,
+        document.body
     );
 };

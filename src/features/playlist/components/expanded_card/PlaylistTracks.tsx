@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
     DndContext,
     closestCenter,
@@ -154,15 +155,18 @@ export const PlaylistTracks: React.FC<PlaylistTracksProps> = ({ tracks, isEditin
                             ))}
                         </SortableContext>
 
-                        <DragOverlay dropAnimation={dropAnimationConfig}>
-                            {activeTrack ? (
-                                <PlaylistTrackItem
-                                    item={activeTrack}
-                                    isEditingEnabled={isEditingEnabled}
-                                    isOverlay={true}
-                                />
-                            ) : null}
-                        </DragOverlay>
+                        {createPortal(
+                            <DragOverlay dropAnimation={dropAnimationConfig}>
+                                {activeTrack ? (
+                                    <PlaylistTrackItem
+                                        item={activeTrack}
+                                        isEditingEnabled={isEditingEnabled}
+                                        isOverlay={true}
+                                    />
+                                ) : null}
+                            </DragOverlay>,
+                            document.body
+                        )}
                     </DndContext>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500">

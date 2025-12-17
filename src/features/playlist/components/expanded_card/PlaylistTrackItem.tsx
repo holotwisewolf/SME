@@ -110,9 +110,9 @@ export const PlaylistTrackItem: React.FC<PlaylistTrackItemProps> = ({
 
             <div className="flex items-center gap-3 w-[160px] justify-end relative">
                 {isTrashCandidate ? (
-                    <div className="flex items-center gap-2 text-red-500 font-bold animate-pulse">
+                    <div className="flex items-center gap-2 text-red-500 font-bold">
                         <Trash2 className="w-5 h-5" />
-                        <span className="text-sm">Release to delete</span>
+                        <span className="text-sm">Remove</span>
                     </div>
                 ) : (
                     <>

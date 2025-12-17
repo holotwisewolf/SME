@@ -8,7 +8,8 @@ import { getPlaylistPreviewTracks } from '../services/playlist_services';
 import { supabase } from '../../../lib/supabaseClient';
 import { AddTrackModal } from './AddTrackModal';
 import { ExpandedPlaylistCard } from './expanded_card/ExpandedPlaylistCard';
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDndMonitor } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { DraggableTrackRow } from './DraggableTrackRow';
 import type { EnhancedPlaylist } from './PlaylistDashboard';
 
@@ -21,8 +22,8 @@ interface PlaylistCardProps {
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
 }
 
-const PlaylistCard: React.FC<PlaylistCardProps> = ({ 
-    playlist, onDelete, lastUpdated, initialIsLiked, onToggleFavorite, onPlaylistUpdate 
+const PlaylistCard: React.FC<PlaylistCardProps> = ({
+    playlist, onDelete, lastUpdated, initialIsLiked, onToggleFavorite, onPlaylistUpdate
 }) => {
     const [isFavourite, setIsFavourite] = useState(initialIsLiked || false);
     const [showAddTrackModal, setShowAddTrackModal] = useState(false);
@@ -39,6 +40,31 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
     const { setNodeRef, isOver } = useDroppable({
         id: playlist.id,
         data: { playlist }
+    });
+
+    useDndMonitor({
+        onDragEnd(event) {
+            const { active, over } = event;
+            if (!over) return;
+
+            const activeId = active.id as string;
+            const overId = over.id as string;
+
+            // Check if this drag event belongs to this playlist's tracks
+            if (activeId.startsWith(`${playlist.id}::`) && overId.startsWith(`${playlist.id}::`)) {
+                if (activeId !== overId) {
+                    setPreviewTracks((items) => {
+                        const oldIndex = items.findIndex((t) => `${playlist.id}::${t.id}` === activeId);
+                        const newIndex = items.findIndex((t) => `${playlist.id}::${t.id}` === overId);
+                        return arrayMove(items, oldIndex, newIndex);
+                    });
+
+                    // Note: We are not persisting this reorder to the backend for preview tracks
+                    // because preview tracks are just a subset, and reordering them might be complex 
+                    // without full context. But visual reordering is now supported.
+                }
+            }
+        },
     });
 
     useEffect(() => {
@@ -137,27 +163,32 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                         {isInlineExpanded ? (
                             <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
                                 {previewTracks.length > 0 ? (
-                                    previewTracks.map((track) => (
-                                        <DraggableTrackRow key={track.id} track={track} playlistId={playlist.id}>
-                                            <div className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-white/5 transition-colors group/track">
-                                                <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
-                                                    {track.album?.images?.[0]?.url ? (
-                                                        <img src={track.album.images[0].url} alt={track.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center">
-                                                            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                                                            </svg>
-                                                        </div>
-                                                    )}
+                                    <SortableContext
+                                        items={previewTracks.map(t => `${playlist.id}::${t.id}`)}
+                                        strategy={verticalListSortingStrategy}
+                                    >
+                                        {previewTracks.map((track) => (
+                                            <DraggableTrackRow key={track.id} track={track} playlistId={playlist.id}>
+                                                <div className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-white/5 transition-colors group/track">
+                                                    <div className="w-8 h-8 rounded overflow-hidden bg-[#282828] shrink-0">
+                                                        {track.album?.images?.[0]?.url ? (
+                                                            <img src={track.album.images[0].url} alt={track.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm text-gray-200 font-medium truncate group-hover/track:text-white transition-colors">{track.name}</div>
+                                                        <div className="text-xs text-gray-500 truncate">{track.artists?.[0]?.name}</div>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-sm text-gray-200 font-medium truncate group-hover/track:text-white transition-colors">{track.name}</div>
-                                                    <div className="text-xs text-gray-500 truncate">{track.artists?.[0]?.name}</div>
-                                                </div>
-                                            </div>
-                                        </DraggableTrackRow>
-                                    ))
+                                            </DraggableTrackRow>
+                                        ))}
+                                    </SortableContext>
                                 ) : (
                                     <div className="text-xs text-gray-500 text-center py-4 italic">
                                         {playlist.track_count === 0 ? "No tracks yet" : "Loading tracks..."}
