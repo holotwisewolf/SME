@@ -1,22 +1,7 @@
 import { supabase } from '../../../lib/supabaseClient';
 import type { Tables } from '../../../types/supabase';
 
-// --- Caching Layer (Prevent 429 Errors) ---
-const spotifyCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 10; // 10 minutes cache
 
-const getFromCache = (trackId: string) => {
-    const cached = spotifyCache.get(trackId);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        return cached.data;
-    }
-    return null;
-};
-
-const setCache = (trackId: string, data: any) => {
-    spotifyCache.set(trackId, { data, timestamp: Date.now() });
-};
-// ------------------------------------------
 
 /**
  * Get all playlists for the current user
@@ -181,41 +166,34 @@ export async function fetchPlaylistTracksWithDetails(playlistId: string): Promis
     if (!items || items.length === 0) return [];
 
     const allTrackIds = items.map(item => item.spotify_track_id);
-    
-    // 1. Identify missing tracks
-    const missingIds = allTrackIds.filter(id => !getFromCache(id));
+    const trackDetailsMap = new Map<string, any>();
 
-    // 2. Fetch missing tracks
-    if (missingIds.length > 0) {
-        const chunks = [];
-        for (let i = 0; i < missingIds.length; i += 50) {
-            chunks.push(missingIds.slice(i, i + 50));
-        }
+    // Fetch all tracks (batched)
+    const chunks = [];
+    for (let i = 0; i < allTrackIds.length; i += 50) {
+        chunks.push(allTrackIds.slice(i, i + 50));
+    }
 
-        const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
-        
-        for (const chunk of chunks) {
-            try {
-                const response = await getMultipleTracks(chunk);
-                if (response?.tracks) {
-                    response.tracks.forEach((track: any) => {
-                        if (track) setCache(track.id, track);
-                    });
-                }
-            } catch (err) {
-                console.error("Spotify API Rate Limit or Error:", err);
+    const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
+
+    for (const chunk of chunks) {
+        try {
+            const response = await getMultipleTracks(chunk);
+            if (response?.tracks) {
+                response.tracks.forEach((track: any) => {
+                    if (track) trackDetailsMap.set(track.id, track);
+                });
             }
+        } catch (err) {
+            console.error("Spotify API Rate Limit or Error:", err);
         }
     }
 
-    // 3. Merge details
-    return items.map(item => {
-        const trackDetails = getFromCache(item.spotify_track_id);
-        return {
-            ...item,
-            details: trackDetails
-        };
-    });
+    // Merge details
+    return items.map(item => ({
+        ...item,
+        details: trackDetailsMap.get(item.spotify_track_id)
+    }));
 }
 
 /**
@@ -234,26 +212,18 @@ export async function getPlaylistPreviewTracks(playlistId: string, limit: number
     if (!items || items.length === 0) return [];
 
     const trackIds = items.map(item => item.spotify_track_id);
-    
-    // 1. Check Cache
-    const missingIds = trackIds.filter(id => !getFromCache(id));
 
-    // 2. Fetch missing
-    if (missingIds.length > 0) {
-        const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
-        try {
-            const response = await getMultipleTracks(missingIds);
-            if (response?.tracks) {
-                response.tracks.forEach((track: any) => {
-                    if (track) setCache(track.id, track);
-                });
-            }
-        } catch (err) {
-            console.error("Spotify API Error (Preview):", err);
+    const { getMultipleTracks } = await import('../../spotify/services/spotify_services');
+    try {
+        const response = await getMultipleTracks(trackIds);
+        if (response?.tracks) {
+            return response.tracks.filter(Boolean);
         }
+    } catch (err) {
+        console.error("Spotify API Error (Preview):", err);
     }
 
-    return trackIds.map(id => getFromCache(id)).filter(Boolean);
+    return [];
 }
 
 /**
@@ -373,7 +343,7 @@ export async function reorderPlaylistTracks(tracks: { id: string; position: numb
  * Upload playlist image
  */
 export async function uploadPlaylistImage(playlistId: string, file: File): Promise<string> {
-    const fileName = `${playlistId}`; 
+    const fileName = `${playlistId}`;
     const filePath = `${fileName}`;
     const { error: uploadError } = await supabase.storage
         .from('playlists')
