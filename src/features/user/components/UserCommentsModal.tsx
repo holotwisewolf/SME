@@ -94,7 +94,7 @@ const UserCommentsModal: React.FC<UserCommentsModalProps> = ({ userId, onClose }
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="relative w-full max-w-2xl bg-[#1f1f1f] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
                 <div className="flex items-center justify-between p-6 border-b border-white/5">
-                    <h2 className="text-xl font-bold text-white uppercase tracking-tight">Full Comment Feed</h2>
+                    <h2 className="text-xl font-bold text-white uppercase tracking-tight">Full Activity</h2>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400"><X className="w-5 h-5" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#121212]">

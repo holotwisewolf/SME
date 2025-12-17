@@ -167,3 +167,31 @@
     - **src/features/trending/components/ActivityCard.tsx**
       - fix changing profile based on user actions (ex. comment has a message icon profile)
 
+### 2025-12-18(SF)
+
+### Porgress
+
+- **Added User Profile**
+  - **added src/features/user/components/UserCommentsModal.tsx**
+    - 'const enrichItems' : filter wheter it is 'track','album','playlist'.
+    - ‘const loadComments' - get user comment and print out.
+  
+  - **added src/features/user/components/UserItemsModal.tsx**
+    - when click on view all,use format declared here.
+
+  - **added src/features/user/services/user_profile_services.ts**
+    - export async function getPublicProfile(...){}
+    - export async function getUserAverageRating(...){}
+    - export async function getUserComments(...){}
+    - export async function getUserRecentRatings(...){}
+    - export async function getUserRecentFavorites(...){}
+    - export async function getUserPublicPlaylists(...){}
+  
+  - **added new button in ../features/user/user_pages/UserDropdown.tsx**
+
+  - **added src/features/user/user_pages/UserProfile.tsx**
+    - all User Profile layout here !!!
+
+  - **added route in App.tsx**
+    - import UserProfile from "./features/user/user_pages/UserProfile";
+    - have added comment "{/* ADDED PROFILE ROUTES */}" for easy find out.

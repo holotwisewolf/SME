@@ -92,7 +92,7 @@ const UserDropdown: React.FC = () => {
                                 Account
                             </Link>
 
-                            {/* 👇👇👇 新增的 Profile 按钮 (Public View) 👇👇👇 */}
+                            {/*  Profile button (Public View) */}
                             <Link
                                 to={`/profile/${user?.id}`}
                                 onClick={() => setIsOpen(false)}
@@ -100,8 +100,8 @@ const UserDropdown: React.FC = () => {
                             >
                                 My Profile
                             </Link>
-                            {/* 👆👆👆 End New Button 👆👆👆 */}
-                            
+                            {/* End New Button */}
+
                             <Link
                                 to="/settings"
                                 onClick={() => setIsOpen(false)}
