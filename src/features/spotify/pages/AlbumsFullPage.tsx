@@ -63,6 +63,8 @@ export function AlbumsFullPage() {
         loadAlbums(true);
     }, [artistId, artistName, albumId, search]);
 
+    useSidebarBlur(!!selectedAlbum || !!selectedTrack || !!playlistModalTrack);
+
     const loadAlbums = async (reset = false) => {
         if (reset) {
             setLoading(true);
@@ -231,7 +233,7 @@ export function AlbumsFullPage() {
         );
     }
 
-    useSidebarBlur(!!selectedAlbum || !!selectedTrack || !!playlistModalTrack);
+
 
     return (
         <div className="min-h-screen bg-[#696969] p-8">

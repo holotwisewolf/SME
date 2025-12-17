@@ -33,6 +33,8 @@ export function TracksFullPage() {
         loadTracks(true);
     }, [artistId, artistName, search]);
 
+    useSidebarBlur(!!selectedTrack || !!playlistModalTrack);
+
     const loadTracks = async (reset = false) => {
         if (reset) {
             setLoading(true);
@@ -97,7 +99,7 @@ export function TracksFullPage() {
         );
     }
 
-    useSidebarBlur(!!selectedTrack || !!playlistModalTrack);
+
 
     return (
         <div className="min-h-screen bg-[#696969] p-8">

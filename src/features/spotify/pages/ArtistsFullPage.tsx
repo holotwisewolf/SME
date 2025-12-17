@@ -21,6 +21,8 @@ export function ArtistsFullPage() {
 
     const { isOpen, selectedArtist, openPopup, closePopup } = useArtistPopup();
 
+    useSidebarBlur(isOpen);
+
     useEffect(() => {
         loadArtists(true);
     }, [artistId, search]);
@@ -93,7 +95,7 @@ export function ArtistsFullPage() {
         );
     }
 
-    useSidebarBlur(isOpen);
+
 
     return (
         <div className="min-h-screen bg-[#696969] p-8">
