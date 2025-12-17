@@ -1,7 +1,7 @@
 // Community Activity Page - Real-time activity feed
 
 import React, { useState, useEffect } from 'react';
-import { Activity, Filter, RefreshCw } from 'lucide-react';
+import { Activity, Filter, RefreshCw} from 'lucide-react';
 import ActivityCard from '../../features/trending/components/ActivityCard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { getRecentActivity } from '../../features/trending/services/trending_services';

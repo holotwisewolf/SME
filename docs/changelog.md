@@ -155,5 +155,15 @@
     ## 2025-12-17(Eric)
     - **src/pages/discovery/CommunityActivity.tsx**
       - solved the "unknown title" and "unknown artist" issue in the community activity section.
-      - 
+      - add the scroll loading feature where it will load more when you scroll instead of displaying fully.
+    
+    - **src/features/trending/services/trending_services.ts**
+      - made some changes to the getRecentActivity funciton
+
+    - **src/features/trending/components/DiscoverySidebar.tsx**
+      - solve the community pulse issues such as the day history (nand), profile based on actions (ex: star represents
+        reviews, the message icon represents comments and heart icon represents favourited)
+    
+    - **src/features/trending/components/ActivityCard.tsx**
+      - fix changing profile based on user actions (ex. comment has a message icon profile)
 

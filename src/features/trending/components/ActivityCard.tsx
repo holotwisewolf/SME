@@ -51,7 +51,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, index }) => {
         switch (activity.type) {
             case 'rating': return 'rated';
             case 'comment': return 'commented on';
-            case 'favorite': return 'favorited';
+            case 'favorite': return 'favourited';
             case 'tag': return 'tagged';
             default: return 'interacted with';
         }
@@ -90,35 +90,17 @@ if (!activity.track?.title) {
             className="bg-[#292929] rounded-lg p-4 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30 transition-all cursor-pointer group"
         >
             <div className="flex gap-4">
-                {/* --- LEFT ICON SECTION --- */}
+                {/* --- LEFT ICON SECTION  --- */}
                 <div className="flex-shrink-0">
-                    {/* LOGIC:
-                       1. If it is a RATING -> Force display of the STAR icon (Ignore user avatar).
-                       2. If it is NOT a rating (e.g. Comment) -> Show Avatar if exists, else Default Icon.
-                    */}
-                    {activity.type === 'rating' ? (
-                        <div className="w-10 h-10 rounded-full bg-[#FFD1D1]/10 flex items-center justify-center">
-                            <Star className="w-5 h-5 fill-[#FFD1D1] text-[#FFD1D1]" />
-                        </div>
-                    ) : (
-                        avatarUrl ? (
-                            <img 
-                                src={avatarUrl} 
-                                alt={displayName} 
-                                className="w-10 h-10 rounded-full object-cover border border-[#D1D1D1]/10"
-                            />
-                        ) : (
-                            <div className="w-10 h-10 rounded-full bg-[#FFD1D1]/10 flex items-center justify-center">
-                                {activity.type === 'comment' ? (
-                                    <MessageCircle className="w-5 h-5 text-[#FFD1D1]" />
-                                ) : activity.type === 'favorite' ? (
-                                    <Heart className="w-5 h-5 text-[#FFD1D1]" />
-                                ) : (
-                                    <Activity className="w-5 h-5 text-[#FFD1D1]" />
-                                )}
-                            </div>
-                        )
-                    )}
+                    {/* Always show the Icon, never the Profile Picture */}
+                    <div className="w-10 h-10 rounded-full bg-[#FFD1D1]/10 flex items-center justify-center border border-[#D1D1D1]/5">
+                        {activity.type === 'rating' && <Star className="w-5 h-5 fill-[#FFD1D1] text-[#FFD1D1]" />}
+                        {activity.type === 'comment' && <MessageCircle className="w-5 h-5 text-[#FFD1D1]" />}
+                        {activity.type === 'favorite' && <Heart className="w-5 h-5 fill-[#FFD1D1] text-[#FFD1D1]" />}
+                        {activity.type === 'tag' && <Tag className="w-5 h-5 text-[#FFD1D1]" />}
+                        {/* Fallback for unknown types */}
+                        {!['rating', 'comment', 'favorite', 'tag'].includes(activity.type) && <Activity className="w-5 h-5 text-[#FFD1D1]" />}
+                    </div>
                 </div>
 
                 {/* --- CONTENT SECTION --- */}
