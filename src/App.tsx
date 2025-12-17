@@ -33,6 +33,9 @@ import ErrorMessage from "./components/ui/ErrorMessage";
 import { SuccessProvider } from "./context/SuccessContext";
 import SuccessMessage from "./components/ui/SuccessMessage";
 
+//new added for UserProfile
+import UserProfile from "./features/user/user_pages/UserProfile";
+
 function App() {
   const location = useLocation();
   return (
@@ -163,6 +166,20 @@ function App() {
                   <Route path="/setup-profile" element={<></>} />
                   <Route path="/account" element={<></>} />
                   <Route path="/settings" element={<></>} />
+
+                  {/* 👇👇👇 在这里添加 PROFILE ROUTES 👇👇👇 */}
+                  
+                  {/* USER PROFILE PUBLIC PAGES */}
+                  <Route
+                    path="/profile/:userId"
+                    element={
+                      <PageWrapper>
+                        <UserProfile />
+                      </PageWrapper>
+                    }
+                  />
+                  
+                  {/* 👆👆👆 添加结束 👆👆👆 */}
 
                   {/* SPOTIFY FULL PAGES */}
                   <Route

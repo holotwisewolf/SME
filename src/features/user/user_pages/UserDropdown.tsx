@@ -91,6 +91,17 @@ const UserDropdown: React.FC = () => {
                             >
                                 Account
                             </Link>
+
+                            {/* 👇👇👇 新增的 Profile 按钮 (Public View) 👇👇👇 */}
+                            <Link
+                                to={`/profile/${user?.id}`}
+                                onClick={() => setIsOpen(false)}
+                                className="block px-4 py-2 text-sm text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
+                            >
+                                My Profile
+                            </Link>
+                            {/* 👆👆👆 End New Button 👆👆👆 */}
+                            
                             <Link
                                 to="/settings"
                                 onClick={() => setIsOpen(false)}
