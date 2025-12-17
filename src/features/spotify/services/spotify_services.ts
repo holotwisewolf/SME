@@ -1,4 +1,5 @@
 import { spotifyFetch, getSpotifyToken } from './spotifyConnection';
+import { supabase } from '../../../lib/supabaseClient';
 
 // ============================================
 // Search Functions
@@ -61,16 +62,70 @@ export async function searchAll(query: string, limit: number = 10, offset: numbe
 // Details Functions
 // ============================================
 
+// Helper to check Supabase cache
+async function getFromCache(spotifyId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('spotify_cache')
+      .select('data, expires_at')
+      .eq('resource_id', spotifyId)
+      .single();
+
+    if (error || !data) return null;
+
+    // Check expiry
+    if (new Date(data.expires_at).getTime() < Date.now()) return null;
+
+    return data.data;
+  } catch (err) {
+    // Fail silently to API
+    return null;
+  }
+}
+
+// Helper to save to Supabase cache
+async function saveToCache(spotifyId: string, type: 'track' | 'album' | 'artist', data: any) {
+  try {
+    // Cache for 7 days
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    await supabase.from('spotify_cache').upsert({
+      resource_id: spotifyId,
+      resource_type: type,
+      data,
+      expires_at: expiresAt,
+      created_at: new Date().toISOString()
+    }, { onConflict: 'resource_id' });
+  } catch (err) {
+    console.warn('Failed to cache Spotify data:', err);
+  }
+}
+
 export async function getAlbumDetails(albumId: string) {
-  return await spotifyFetch(`albums/${albumId}`)
+  const cached = await getFromCache(albumId);
+  if (cached) return cached;
+
+  const data = await spotifyFetch(`albums/${albumId}`);
+  await saveToCache(albumId, 'album', data);
+  return data;
 }
 
 export async function getTrackDetails(trackId: string) {
-  return await spotifyFetch(`tracks/${trackId}`)
+  const cached = await getFromCache(trackId);
+  if (cached) return cached;
+
+  const data = await spotifyFetch(`tracks/${trackId}`);
+  await saveToCache(trackId, 'track', data);
+  return data;
 }
 
 export async function getArtistDetails(artistId: string) {
-  return await spotifyFetch(`artists/${artistId}`)
+  const cached = await getFromCache(artistId);
+  if (cached) return cached;
+
+  const data = await spotifyFetch(`artists/${artistId}`);
+  await saveToCache(artistId, 'artist', data);
+  return data;
 }
 
 /**
@@ -82,6 +137,12 @@ export async function getArtistDetails(artistId: string) {
  */
 export async function getMultipleTracks(trackIds: string[]) {
   if (!trackIds.length) return { tracks: [] };
+
+  // Optimization: Check cache for all IDs first?
+  // Use Promise.all to check cache? Ideally we'd batch query Supabase "WHERE spotify_id IN (...)"
+  // For now, let's keep it simple or the complexity explodes.
+  // The cache table might support batching but mixing cached/uncached is tricky in one go without logic overhaul.
+  // Keeping original batch logic for now, but individual item getters are cached.
 
   // Spotify limit: 50 IDs per request
   const chunks = [];
@@ -98,6 +159,13 @@ export async function getMultipleTracks(trackIds: string[]) {
   const allTracks = results.reduce((acc, curr) => {
     return [...acc, ...(curr?.tracks || [])];
   }, []);
+
+  // Cache the results!
+  allTracks.forEach((track: any) => {
+    if (track && track.id) {
+      saveToCache(track.id, 'track', track);
+    }
+  });
 
   return { tracks: allTracks };
 }
@@ -125,6 +193,13 @@ export async function getMultipleAlbums(albumIds: string[]) {
     return [...acc, ...(curr?.albums || [])];
   }, []);
 
+  // Cache results
+  allAlbums.forEach((album: any) => {
+    if (album && album.id) {
+      saveToCache(album.id, 'album', album);
+    }
+  });
+
   return { albums: allAlbums };
 }
 
@@ -139,8 +214,13 @@ export async function getAlbum(albumId: string) {
  * Get tracks for an album
  */
 export async function getAlbumTracks(albumId: string) {
-  const data = await spotifyFetch(`albums/${albumId}/tracks`)
-  return data
+  // Use cache for full album object? No, this is the tracks endpoint.
+  // URL: albums/{id}/tracks
+  // Currently difficult to cache paginated results reliably without a dedicated 'album_tracks_cache'.
+  // We will leave this uncached for now or cache page 1?
+  // Let's stick to API for tracks listing to ensure freshness.
+  const data = await spotifyFetch(`albums/${albumId}/tracks`);
+  return data;
 }
 
 
