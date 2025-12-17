@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MoreOptionsIcon } from '../../../../components/ui/MoreOptionsIcon';
-import { updatePlaylistDescription, updatePlaylistRating } from '../../services/playlist_services';
+import { updatePlaylistDescription, updatePlaylistRating, deletePlaylistRating } from '../../services/playlist_services';
 import { getPreMadeTags, assignTagToItem, createCustomTag, searchTags, removeTagFromItem } from '../../../tags/services/tag_services';
 import type { Tag } from '../../../tags/type/tag_types';
 import { useError } from '../../../../context/ErrorContext';
@@ -111,8 +111,15 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) { showError('Log in to rate'); return; }
-            await updatePlaylistRating(playlist.id, rating);
-            showSuccess(`Rated ${rating}/5`);
+            if (userRating === rating) {
+                // Toggle off (delete rating)
+                await deletePlaylistRating(playlist.id);
+                showSuccess('Rating removed');
+            } else {
+                await updatePlaylistRating(playlist.id, rating);
+                showSuccess(`Rated ${rating}/5`);
+            }
+
             window.location.reload(); 
         } catch (error) {
             console.error('Error updating rating:', error);
@@ -156,23 +163,53 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
             </div>
             <div className="mb-2">
                 <div className="flex items-center justify-between mb-2">
-                    <p className="text-gray-400 text-xs">Your Tags:</p>
+                    <p className="text-gray-400 text-xs">{isEditingEnabled ? 'Your Tags:' : 'Creator Tags:'}</p>
                     <div className="relative tag-menu-container">
                         <button onClick={() => setIsTagMenuOpen(!isTagMenuOpen)} className="p-1 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"><MoreOptionsIcon size={14} orientation="horizontal" /></button>
                         {isTagMenuOpen && (
                             <div className="absolute right-0 bottom-full mb-2 w-48 bg-[#2a2a2a] border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                <div className="px-3 py-2 border-b border-white/5 bg-white/5"><span className="text-xs font-bold text-gray-300 uppercase tracking-wider">Add Tags</span></div>
-                                <div className="px-3 py-2 border-b border-white/5"><input type="text" value={customTagInput} onChange={(e) => setCustomTagInput(e.target.value)} onKeyDown={handleAddCustomTag} placeholder="Press Enter to add" className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors" /></div>
-                                <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                                    {availableTags.filter(t => !tags.includes(t.name)).length > 0 ? availableTags.filter(t => !tags.includes(t.name)).map(tag => (
-                                        <button key={tag.id} onClick={() => handleAddPresetTag(tag)} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#FFD1D1]"></span>{tag.name}</button>
-                                    )) : <div className="px-3 py-2 text-xs text-gray-500 italic">No new tags available</div>}
+                                <div className="px-3 py-2 border-b border-white/5 bg-white/5">
+                                    <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">Add Tags</span>
+                                </div>
+
+                                {/* Custom Tag Input */}
+                                <div className="px-3 py-2 border-b border-white/5">
+                                    <input
+                                        type="text"
+                                        value={customTagInput}
+                                        onChange={(e) => setCustomTagInput(e.target.value)}
+                                        onKeyDown={handleAddCustomTag}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        placeholder="Press Enter to add"
+                                        className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
+                                    />
+                                </div>
+
+                                <div className="max-h-32 overflow-y-auto subtle-scrollbar">
+                                    {availableTags.filter(t => !tags.includes(t.name)).length > 0 ? (
+                                        availableTags
+                                            .filter(t => !tags.includes(t.name))
+                                            .map(tag => (
+                                                <button
+                                                    key={tag.id}
+                                                    onClick={() => handleAddPresetTag(tag)}
+                                                    className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                                >
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#FFD1D1]"></span>
+                                                    {tag.name}
+                                                </button>
+                                            ))
+                                    ) : (
+                                        <div className="px-3 py-2 text-xs text-gray-500 italic">
+                                            No new tags available
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
-                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-hidden flex items-center">
+                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-y-auto subtle-scrollbar flex items-center">
                     {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {tags.map((tag, index) => (

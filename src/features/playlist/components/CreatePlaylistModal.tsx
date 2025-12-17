@@ -74,8 +74,7 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ onClos
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full bg-[#2a2a2a] border border-white/10 rounded p-3 text-white focus:outline-none focus:border-[#1DB954] transition-colors"
-                                placeholder="My Awesome Playlist"
+                                className="w-full bg-[#2a2a2a] border border-white/20 rounded p-3 text-white placeholder-gray-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-colors"
                                 autoFocus
                             />
                         </div>
@@ -85,7 +84,7 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ onClos
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                className="w-full bg-[#2a2a2a] border border-white/10 rounded p-3 text-white focus:outline-none focus:border-[#1DB954] transition-colors resize-none h-24"
+                                className="w-full bg-[#2a2a2a] border border-white/20 rounded p-3 text-white placeholder-gray-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-colors resize-none h-24"
                                 placeholder="Add an optional description"
                             />
                         </div>
@@ -109,7 +108,7 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ onClos
                             <button
                                 type="submit"
                                 disabled={loading || !name.trim()}
-                                className="px-6 py-2 bg-[#1DB954] hover:bg-[#1ed760] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-full transition-transform hover:scale-105 active:scale-95"
+                                className="px-6 py-2 bg-[#FFD1D1] hover:bg-[#ffc2c2] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-full transition-transform hover:scale-105 active:scale-95"
                             >
                                 {loading ? 'Creating...' : 'Create'}
                             </button>

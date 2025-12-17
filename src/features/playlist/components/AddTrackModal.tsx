@@ -6,6 +6,8 @@ import type { SpotifyTrack } from '../../spotify/type/spotify_types';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import SearchButton from '../../../components/ui/SearchButton';
 import ClearButton from '../../../components/ui/ClearButton';
+import { useError } from '../../../context/ErrorContext';
+import { useSuccess } from '../../../context/SuccessContext';
 
 interface AddTrackModalProps {
     playlistId: string;
@@ -14,49 +16,58 @@ interface AddTrackModalProps {
     onTrackAdded: () => void;
 }
 
-export const AddTrackModal: React.FC<AddTrackModalProps> = ({ 
-    playlistId, 
-    playlistName, 
+export const AddTrackModal: React.FC<AddTrackModalProps> = ({
+    playlistId,
+    playlistName,
     onClose,
-    onTrackAdded 
+    onTrackAdded
 }) => {
     const [searchText, setSearchText] = useState('');
     const [results, setResults] = useState<SpotifyTrack[]>([]);
     const [loading, setLoading] = useState(false);
     const [addingTrackId, setAddingTrackId] = useState<string | null>(null);
+    const { showError } = useError();
+    const { showSuccess } = useSuccess();
 
-    // Debounce Search
     useEffect(() => {
-        const timeoutId = setTimeout(async () => {
-            if (searchText.trim()) {
-                setLoading(true);
-                try {
-                    const data = await SpotifyService.searchTracks(searchText, 10);
-                    setResults(data.items || []);
-                } catch (error) {
-                    console.error("Spotify search failed", error);
-                    setResults([]);
-                } finally {
-                    setLoading(false);
-                }
-            } else {
+        const searchTracks = async () => {
+            if (!searchText.trim()) {
                 setResults([]);
+                return;
             }
-        }, 300);
-        return () => clearTimeout(timeoutId);
+
+            setLoading(true);
+            try {
+                const searchResults = await SpotifyService.searchTracks(searchText);
+                setResults(searchResults.items || []);
+            } catch (error) {
+                console.error('Error searching tracks:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const debounceTimer = setTimeout(searchTracks, 500);
+        return () => clearTimeout(debounceTimer);
     }, [searchText]);
 
     const handleAddTrack = async (track: SpotifyTrack) => {
         setAddingTrackId(track.id);
         try {
             await addTrackToPlaylist({ playlistId, trackId: track.id });
-            
+
             // Trigger the refresh in parent
             onTrackAdded();
+            showSuccess('Track added to playlist');
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error adding track to playlist:', error);
-            alert('Failed to add track');
+            const errorMessage = error?.message?.toLowerCase() || '';
+            if (errorMessage.includes('already in playlist')) {
+                showError('This track is already in the playlist');
+            } else {
+                showError('Failed to add track to playlist');
+            }
         } finally {
             setAddingTrackId(null);
         }
@@ -117,7 +128,7 @@ export const AddTrackModal: React.FC<AddTrackModalProps> = ({
                                         track={track}
                                         isSelected={false}
                                         onSelect={() => handleAddTrack(track)}
-                                        className="pr-24" 
+                                        className="pr-24"
                                     />
                                     {/* Add Button Overlay */}
                                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 ${addingTrackId === track.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>

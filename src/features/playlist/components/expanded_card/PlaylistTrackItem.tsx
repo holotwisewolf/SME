@@ -69,10 +69,10 @@ export const PlaylistTrackItem: React.FC<PlaylistTrackItemProps> = ({
 
     // If it's a trash candidate (dragged out), we might want to style it differently
     const containerClass = `flex items-center justify-between p-2 rounded-lg group transition-colors cursor-pointer relative ${isTrashCandidate
-            ? 'bg-red-500/20 border border-red-500/50'
-            : isDragging
-                ? 'bg-[#292929] shadow-xl ring-2 ring-[#1DB954] opacity-90'
-                : 'hover:bg-white/5'
+        ? 'bg-red-500/20 border border-red-500/50'
+        : isDragging
+            ? 'bg-[#292929] shadow-xl ring-2 ring-[#1DB954] opacity-90'
+            : 'hover:bg-white/5'
         }`;
 
     return (
@@ -123,7 +123,7 @@ export const PlaylistTrackItem: React.FC<PlaylistTrackItemProps> = ({
                         {!isEditingEnabled && !isOverlay && (
                             <div className="relative" ref={menuRef}>
                                 <div
-                                    className="w-5 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="w-8 h-8 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all hover:bg-white/10 rounded-full"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setShowMenu(!showMenu);

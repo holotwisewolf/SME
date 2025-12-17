@@ -84,7 +84,8 @@ export function PlaylistSelectCard({
         } catch (error: any) {
             console.error('Error adding to playlist:', error);
             // Check if it's a duplicate track error
-            if (error?.message?.includes('already exists') || error?.message?.includes('duplicate')) {
+            const errorMessage = error?.message?.toLowerCase() || '';
+            if (errorMessage.includes('already in playlist') || errorMessage.includes('already exists') || errorMessage.includes('duplicate')) {
                 showError('This track is already in the playlist');
             } else {
                 showError('Failed to add track to playlist');

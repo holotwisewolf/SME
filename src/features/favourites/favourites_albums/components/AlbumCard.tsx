@@ -84,7 +84,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove, searchQuery = 
     return (
         <>
             <div
-                className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 ${isInlineExpanded ? 'min-h-[20rem] max-h-[28rem] h-auto' : 'h-80'}`}
+                className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] ${isInlineExpanded ? 'min-h-[20rem] max-h-[28rem] h-auto' : 'h-80'}`}
             >
                 {/* Header */}
                 <div className="flex justify-between items-start mb-4 px-1">

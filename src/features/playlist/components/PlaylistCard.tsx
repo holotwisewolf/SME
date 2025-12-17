@@ -60,9 +60,13 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
             } catch (error) {
                 console.error('Error loading preview tracks:', error);
             }
-        }, delay);
-        return () => clearTimeout(timeoutId);
-    }, [playlist.id, lastUpdated, refreshTrigger]);
+        };
+        loadPreviewTracks();
+    }, [
+        playlist.id,
+        lastUpdated,
+        refreshTrigger
+    ]);
 
     const handleFavourite = async () => {
         const willBeFavourite = !isFavourite;
@@ -81,7 +85,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
 
     return (
         <>
-            <div ref={setNodeRef} className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 ${isInlineExpanded ? 'min-h-[20rem] max-h-[28rem] h-auto' : 'h-80'} ${isOver ? 'ring-2 ring-white/50 bg-[#2a2a2a] shadow-[0_0_15px_rgba(255,255,255,0.3)]' : ''}`}>
+            <div ref={setNodeRef} className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] ${isInlineExpanded ? 'min-h-[20rem] max-h-[28rem] h-auto' : 'h-80'} ${isOver ? 'ring-2 ring-white/50 bg-[#2a2a2a] shadow-[0_0_15px_rgba(255,255,255,0.3)]' : ''}`}>
                 <div className="flex justify-between items-start mb-4 px-1">
                     <h3 className="font-medium text-[#E0E0E0] text-lg line-clamp-2 leading-tight">{title}</h3>
                     <div className="flex space-x-3 text-[#FFD1D1]">

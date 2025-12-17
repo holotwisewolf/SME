@@ -76,17 +76,56 @@ export async function getArtistDetails(artistId: string) {
 /**
  * Get multiple tracks at once (batch request)
  */
+/**
+ * Get multiple tracks at once (batch request)
+ * Handles chunking to respect Spotify's 50 ID limit
+ */
 export async function getMultipleTracks(trackIds: string[]) {
-  const ids = trackIds.join(',')
-  return await spotifyFetch(`tracks?ids=${ids}`)
+  if (!trackIds.length) return { tracks: [] };
+
+  // Spotify limit: 50 IDs per request
+  const chunks = [];
+  for (let i = 0; i < trackIds.length; i += 50) {
+    chunks.push(trackIds.slice(i, i + 50));
+  }
+
+  const results = await Promise.all(chunks.map(async chunk => {
+    const ids = chunk.join(',');
+    return await spotifyFetch(`tracks?ids=${ids}`);
+  }));
+
+  // Merge results
+  const allTracks = results.reduce((acc, curr) => {
+    return [...acc, ...(curr?.tracks || [])];
+  }, []);
+
+  return { tracks: allTracks };
 }
 
 /**
  * Get multiple albums at once (batch request)
+ * Handles chunking to respect Spotify's 20 ID limit
  */
 export async function getMultipleAlbums(albumIds: string[]) {
-  const ids = albumIds.join(',')
-  return await spotifyFetch(`albums?ids=${ids}`)
+  if (!albumIds.length) return { albums: [] };
+
+  // Spotify limit: 20 IDs per request
+  const chunks = [];
+  for (let i = 0; i < albumIds.length; i += 20) {
+    chunks.push(albumIds.slice(i, i + 20));
+  }
+
+  const results = await Promise.all(chunks.map(async chunk => {
+    const ids = chunk.join(',');
+    return await spotifyFetch(`albums?ids=${ids}`);
+  }));
+
+  // Merge results
+  const allAlbums = results.reduce((acc, curr) => {
+    return [...acc, ...(curr?.albums || [])];
+  }, []);
+
+  return { albums: allAlbums };
 }
 
 /**

@@ -3,16 +3,19 @@ import { motion } from 'framer-motion';
 import type { SpotifyTrack } from '../../../../spotify/type/spotify_types';
 import { submitPersonalRating, getPersonalRating } from '../../../../ratings/services/rating_services';
 import { removeFromFavourites } from '../../../services/favourites_services';
+import { deleteItemRating } from '../../../services/item_services';
 import { getItemComments, createComment } from '../../../../comments/services/comment_services';
 import { getItemTags } from '../../../../tags/services/tag_services';
 import { supabase } from '../../../../../lib/supabaseClient';
 import { useError } from '../../../../../context/ErrorContext';
+import { useSuccess } from '../../../../../context/SuccessContext';
 import ExpandButton from '../../../../../components/ui/ExpandButton';
 import { TrackHeader } from './TrackHeader';
 import { TrackReview } from './TrackReview';
 import { TrackCommunity } from './TrackCommunity';
 import { TrackSettings } from './TrackSettings';
 import { PlaylistSelectCard } from '../../../../spotify/components/PlaylistSelectCard';
+import { createPortal } from 'react-dom';
 
 interface TrackReviewModalProps {
     track: SpotifyTrack;
@@ -44,13 +47,13 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     onRemove
 }) => {
     const { showError } = useError();
+    const { showSuccess } = useSuccess();
     const [activeTab, setActiveTab] = useState<'review' | 'community' | 'settings'>('review');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
 
     // Data States
     const [userRating, setUserRating] = useState<number>(0);
-    const [review, setReview] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [comments, setComments] = useState<any[]>([]);
@@ -111,8 +114,16 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                 return;
             }
 
-            setUserRating(newRating);
-            await submitPersonalRating(user.id, track.id, 'track', newRating);
+            if (userRating === newRating) {
+                // Toggle off (delete rating)
+                await deleteItemRating(track.id, 'track');
+                setUserRating(0); // Set to 0 to indicate no rating
+                showSuccess('Rating removed');
+            } else {
+                setUserRating(newRating);
+                await submitPersonalRating(user.id, track.id, 'track', newRating);
+                showSuccess(`Rated ${newRating}/5`);
+            }
 
             // Refresh global rating
             const updatedRatingData = await getTrackRating(track.id);
@@ -182,14 +193,14 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
         setShowPlaylistModal(true); // Just show playlist modal on top
     };
 
-    return (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={onClose}
-                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
 
             <motion.div
@@ -249,8 +260,6 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                             <TrackReview
                                 track={track}
                                 userRating={userRating}
-                                review={review}
-                                setReview={setReview}
                                 tags={tags}
                                 newTag={newTag}
                                 setNewTag={setNewTag}
@@ -259,6 +268,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                                 handleRatingClick={handleRatingClick}
                                 handleAddTag={handleAddTag}
                                 removeTag={removeTag}
+                                userName={userName}
                             />
                         )}
 
@@ -294,6 +304,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                     onClose={() => setShowPlaylistModal(false)}
                 />
             )}
-        </div>
+        </div>,
+        document.body
     );
 };

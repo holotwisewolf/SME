@@ -69,24 +69,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
 
     return (
         <motion.aside
-            initial={false}
-            animate={isExpanded ? "expanded" : "collapsed"}
-            variants={sidebarVariants}
-            className="relative h-screen bg-[#2a2a2e] border-[white] flex flex-col z-50 overflow-visible rounded-br-2xl"
-        >
+        initial={false}
+        animate={isExpanded ? "expanded" : "collapsed"}
+        variants={sidebarVariants}
+        // added rounded-br-[20px] to the end of the list below
+        className="relative h-screen bg-[#2a2a2e] flex flex-col z-50 overflow-visible rounded-br-[20px]"
+    >
+        {/* FIXED LOGO SECTION */}
+        <SidebarLogo isExpanded={isExpanded} />
 
+        {/* Navigation Items */}
+        <SidebarMenu isExpanded={isExpanded} menuItems={menuItems} />
 
-            {/* FIXED LOGO SECTION */}
-            <SidebarLogo isExpanded={isExpanded} />
-
-            {/* Navigation Items */}
-            <SidebarMenu isExpanded={isExpanded} menuItems={menuItems} />
-
-            {/* Expand/Collapse Button */}
-            <div className="mb-8 flex justify-center shrink-0">
-                <ExpandSidebarButton isExpanded={isExpanded} toggleSidebar={toggleSidebar} />
-            </div>
-        </motion.aside>
+        {/* Expand/Collapse Button */}
+        <div className="mb-8 flex justify-center shrink-0">
+            <ExpandSidebarButton isExpanded={isExpanded} toggleSidebar={toggleSidebar} />
+        </div>
+    </motion.aside>
     );
 };
 

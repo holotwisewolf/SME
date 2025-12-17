@@ -78,8 +78,7 @@ export async function addTrackToPlaylist(request: { playlistId: string; trackId:
         .maybeSingle();
 
     if (existing) {
-        console.log('Track already in playlist');
-        return;
+        throw new Error('Track already in playlist');
     }
 
     const { data: maxPosData } = await supabase
