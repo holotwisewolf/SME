@@ -25,7 +25,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
         try {
             const [tags, activity, quickStats] = await Promise.all([
                 getTrendingTags('week', 10),
-                getRecentActivity(5), // Fewer items for compact display
+                getRecentActivity(5),
                 getCommunityQuickStats()
             ]);
 
@@ -66,27 +66,25 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
         }
     };
 
-    const getActivityText = (activity: any) => {
-        switch (activity.type) {
-            case 'rating':
-                return `rated ${activity.itemType}`;
-            case 'comment':
-                return `commented on ${activity.itemType}`;
-            case 'favorite':
-                return `favorited ${activity.itemType}`;
-            case 'tag':
-                return `tagged ${activity.itemType}`;
-            default:
-                return `interacted with ${activity.itemType}`;
+    const getActivityActionText = (type: string) => {
+        switch (type) {
+            case 'rating': return 'rated';
+            case 'comment': return 'commented on';
+            case 'favorite': return 'favourited';
+            case 'tag': return 'tagged';
+            default: return 'interacted with';
         }
+    };
+
+    // Helper to safely get the star count number
+    const getStarRating = (activity: any) => {
+        const val = activity.rating_value || activity.rating || activity.value;
+        return Number(val) || 0;
     };
 
     const handleTagClick = (tagName: string) => {
         if (!onFiltersChange || !filters) return;
-
         const currentTags = filters.tags || [];
-
-        // Toggle tag - if already selected, remove it; otherwise add it
         if (currentTags.includes(tagName)) {
             const newTags = currentTags.filter(t => t !== tagName);
             onFiltersChange({ ...filters, tags: newTags });
@@ -98,7 +96,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
 
     return (
         <div className="w-80 flex-shrink-0 space-y-4 sticky top-20 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pr-2">
-            {/* Trending Tags - Compact */}
+            {/* Trending Tags */}
             <div className="bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <TrendingUp className="w-4 h-4 text-[#FFD1D1]" />
@@ -140,7 +138,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                 )}
             </div>
 
-            {/* Community Pulse - Enhanced */}
+            {/* Community Pulse */}
             <div className="bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -161,35 +159,64 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                         <div className="w-4 h-4 border-2 border-[#FFD1D1] border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : recentActivity.length > 0 ? (
-                    <>
-                        <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
-                            <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
-                                {recentActivity.map((activity) => (
-                                    <div key={activity.id} className="text-xs border-b border-[#D1D1D1]/5 pb-2 last:border-0">
-                                        <p className="text-[#D1D1D1]/80 flex items-center gap-1.5">
-                                            {getActivityIcon(activity.type)}
-                                            <span className="text-[#FFD1D1] font-medium">@{activity.user}</span>
-                                            {' '}
-                                            <span className="text-[#D1D1D1]/60">{getActivityText(activity)}</span>
-                                        </p>
-                                        {activity.preview && (
-                                            <p className="text-[#D1D1D1]/50 italic mt-1 line-clamp-1">"{activity.preview}"</p>
-                                        )}
-                                        <p className="text-[#D1D1D1]/40 mt-1">{getRelativeTime(activity.timestamp)}</p>
+                    <div className="flex flex-col max-h-[420px] overflow-y-auto scrollbar-hide pr-1">
+                        {recentActivity.map((activity, index) => (
+                            <div 
+                                key={activity.id} 
+                                className={`flex gap-3 items-start relative ${index !== recentActivity.length - 1 ? 'border-b border-[#D1D1D1]/10 pb-4 mb-4' : ''}`}
+                            >
+                                {/* Icon Container */}
+                                <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0 border border-[#D1D1D1]/5 shadow-inner">
+                                    {getActivityIcon(activity.type)}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                    {/* Header Line */}
+                                    <div className="text-[13px] leading-tight">
+                                        <span className="text-[#FFD1D1] font-bold">
+                                            @{typeof activity.user === 'object' ? activity.user.display_name : (activity.user_display_name || 'User')}
+                                        </span>
+                                        <span className="text-[#D1D1D1]/50 px-1">
+                                            {getActivityActionText(activity.type)}
+                                        </span>
+                                        <span className="text-[#FFD1D1] font-medium break-words">
+                                            {activity.item_title || activity.track?.title || 'Item'}
+                                        </span>
                                     </div>
-                                ))}
+
+                                    {/* Rating Stars */}
+                                    {activity.type === 'rating' && (
+                                        <div className="flex gap-0.5 mt-1.5 mb-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star
+                                                    key={i}
+                                                    className={`w-3 h-3 ${i < getStarRating(activity) ? 'text-[#FFD1D1] fill-[#FFD1D1]' : 'text-[#D1D1D1]/10'}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Comment Text - UPDATED: Vertical bar, quotes, italics */}
+                                    {activity.content && (
+                                        <p className="text-[13px] text-[#D1D1D1] font-normal italic leading-tight mt-2 mb-1 pl-3 border-l-2 border-[#D1D1D1]/20">
+                                            "{activity.content}"
+                                        </p>
+                                    )}
+
+                                    {/* Timestamp */}
+                                    <p className="text-[11px] text-[#D1D1D1]/30 font-medium tracking-tight mt-0.5">
+                                        {getRelativeTime(activity.timestamp || activity.created_at)}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                        <p className="text-xs text-[#D1D1D1]/40 mt-2">
-                            Real-time community activity
-                        </p>
-                    </>
+                        ))}
+                    </div>
                 ) : (
-                    <p className="text-xs text-[#D1D1D1]/50">No recent activity</p>
+                    <p className="text-xs text-[#D1D1D1]/50 text-center py-4">No recent activity</p>
                 )}
             </div>
 
-            {/* Quick Stats - Improved Labels */}
+            {/* Quick Stats */}
             <div className="bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <Activity className="w-4 h-4 text-[#FFD1D1]" />

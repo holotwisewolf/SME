@@ -3,6 +3,7 @@
 import { supabase } from '../../../lib/supabaseClient';
 import type { TrendingFilters, TrendingItem, CommunityStats, TimeRange, SortBy } from '../types/trending';
 import type { ItemType } from '../../../types/global';
+import { getMultipleTracks, getMultipleAlbums } from '../../spotify/services/spotify_services';
 
 /**
  * Get the date threshold based on time range
@@ -32,8 +33,8 @@ function getTimeThreshold(timeRange: TimeRange): string | null {
 function getSortClause(sortBy: SortBy): { column: string; ascending: boolean } {
     switch (sortBy) {
         case 'trending':
-            // Sort by pre-calculated trending score
-            return { column: 'trending_score', ascending: false };
+            // Sort by sum of all activity counts
+            return { column: '(favorite_count + rating_count + comment_count + tag_count)', ascending: false };
         case 'top-rated':
             return { column: 'average_rating', ascending: false };
         case 'most-ratings':
@@ -131,7 +132,7 @@ async function getTrendingItems(
         }
 
         // Limit results (fetch more for trending to sort client-side)
-        const fetchLimit = limit;
+        const fetchLimit = filters.sortBy === 'trending' ? limit * 2 : limit;
         query = query.limit(fetchLimit);
 
         const { data, error } = await query;
@@ -163,8 +164,8 @@ async function getTrendingItems(
             tagCount: item.tag_count || 0,
         }));
 
-        // Sort by trending (total activity) - previously done client-side, now handled by DB
-        /* if (filters.sortBy === 'trending') {
+        // Sort by trending (total activity) if needed
+        if (filters.sortBy === 'trending') {
             trendingItems = trendingItems
                 .sort((a, b) => {
                     const totalA = a.favoriteCount + a.ratingCount + a.commentCount + a.tagCount;
@@ -172,7 +173,7 @@ async function getTrendingItems(
                     return totalB - totalA; // Descending order
                 })
                 .slice(0, limit); // Apply limit after sorting
-        } */
+        }
 
         // Enrich with metadata (name, artist, image)
         let enrichedItems = await enrichWithMetadata(trendingItems);
@@ -224,48 +225,41 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
     const albums = items.filter(item => item.type === 'album');
 
     // Fetch playlist metadata from database
-    // Fetch playlist metadata from database (with batching)
     if (playlists.length > 0) {
         const playlistIds = playlists.map(p => p.id);
-        const BATCH_SIZE = 10; // Supabase URL limit safety - 20 proved too high
-        const batches = [];
+        const { data: playlistData } = await supabase
+            .from('playlists')
+            .select('id, title, description, color, is_public')
+            .in('id', playlistIds)
+            .eq('is_public', true); // Only fetch public playlists
 
-        for (let i = 0; i < playlistIds.length; i += BATCH_SIZE) {
-            batches.push(playlistIds.slice(i, i + BATCH_SIZE));
-        }
-
-        try {
-            const batchResults = await Promise.all(
-                batches.map(batchIds =>
-                    supabase
+        if (playlistData) {
+            // Check which playlists have images in storage
+            const imageChecks = await Promise.all(
+                playlistData.map(async (meta) => {
+                    const { data, error } = await supabase.storage
                         .from('playlists')
-                        .select('id, title, description, color, is_public')
-                        .in('id', batchIds)
-                        .eq('is_public', true)
-                        .then(res => ({ data: res.data as any, error: res.error }))
-                )
+                        .list('', { search: meta.id });
+
+                    const hasImage = data && data.length > 0 && !error;
+                    return { id: meta.id, hasImage };
+                })
             );
 
-            // Combine results/handle errors per batch if needed (though Promise.all fails fast usually)
-            const allPlaylistData = batchResults.flatMap(res => res.data || []);
+            const imageMap = new Map(imageChecks.map(check => [check.id, check.hasImage]));
 
-            if (allPlaylistData.length > 0) {
-                playlists.forEach(playlist => {
-                    const meta = allPlaylistData.find((p: any) => p.id === playlist.id);
-                    if (meta) {
-                        playlist.name = meta.title;
-                        playlist.color = meta.color || undefined;
+            playlists.forEach(playlist => {
+                const meta = playlistData.find(p => p.id === playlist.id);
+                if (meta) {
+                    playlist.name = meta.title;
+                    playlist.color = meta.color || undefined;
 
-                        // Fallback logic since avatar_url column might not exist
-                        const { data: publicUrlData } = supabase.storage.from('playlists').getPublicUrl(playlist.id);
-                        if (publicUrlData) {
-                            playlist.imageUrl = publicUrlData.publicUrl;
-                        }
+                    // Only set imageUrl if image actually exists in storage
+                    if (imageMap.get(meta.id)) {
+                        playlist.imageUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
                     }
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching playlist metadata batches:', error);
+                }
+            });
         }
     }
 
@@ -461,49 +455,111 @@ export async function getTrendingTags(timeRange: TimeRange, limit = 20): Promise
 /**
  * Get recent community activity (ratings, comments, favorites)
  */
-export async function getRecentActivity(limit = 10): Promise<any[]> {
+export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
     try {
-        const { data, error } = await supabase
-            .from('recent_activity_feed')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(limit);
+        const fetchLimit = limit * page;
+        const activities: any[] = [];
 
-        if (error) {
-            console.error('Error fetching recent activity:', error);
-            // Fallback to empty array if view fails (or doesn't exist yet)
-            return [];
+        // 1. Fetch Raw Data
+        const [ratingsResponse, commentsResponse, favoritesResponse] = await Promise.all([
+            supabase.from('ratings').select('id, item_id, item_type, rating, created_at, user_id').order('created_at', { ascending: false }).limit(fetchLimit),
+            supabase.from('comments').select('id, item_id, item_type, content, created_at, user_id').order('created_at', { ascending: false }).limit(fetchLimit),
+            supabase.from('favorites').select('id, item_id, item_type, created_at, user_id').order('created_at', { ascending: false }).limit(fetchLimit)
+        ]);
+
+        if (ratingsResponse.data) ratingsResponse.data.forEach(r => activities.push({ ...r, type: 'rating', value: r.rating }));
+        if (commentsResponse.data) commentsResponse.data.forEach(c => activities.push({ ...c, type: 'comment', content: c.content }));
+        if (favoritesResponse.data) favoritesResponse.data.forEach(f => activities.push({ ...f, type: 'favorite' }));
+
+        activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const startIndex = (page - 1) * limit;
+        const paginatedItems = activities.slice(startIndex, startIndex + limit);
+
+        if (paginatedItems.length === 0) return [];
+
+        // 2. ENRICHMENT
+        const uniqueUserIds = [...new Set(paginatedItems.map(item => item.user_id).filter(Boolean))];
+        let profiles: any[] = [];
+        if (uniqueUserIds.length > 0) {
+            const { data } = await supabase.from('profiles').select('id, username, display_name, avatar_url').in('id', uniqueUserIds);
+            profiles = data || [];
         }
 
-        if (!data) return [];
+        const trackIds = paginatedItems.filter(a => a.item_type?.toLowerCase() === 'track').map(a => a.item_id);
+        const albumIds = paginatedItems.filter(a => a.item_type?.toLowerCase() === 'album').map(a => a.item_id);
+        const playlistIds = paginatedItems.filter(a => a.item_type?.toLowerCase() === 'playlist').map(a => a.item_id);
 
-        return data.map((activity: any) => ({
-            id: activity.id,
-            type: activity.type,
-            user: activity.user_id?.substring(0, 8) || 'Unknown', // View uses user_id
-            itemId: activity.item_id,
-            itemType: activity.item_type || 'track', // Default to track if missing (but view usually has it)
-            value: activity.rating, // Optimistic access 
-            // The view definition snippet was: "select 'rating' as type, id, user_id, item_id, created_at, null as content from ratings"
-            // It did NOT select the 'rating' value (number).
-            // If the rating value is missing from the view, we can't show stars.
-            // Let's assume the user was concise and the view actually joined/selected relevant columns.
-            // If strictly following the snippet "null as content", then for ratings content is null.
-            // But where is the rating value?
-            // The comments query selected 'content'.
-            // The ratings query selected 'rating'.
+        // Helper to detect if it's a Spotify ID (usually 22 chars) vs Supabase UUID
+        const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        
+        const internalPlaylistIds = playlistIds.filter(id => isUUID(id));
+        const spotifyPlaylistIds = playlistIds.filter(id => !isUUID(id));
 
-            // If the view maps 'rating' column to 'content' for ratings? No, rating is int, content is text.
-            // If the view is strictly generic (type, id, user, item, time, content), then it might be missing the star rating value.
-            // But likely it has it. I'll check if 'rating' prop exists on the row.
-            // If not, I can't show stars. I'll map 'content' to preview for comments.
-            preview: activity.content ? (activity.content.substring(0, 50) + (activity.content.length > 50 ? '...' : '')) : undefined,
-            timestamp: activity.created_at,
-            // Attempt to get rating value if it exists in the view (maybe user included it or I can select it)
-            // If not, we just won't show the star value, which is acceptable for a "feed" if necessary.
+        let spotifyTracks: any[] = [];
+        let spotifyAlbums: any[] = [];
+        let internalPlaylists: any[] = [];
+        let spotifyPlaylists: any[] = [];
 
-        }));
+        // Fetch Metadata in Parallel
+        const [trackData, albumData, internalPLData] = await Promise.all([
+            trackIds.length > 0 ? getMultipleTracks(trackIds) : Promise.resolve(null),
+            albumIds.length > 0 ? getMultipleAlbums(albumIds) : Promise.resolve(null),
+            internalPlaylistIds.length > 0 ? supabase.from('playlists').select('id, title, user_id, profiles:user_id(display_name)').in('id', internalPlaylistIds) : Promise.resolve({ data: [] })
+        ]);
 
+        // Optional: Fetch Spotify Playlist names if your service supports it
+        // If not, we'll just name them "Spotify Playlist"
+        
+        if (trackData?.tracks) spotifyTracks = trackData.tracks;
+        if (albumData?.albums) spotifyAlbums = albumData.albums;
+        if (internalPLData?.data) internalPlaylists = internalPLData.data;
+
+        // 3. Map Final Data
+        return paginatedItems.map(item => {
+            const userProfile = profiles.find(p => p.id === item.user_id);
+            const displayName = userProfile?.display_name || userProfile?.username || 'Anonymous';
+            const type = item.item_type?.toLowerCase();
+
+            let mediaTitle = 'Unknown Title';
+            let mediaArtist = 'Unknown Artist';
+
+            if (type === 'track') {
+                const t = spotifyTracks.find(track => track && track.id === item.item_id);
+                mediaTitle = t ? t.name : 'Track';
+                mediaArtist = t ? t.artists[0]?.name : 'Spotify';
+            } 
+            else if (type === 'album') {
+                const a = spotifyAlbums.find(album => album && album.id === item.item_id);
+                mediaTitle = a ? a.name : 'Album';
+                mediaArtist = a ? a.artists[0]?.name : 'Spotify';
+            } 
+            else if (type === 'playlist') {
+                const p = internalPlaylists.find(pl => pl.id === item.item_id);
+                if (p) {
+                    mediaTitle = p.title || p.name || 'Untitled Playlist';
+                    const creator = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+                    mediaArtist = creator?.display_name || 'Community Member';
+                } else if (!isUUID(item.item_id)) {
+                    // It's a Spotify Playlist ID
+                    mediaTitle = 'Spotify Playlist';
+                    mediaArtist = 'Spotify';
+                } else {
+                    mediaTitle = 'Deleted Playlist';
+                    mediaArtist = 'Hidden';
+                }
+            }
+
+            return {
+                id: item.id,
+                type: item.type,
+                created_at: item.created_at,
+                value: item.value,
+                content: item.content,
+                itemType: type,
+                user: { id: item.user_id, display_name: displayName, avatar_url: userProfile?.avatar_url },
+                track: { id: item.item_id, title: mediaTitle, artist: mediaArtist }
+            };
+        });
     } catch (error) {
         console.error('Error in getRecentActivity:', error);
         return [];
@@ -531,13 +587,23 @@ export async function getCommunityQuickStats(): Promise<{
             .select('*', { count: 'exact', head: true });
 
         // Get current active users (users who have rated/commented in last 30 days)
-        // Get current active users using DB function
-        const { data: activeUsersCount, error: activeUsersError } = await supabase
-            .rpc('get_active_user_count', { days_ago: 30 });
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        if (activeUsersError) {
-            console.error('Error fetching active user count:', activeUsersError);
-        }
+        const { data: activeRaters } = await supabase
+            .from('ratings')
+            .select('user_id')
+            .gte('created_at', thirtyDaysAgo.toISOString());
+
+        const { data: activeCommenters } = await supabase
+            .from('comments')
+            .select('user_id')
+            .gte('created_at', thirtyDaysAgo.toISOString());
+
+        const uniqueActiveUsers = new Set([
+            ...(activeRaters?.map(r => r.user_id) || []),
+            ...(activeCommenters?.map(c => c.user_id) || [])
+        ]);
 
         // Get items added this week
         const sevenDaysAgo = new Date();
@@ -551,7 +617,7 @@ export async function getCommunityQuickStats(): Promise<{
         return {
             totalItems: totalItems || 0,
             totalMembers: totalMembers || 0,
-            currentActiveUsers: activeUsersCount || 0,
+            currentActiveUsers: uniqueActiveUsers.size,
             thisWeek: thisWeek || 0,
         };
 

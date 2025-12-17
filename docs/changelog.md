@@ -151,3 +151,9 @@
     - Implemented **Frontend Data Aggregation**: Fetches and calculates `rating_avg`, `comment_count`, and `tag_count` in parallel.
     - Implemented **Supabase Realtime**: Dashboard now listens for database changes (ratings/comments) from other users and auto-refreshes stats.
     - Added complex sorting logic (e.g., Sort by "Recently Commented", "Highest Personal Rating", "Most Tags").
+
+    ## 2025-12-17(Eric)
+    - **src/pages/discovery/CommunityActivity.tsx**
+      - solved the "unknown title" and "unknown artist" issue in the community activity section.
+      - 
+
