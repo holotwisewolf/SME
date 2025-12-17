@@ -1,7 +1,7 @@
 // DiscoverySidebar - Right sidebar with community insights (ENHANCED)
 
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Clock, Activity, Star, MessageCircle, Heart, Tag, ExternalLink } from 'lucide-react';
+import { TrendingUp, Clock, Activity, ExternalLink } from 'lucide-react';
 import { getTrendingTags, getRecentActivity, getCommunityQuickStats } from '../services/trending_services';
 import type { TrendingFilters } from '../types/trending';
 
@@ -54,7 +54,6 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
         const diffDays = Math.floor(diffHours / 24);
         return `${diffDays}d ago`;
     };
-
 
 
     // Helper to safely get the star count number (Unused in simple view but kept if needed later, or remove)
@@ -118,9 +117,18 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
 
             {/* Community Pulse */}
             <div className="bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-3">
-                    <Clock className="w-4 h-4 text-[#FFD1D1]" />
-                    <h3 className="text-sm font-bold text-[#D1D1D1]">Community Pulse</h3>
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[#FFD1D1]" />
+                        <h3 className="text-sm font-bold text-[#D1D1D1]">Community Pulse</h3>
+                    </div>
+                    <a
+                        href="/discovery/community-activity"
+                        className="text-[#D1D1D1]/60 hover:text-[#FFD1D1] transition-colors"
+                        title="View full activity"
+                    >
+                        <ExternalLink className="w-4 h-4" />
+                    </a>
                 </div>
 
                 {loading ? (
@@ -129,9 +137,8 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                     </div>
                 ) : recentActivity.length > 0 ? (
                     <>
-                        {/* THE DARK CONTAINER THE USER WANTS */}
                         <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
-                            <div className="space-y-3 max-h-[420px] overflow-y-auto custom-scrollbar pr-2">
+                            <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-hide pr-2">
                                 {recentActivity.map((activity) => (
                                     <div key={activity.id} className="text-sm border-b border-[#D1D1D1]/5 pb-2 last:border-0 last:pb-0">
                                         <p className="text-[#D1D1D1]/70 leading-relaxed">
