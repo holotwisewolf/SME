@@ -6,18 +6,18 @@ import DefUserAvatar from '../../../components/ui/DefUserAvatar';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import ActivityCard from '../../trending/components/ActivityCard';
 import UserCommentsModal from '../components/UserCommentsModal';
-import UserItemsModal from '../components/UserItemsModal'; 
-import ItemModals from '../../trending/components/dashboard/ItemModals'; 
+import UserItemsModal from '../components/UserItemsModal';
+import ItemModals from '../../trending/components/dashboard/ItemModals';
 import { spotifyFetch } from '../../../features/spotify/services/spotifyConnection';
 import { supabase } from '../../../lib/supabaseClient';
 
-import { 
-    getPublicProfile, 
-    getUserAverageRating, 
-    getUserComments, 
+import {
+    getPublicProfile,
+    getUserAverageRating,
+    getUserComments,
     getUserRecentFavorites,
     getUserRecentRatings,
-    getUserPublicPlaylists 
+    getUserPublicPlaylists
 } from '../services/user_profile_services';
 import { Play, Heart, Star, Lock, Music, ChevronDown } from 'lucide-react';
 
@@ -25,7 +25,7 @@ const UserProfile = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
     const { user: currentUser } = useLogin();
-    
+
     // Data States
     const [profile, setProfile] = useState<any>(null);
     const [ratingStats, setRatingStats] = useState({ average: 0, count: 0 });
@@ -39,16 +39,16 @@ const UserProfile = () => {
     // UI States
     const [activeTab, setActiveTab] = useState<'music' | 'activity'>('music');
     const [favFilter, setFavFilter] = useState<string>('all');
-    const [starFilter, setStarFilter] = useState<number>(0); 
+    const [starFilter, setStarFilter] = useState<number>(0);
     const [showCommentsModal, setShowCommentsModal] = useState(false);
-    const [showRatingInfo, setShowRatingInfo] = useState(false); 
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false); 
-    
+    const [showRatingInfo, setShowRatingInfo] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
     // Window status 
     const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
     const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
-    const [viewAllModal, setViewAllModal] = useState<{title: string, items: any[]} | null>(null);
+    const [viewAllModal, setViewAllModal] = useState<{ title: string, items: any[] } | null>(null);
 
     const isOwnProfile = currentUser?.id === userId;
 
@@ -64,7 +64,7 @@ const UserProfile = () => {
         const trackIds = items.filter(i => i.item_type === 'track').map(i => i.item_id);
         const albumIds = items.filter(i => i.item_type === 'album').map(i => i.item_id);
         const playlistIds = items.filter(i => i.item_type === 'playlist').map(i => i.item_id);
-        
+
         let trackMap = new Map();
         let albumMap = new Map();
         let playlistMap = new Map();
@@ -111,7 +111,7 @@ const UserProfile = () => {
             if (profileData.is_private_profile && currentUser?.id !== userId) { setLoading(false); return; }
 
             const [ratingRes, pls, favs, rates, comms] = await Promise.all([
-                getUserAverageRating(userId), 
+                getUserAverageRating(userId),
                 getUserPublicPlaylists(userId),
                 getUserRecentFavorites(userId, 50),
                 getUserRecentRatings(userId, 50),
@@ -119,7 +119,7 @@ const UserProfile = () => {
             ]);
 
             const [enrichedFavs, enrichedRates] = await Promise.all([
-                enrichItems(favs || []), 
+                enrichItems(favs || []),
                 enrichItems(rates || [])
             ]);
 
@@ -166,9 +166,9 @@ const UserProfile = () => {
                 ) : item.color ? (
                     <div className="w-full h-full opacity-60" style={{ backgroundColor: item.color }} />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white/10"><Music size={40}/></div>
+                    <div className="w-full h-full flex items-center justify-center text-white/10"><Music size={40} /></div>
                 )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"><Play fill="white" size={24}/></div>
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"><Play fill="white" size={24} /></div>
                 {item.rating && (
                     <div className="absolute top-2 right-2 bg-black/60 px-1.5 py-0.5 rounded text-[10px] font-black text-[#FFD1D1] flex items-center gap-0.5 border border-white/5 shadow-lg">
                         <Star size={9} fill="currentColor" className="fill-yellow-500 text-yellow-500" />{item.rating}
@@ -193,7 +193,7 @@ const UserProfile = () => {
                         <h1 className="text-4xl font-bold text-white tracking-tight leading-none mb-1">{profile.display_name}</h1>
                         <p className="text-white/50 text-sm font-bold uppercase tracking-widest mb-3">@{profile.username}</p>
                         <div className="max-w-md mx-auto mb-4">
-                            <p className="text-white text-base italic font-medium leading-relaxed">{profile.bio || "No bio."}</p>
+                            <p className="text-white text-base font-medium leading-relaxed">{profile.bio || "No bio."}</p>
                         </div>
                         {!isLocked && (
                             <div className="flex items-center justify-center gap-10 py-3">
@@ -204,7 +204,7 @@ const UserProfile = () => {
                                 <div className="text-center relative cursor-pointer group" onClick={() => setShowRatingInfo(!showRatingInfo)}>
                                     <div className="flex items-center justify-center gap-1.5 leading-none">
                                         <p className="text-xl font-bold text-white">{Number(ratingStats.average || 0).toFixed(1)}</p>
-                                        <Star size={14} className="fill-[#FFD1D1] text-[#FFD1D1]"/>
+                                        <Star size={14} className="fill-[#FFD1D1] text-[#FFD1D1]" />
                                     </div>
                                     <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1.5">Avg Rating</p>
                                     <AnimatePresence>
@@ -227,22 +227,22 @@ const UserProfile = () => {
             </div>
 
             {isLocked ? (
-                <div className="py-20 text-center border-t border-white/10"><Lock className="mx-auto mb-2 text-white/10" size={30}/><p className="text-white/40 font-black uppercase text-xs tracking-widest">Private Account</p></div>
+                <div className="py-20 text-center border-t border-white/10"><Lock className="mx-auto mb-2 text-white/10" size={30} /><p className="text-white/40 font-black uppercase text-xs tracking-widest">Private Account</p></div>
             ) : (
                 <>
                     {/* Tab Navigation with Dynamic Line */}
-                    <div className="bg-[#696969] pt-2"> 
+                    <div className="bg-[#696969] pt-2">
                         <div className="max-w-4xl mx-auto border-t border-white/10 px-6 flex justify-center gap-12 text-white/30 relative">
                             {['music', 'activity'].map(t => (
-                                <button 
-                                    key={t} 
-                                    onClick={() => setActiveTab(t as any)} 
+                                <button
+                                    key={t}
+                                    onClick={() => setActiveTab(t as any)}
                                     className={`py-6 text-2xl font-bold uppercase tracking-tight transition-all relative ${activeTab === t ? 'text-white' : 'hover:text-white'}`}
                                 >
                                     {t === 'music' ? 'Music' : 'Activity'}
                                     {/* 加上底线逻辑 */}
                                     {activeTab === t && (
-                                        <motion.div 
+                                        <motion.div
                                             layoutId="activeTabLine"
                                             className="absolute bottom-0 left-0 right-0 h-1 bg-[#FFD1D1] rounded-t-full"
                                         />
@@ -258,12 +258,12 @@ const UserProfile = () => {
                                 <section>
                                     <div className="flex justify-between items-end mb-6 px-1 text-white">
                                         <h2 className="text-xl font-bold uppercase tracking-tight">Created Playlists</h2>
-                                        {playlists.length > 5 && <button onClick={() => setViewAllModal({title: 'Created Playlists', items: playlists})} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase transition-colors">View All</button>}
+                                        {playlists.length > 5 && <button onClick={() => setViewAllModal({ title: 'Created Playlists', items: playlists })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase transition-colors">View All</button>}
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                                         {playlists.slice(0, 5).map(p => (
                                             <div key={p.id} onClick={() => setSelectedPlaylist(p)} className="group cursor-pointer">
-                                                <UniversalThumbnail item={{...p, type: 'playlist', item_id: p.id}} />
+                                                <UniversalThumbnail item={{ ...p, type: 'playlist', item_id: p.id }} />
                                                 <h3 className="text-[12px] font-bold text-white/90 truncate px-0.5 group-hover:text-[#FFD1D1] transition-colors">{p.title}</h3>
                                             </div>
                                         ))}
@@ -282,7 +282,7 @@ const UserProfile = () => {
                                                 ))}
                                             </div>
                                         </div>
-                                        {enrichedFavorites.filter(f=>favFilter==='all'||f.type===favFilter).length > 5 && <button onClick={() => setViewAllModal({title: 'All Favorites', items: enrichedFavorites.filter(f=>favFilter==='all'||f.type===favFilter)})} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase transition-colors">View All</button>}
+                                        {enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter).length > 5 && <button onClick={() => setViewAllModal({ title: 'All Favorites', items: enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter) })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase transition-colors">View All</button>}
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                                         {enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter).slice(0, 5).map(f => (
@@ -320,8 +320,8 @@ const UserProfile = () => {
                                         </div>
                                         {/* VIEW ALL restored for Ratings per image_a1f438.png */}
                                         {enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter).length > 5 && (
-                                            <button 
-                                                onClick={() => setViewAllModal({title: 'Rating History', items: enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter)})} 
+                                            <button
+                                                onClick={() => setViewAllModal({ title: 'Rating History', items: enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter) })}
                                                 className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase transition-colors"
                                             >
                                                 View All
@@ -348,7 +348,7 @@ const UserProfile = () => {
                                             {recentComments.length > 0 ? (
                                                 recentComments.map((c, i) => <ActivityCard key={c.id} activity={c} index={i} />)
                                             ) : (
-                                                <div className="py-14 text-center text-white/10 italic text-xs uppercase font-bold tracking-widest">No activity</div>
+                                                <div className="py-14 text-center text-white/10 text-xs uppercase font-bold tracking-widest">No activity</div>
                                             )}
                                         </div>
                                     </div>
@@ -364,11 +364,11 @@ const UserProfile = () => {
             <AnimatePresence>
                 {showCommentsModal && <UserCommentsModal userId={userId!} onClose={() => setShowCommentsModal(false)} />}
                 {viewAllModal && (
-                    <UserItemsModal 
-                        title={viewAllModal.title} 
-                        items={viewAllModal.items} 
-                        onClose={() => setViewAllModal(null)} 
-                        onItemClick={(i:any)=> {
+                    <UserItemsModal
+                        title={viewAllModal.title}
+                        items={viewAllModal.items}
+                        onClose={() => setViewAllModal(null)}
+                        onItemClick={(i: any) => {
                             handleItemClick(i);
                             setViewAllModal(null);
                         }}

@@ -363,6 +363,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                                 userName={currentUserName}
                                 onDescriptionChange={(newDescription) => { playlist.description = newDescription; }}
                                 onTagsUpdate={handleTagsSync}
+                                onRatingUpdate={handleRatingUpdate}
                             />
                         )}
 

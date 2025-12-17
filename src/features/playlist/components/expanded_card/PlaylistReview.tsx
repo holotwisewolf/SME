@@ -17,10 +17,11 @@ interface PlaylistReviewProps {
     isEditingEnabled?: boolean;
     userName?: string;
     onTagsUpdate?: (newTags: string[]) => void;
+    onRatingUpdate?: () => void;
 }
 
 export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
-    playlist, userRating, tags, setTags, onDescriptionChange, isEditingEnabled = true, userName = 'You', onTagsUpdate
+    playlist, userRating, tags, setTags, onDescriptionChange, isEditingEnabled = true, userName = 'You', onTagsUpdate, onRatingUpdate
 }) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
@@ -120,7 +121,8 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                 showSuccess(`Rated ${rating}/5`);
             }
 
-            window.location.reload(); 
+            if (onRatingUpdate) onRatingUpdate();
+            // window.location.reload(); 
         } catch (error) {
             console.error('Error updating rating:', error);
             showError('Failed to update rating');

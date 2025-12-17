@@ -46,18 +46,32 @@ const SpotifySearchBar: React.FC = () => {
           setIsOpen(true);
         }
         try {
-          let data: any = {};
+          let searchPromise: Promise<any>;
+
           if (searchType === 'Tracks') {
-            data = await SpotifyService.searchTracks(searchText, 5);
+            searchPromise = SpotifyService.searchTracks(searchText, 5);
           } else if (searchType === 'Albums') {
-            data = await SpotifyService.searchAlbums(searchText, 5);
-          } else if (searchType === 'Artists') {
-            data = await SpotifyService.searchArtists(searchText, 5);
+            searchPromise = SpotifyService.searchAlbums(searchText, 5);
+          } else {
+            searchPromise = SpotifyService.searchArtists(searchText, 5);
           }
+
+          // Race against 15s timeout
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Search timed out')), 15000)
+          );
+
+          const data: any = await Promise.race([searchPromise, timeoutPromise]);
           setResults(data.items || []);
-        } catch (error) {
-          console.error("Spotify search failed", error);
-          setResults([]);
+        } catch (error: any) {
+          if (error.message === 'Search timed out') {
+            console.warn('Search timed out');
+            // Silent fail to "No results found"
+            setResults([]);
+          } else {
+            console.error("Spotify search failed", error);
+            setResults([]);
+          }
         } finally {
           setLoading(false);
         }

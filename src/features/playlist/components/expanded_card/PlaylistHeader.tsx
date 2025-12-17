@@ -83,7 +83,10 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
         setIsUploading(true);
         try {
             await uploadPlaylistImage(playlistId, file);
-            window.location.reload(); // Simple way to refresh for now
+            // Invalidate cache/image url by appending timestamp in parent or just force update
+            // For now, we update the timestamp prop logic in the image tag
+            setImgError(false);
+            // Notify parent to refresh if needed (though the image src with timestamp handles visual)
         } catch (error) {
             console.error('Error uploading image:', error);
             showError('Failed to upload image');

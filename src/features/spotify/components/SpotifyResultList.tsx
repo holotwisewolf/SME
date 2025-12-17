@@ -148,16 +148,16 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
         onClose?.();
     };
 
-    // Early return: Don't render if no results and not loading
-    if ((!results || !Array.isArray(results) || results.length === 0) && !isLoading) return null;
+    // Early return: Don't render if no results, not loading, AND no search text
+    if ((!results || !Array.isArray(results) || results.length === 0) && !isLoading && !searchText) return null;
 
 
     return (
         <>
             {/* Main Results Dropdown with Animation */}
             <AnimatePresence>
-                {/* Render only if isOpen is true AND (there are results OR loading) */}
-                {isOpen && (results.length > 0 || isLoading) && (
+                {/* Render only if isOpen is true AND (there are results OR loading OR valid search text) */}
+                {isOpen && (results.length > 0 || isLoading || searchText) && (
                     <motion.div
                         ref={containerRef}
                         initial={{ opacity: 0, y: -10 }}
@@ -186,96 +186,102 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                                 ) : (
                                     /* Results List */
                                     <div className="p-2 space-y-1">
-                                        {/* Map through results and render based on type */}
-                                        {results.map((item, index) => {
-                                            const isSelected = index === selectedIndex;
+                                        {results.length > 0 ? (
+                                            /* Map through results and render based on type */
+                                            results.map((item, index) => {
+                                                const isSelected = index === selectedIndex;
 
-                                            /* Render Tracks with preview audio and dropdown menu */
-                                            if (type === 'Tracks') {
-                                                const track = item as SpotifyTrack;
-                                                return (
-                                                    <TrackPreviewAudio
-                                                        key={track.id}
-                                                        trackId={track.id}
-                                                        previewUrl={track.preview_url ?? undefined}
-                                                        onPlayPreview={playPreview}
-                                                        onStopPreview={stopPreview}
-                                                    >
+                                                /* Render Tracks with preview audio and dropdown menu */
+                                                if (type === 'Tracks') {
+                                                    const track = item as SpotifyTrack;
+                                                    return (
+                                                        <TrackPreviewAudio
+                                                            key={track.id}
+                                                            trackId={track.id}
+                                                            previewUrl={track.preview_url ?? undefined}
+                                                            onPlayPreview={playPreview}
+                                                            onStopPreview={stopPreview}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="flex-1">
+                                                                    <SpotifyResultItem
+                                                                        track={track}
+                                                                        isSelected={isSelected}
+                                                                        onSelect={() => handleTrackClick(track)}
+                                                                    />
+                                                                </div>
+                                                                <ResultMenuDropdown
+                                                                    trackId={track.id}
+                                                                    trackName={track.name}
+                                                                    spotifyUrl={track.external_urls.spotify}
+                                                                    isOpen={activeMenuId === track.id}
+                                                                    onToggle={(isOpen) => setActiveMenuId(isOpen ? track.id : null)}
+                                                                    onAddToFavourites={handleAddToFavourites}
+                                                                    onAddToPlaylist={(trackId) => handleAddToPlaylist(trackId, track.name)}
+                                                                    type="track"
+                                                                />
+                                                            </div>
+                                                        </TrackPreviewAudio>
+                                                    );
+                                                    /* Render Albums */
+                                                } else if (type === 'Albums') {
+                                                    return (
                                                         <div className="flex items-center gap-2">
                                                             <div className="flex-1">
-                                                                <SpotifyResultItem
-                                                                    track={track}
+                                                                <SpotifyAlbumItem
+                                                                    key={item.id}
+                                                                    album={item as SpotifyAlbum}
                                                                     isSelected={isSelected}
-                                                                    onSelect={() => handleTrackClick(track)}
+                                                                    onSelect={() => handleAlbumClick(item as SpotifyAlbum)}
                                                                 />
                                                             </div>
                                                             <ResultMenuDropdown
-                                                                trackId={track.id}
-                                                                trackName={track.name}
-                                                                spotifyUrl={track.external_urls.spotify}
-                                                                isOpen={activeMenuId === track.id}
-                                                                onToggle={(isOpen) => setActiveMenuId(isOpen ? track.id : null)}
-                                                                onAddToFavourites={handleAddToFavourites}
-                                                                onAddToPlaylist={(trackId) => handleAddToPlaylist(trackId, track.name)}
-                                                                type="track"
+                                                                trackId={item.id} // Reusing trackId prop for ID
+                                                                trackName={item.name}
+                                                                spotifyUrl={(item as SpotifyAlbum).external_urls.spotify}
+                                                                isOpen={activeMenuId === item.id}
+                                                                onToggle={(isOpen) => setActiveMenuId(isOpen ? item.id : null)}
+                                                                onAddToFavourites={handleAddAlbumToFavourites}
+                                                                onImportToPlaylist={(id) => handleImportAlbumToPlaylist(id, item.name)}
+                                                                type="album"
                                                             />
                                                         </div>
-                                                    </TrackPreviewAudio>
-                                                );
-                                                /* Render Albums */
-                                            } else if (type === 'Albums') {
-                                                return (
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex-1">
-                                                            <SpotifyAlbumItem
+                                                    );
+                                                    /* Render Artists with click handler for popup */
+                                                } else {
+                                                    return (
+                                                        <div className="flex items-center gap-2">
+                                                            <div
                                                                 key={item.id}
-                                                                album={item as SpotifyAlbum}
-                                                                isSelected={isSelected}
-                                                                onSelect={() => handleAlbumClick(item as SpotifyAlbum)}
+                                                                onClick={() => handleArtistClick(item as SpotifyArtist)}
+                                                                className="flex-1 cursor-pointer"
+                                                            >
+                                                                <SpotifyArtistItem
+                                                                    artist={item as SpotifyArtist}
+                                                                    isSelected={isSelected}
+                                                                    onSelect={() => handleArtistClick(item as SpotifyArtist)}
+                                                                />
+                                                            </div>
+                                                            <ResultMenuDropdown
+                                                                trackId={item.id}
+                                                                trackName={item.name}
+                                                                spotifyUrl={(item as SpotifyArtist).external_urls.spotify}
+                                                                isOpen={activeMenuId === item.id}
+                                                                onToggle={(isOpen) => setActiveMenuId(isOpen ? item.id : null)}
+                                                                onAddToFavourites={() => { }}
+                                                                onAddToPlaylist={() => { }}
+                                                                hideActions={true}
+                                                                type="artist"
                                                             />
                                                         </div>
-                                                        <ResultMenuDropdown
-                                                            trackId={item.id} // Reusing trackId prop for ID
-                                                            trackName={item.name}
-                                                            spotifyUrl={(item as SpotifyAlbum).external_urls.spotify}
-                                                            isOpen={activeMenuId === item.id}
-                                                            onToggle={(isOpen) => setActiveMenuId(isOpen ? item.id : null)}
-                                                            onAddToFavourites={handleAddAlbumToFavourites}
-                                                            onImportToPlaylist={(id) => handleImportAlbumToPlaylist(id, item.name)}
-                                                            type="album"
-                                                        />
-                                                    </div>
-                                                );
-                                                /* Render Artists with click handler for popup */
-                                            } else {
-                                                return (
-                                                    <div className="flex items-center gap-2">
-                                                        <div
-                                                            key={item.id}
-                                                            onClick={() => handleArtistClick(item as SpotifyArtist)}
-                                                            className="flex-1 cursor-pointer"
-                                                        >
-                                                            <SpotifyArtistItem
-                                                                artist={item as SpotifyArtist}
-                                                                isSelected={isSelected}
-                                                                onSelect={() => handleArtistClick(item as SpotifyArtist)}
-                                                            />
-                                                        </div>
-                                                        <ResultMenuDropdown
-                                                            trackId={item.id}
-                                                            trackName={item.name}
-                                                            spotifyUrl={(item as SpotifyArtist).external_urls.spotify}
-                                                            isOpen={activeMenuId === item.id}
-                                                            onToggle={(isOpen) => setActiveMenuId(isOpen ? item.id : null)}
-                                                            onAddToFavourites={() => { }}
-                                                            onAddToPlaylist={() => { }}
-                                                            hideActions={true}
-                                                            type="artist"
-                                                        />
-                                                    </div>
-                                                );
-                                            }
-                                        })}
+                                                    );
+                                                }
+                                            })
+                                        ) : (
+                                            <div className="p-4 text-center text-gray-500 text-sm">
+                                                No results found
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
