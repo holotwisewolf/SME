@@ -73,7 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
         animate={isExpanded ? "expanded" : "collapsed"}
         variants={sidebarVariants}
         // added rounded-br-[20px] to the end of the list below
-        className="relative h-screen bg-[#2a2a2e] flex flex-col z-50 overflow-visible rounded-br-[20px]"
+        className="relative h-screen bg-[#2a2a2e] flex flex-col z-30 overflow-visible rounded-br-[20px]"
     >
         {/* FIXED LOGO SECTION */}
         <SidebarLogo isExpanded={isExpanded} />

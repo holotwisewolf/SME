@@ -7,6 +7,7 @@ import type { SpotifyArtist } from '../type/spotify_types';
 import type { ArtistFullDetail } from '../type/artist_type';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
+import { useSidebarBlur } from '../../../hooks/useSidebarBlur';
 
 export function ArtistsFullPage() {
     const [searchParams] = useSearchParams();
@@ -91,6 +92,8 @@ export function ArtistsFullPage() {
             </div>
         );
     }
+
+    useSidebarBlur(isOpen);
 
     return (
         <div className="min-h-screen bg-[#696969] p-8">

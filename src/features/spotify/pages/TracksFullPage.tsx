@@ -11,6 +11,7 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { AnimatedLoadingDots } from '../../../components/ui/AnimatedLoadingDots';
 import FavButton from '../../../components/ui/FavButton';
 import ExpandButton from '../../../components/ui/ExpandButton';
+import { useSidebarBlur } from '../../../hooks/useSidebarBlur';
 
 export function TracksFullPage() {
     const [searchParams] = useSearchParams();
@@ -95,6 +96,8 @@ export function TracksFullPage() {
             </div>
         );
     }
+
+    useSidebarBlur(!!selectedTrack || !!playlistModalTrack);
 
     return (
         <div className="min-h-screen bg-[#696969] p-8">
