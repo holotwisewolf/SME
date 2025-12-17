@@ -15,6 +15,7 @@ import {
     updatePlaylistColor,
     reorderPlaylistTracks
 } from '../../services/playlist_services';
+import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../../favourites/services/favourites_services';
 import { getItemTags, getCreatorItemTags } from '../../../tags/services/tag_services';
 import { getProfile, getSession } from '../../../auth/services/auth_services';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
@@ -72,6 +73,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null); // [Resolved] Restore state
     const [searchQuery, setSearchQuery] = useState('');
     const [isOwner, setIsOwner] = useState(false);
+    const [isFavourite, setIsFavourite] = useState(false);
 
     useEffect(() => {
         const checkOwnership = async () => {
@@ -79,7 +81,8 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
             setIsOwner(session?.user?.id === playlist.user_id);
         };
         checkOwnership();
-    }, [playlist.user_id]);
+        checkIsFavourite(playlist.id, 'playlist').then(setIsFavourite);
+    }, [playlist.user_id, playlist.id]);
 
     const filteredTracks = tracks.filter(track =>
         (track.details?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -261,6 +264,24 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         }
     };
 
+    const handleToggleFavourite = async () => {
+        const willBeFavourite = !isFavourite;
+        setIsFavourite(willBeFavourite);
+        try {
+            if (willBeFavourite) {
+                await addToFavourites(playlist.id, 'playlist');
+                showSuccess('Playlist added to favourites');
+            } else {
+                await removeFromFavourites(playlist.id, 'playlist');
+                showSuccess('Playlist removed from favourites');
+            }
+        } catch (error) {
+            console.error('Error toggling favourite:', error);
+            setIsFavourite(!willBeFavourite); // Revert
+            showError('Failed to update favourite status');
+        }
+    };
+
     const handleTrackClick = (track: any) => {
         setSelectedTrack(track); // [Resolved] Set state to open modal
     };
@@ -372,7 +393,21 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                         )}
 
                         {activeTab === 'settings' && (
-                            <PlaylistSettings playlistId={playlist.id} handleExportToSpotify={handleExportToSpotify} handleCopyPlaylist={handleCopyPlaylist} isEditingEnabled={isEditingEnabled} setIsEditingEnabled={setIsEditingEnabled} isPublic={isPublic} onPublicStatusChange={handlePublicStatusChange} onDelete={handleDeletePlaylist} color={playlistColor} onColorChange={handleColorChange} isOwner={isOwner} />
+                            <PlaylistSettings
+                                playlistId={playlist.id}
+                                handleExportToSpotify={handleExportToSpotify}
+                                handleCopyPlaylist={handleCopyPlaylist}
+                                isEditingEnabled={isEditingEnabled}
+                                setIsEditingEnabled={setIsEditingEnabled}
+                                isPublic={isPublic}
+                                onPublicStatusChange={handlePublicStatusChange}
+                                onDelete={handleDeletePlaylist}
+                                color={playlistColor}
+                                onColorChange={handleColorChange}
+                                isOwner={isOwner}
+                                isFavourite={isFavourite}
+                                onToggleFavourite={handleToggleFavourite}
+                            />
                         )}
                     </div>
                 </div>

@@ -5,7 +5,7 @@ import { useSuccess } from '../../../../../context/SuccessContext';
 import { getAlbum, getAlbumTracks } from '../../../../spotify/services/spotify_services';
 import { getItemTags } from '../../../../tags/services/tag_services';
 import { getItemRating, getUserItemRating, getItemComments, addItemComment } from '../../../services/item_services';
-import { removeFromFavourites } from '../../../services/favourites_services';
+import { removeFromFavourites, addToFavourites, checkIsFavourite } from '../../../services/favourites_services';
 import { AlbumHeader } from './AlbumHeader';
 import { AlbumTracks } from './AlbumTracks';
 import { AlbumCommunity } from './AlbumCommunity';
@@ -45,6 +45,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
     const [newComment, setNewComment] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
     const [playlistModalTrack, setPlaylistModalTrack] = useState<{ name: string; trackIds: string[] } | null>(null);
+    const [isFavourite, setIsFavourite] = useState(false);
 
     const filteredTracks = tracks.filter(track =>
         (track.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -53,7 +54,48 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
 
     useEffect(() => {
         loadData();
+        checkIsFavourite(albumId, 'album').then(setIsFavourite);
     }, [albumId]);
+
+    // ... loadData ...
+
+    const handleToggleFavourite = async () => {
+        const willBeFavourite = !isFavourite;
+        setIsFavourite(willBeFavourite);
+        try {
+            if (willBeFavourite) {
+                await addToFavourites(albumId, 'album');
+                showSuccess('Album added to favourites');
+            } else {
+                await removeFromFavourites(albumId, 'album');
+                showSuccess('Album removed from favourites');
+                if (onRemove) onRemove();
+            }
+        } catch (error) {
+            console.error('Error toggling favourite:', error);
+            setIsFavourite(!willBeFavourite); // Revert
+            showError('Failed to update favourite status');
+        }
+    };
+
+    const handleRemoveFromFavourites = async () => {
+        if (window.confirm('Remove this album from your favourites?')) {
+            try {
+                await removeFromFavourites(albumId, 'album');
+                setIsFavourite(false);
+                showSuccess('Album removed from favourites');
+                if (onRemove) {
+                    onRemove();
+                }
+                if (onClose) {
+                    onClose();
+                }
+            } catch (error) {
+                console.error('Error removing from favourites:', error);
+                showError('Failed to remove album');
+            }
+        }
+    };
 
     const loadData = async () => {
         setLoading(true);
@@ -137,23 +179,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
         }
     };
 
-    const handleRemoveFromFavourites = async () => {
-        if (window.confirm('Remove this album from your favourites?')) {
-            try {
-                await removeFromFavourites(albumId, 'album');
-                showSuccess('Album removed from favourites');
-                if (onRemove) {
-                    onRemove();
-                }
-                if (onClose) {
-                    onClose();
-                }
-            } catch (error) {
-                console.error('Error removing from favourites:', error);
-                showError('Failed to remove album');
-            }
-        }
-    };
+
 
     const handleImportToPlaylist = () => {
         if (tracks.length > 0) {
@@ -289,6 +315,8 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                                 albumSpotifyUrl={album.external_urls?.spotify}
                                 onRemove={handleRemoveFromFavourites}
                                 onImportToPlaylist={handleImportToPlaylist}
+                                isFavourite={isFavourite}
+                                onToggleFavourite={handleToggleFavourite}
                             />
                         )}
                     </div>

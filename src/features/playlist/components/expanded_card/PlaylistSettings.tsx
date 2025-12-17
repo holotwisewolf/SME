@@ -30,6 +30,8 @@ interface PlaylistSettingsProps {
     color?: string;
     onColorChange: (color: string) => void;
     isOwner?: boolean;
+    isFavourite?: boolean;
+    onToggleFavourite?: () => void;
 }
 
 const PRESET_COLORS = [
@@ -56,7 +58,9 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
     onDelete,
     color,
     onColorChange,
-    isOwner = false
+    isOwner = false,
+    isFavourite,
+    onToggleFavourite
 }) => {
     const { showError } = useError();
 
@@ -97,6 +101,19 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
                             <div className="flex items-center gap-3">
                                 <Copy className="w-5 h-5 text-[#1DB954]" />
                                 <span className="text-gray-300">Copy Playlist</span>
+                            </div>
+                        </button>
+
+                        <button
+                            onClick={onToggleFavourite}
+                            disabled={!onToggleFavourite || isFavourite}
+                            className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <div className="flex items-center gap-3">
+                                <svg className="w-5 h-5 text-[#1DB954]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                <span className="text-gray-300">Add to Favourites</span>
                             </div>
                         </button>
                     </div>
@@ -152,17 +169,26 @@ export const PlaylistSettings: React.FC<PlaylistSettingsProps> = ({
                 )}
 
                 {/* --- Danger Zone --- */}
-                {isOwner && onDelete && (
-                    <div>
-                        <h3 className="text-white font-medium mb-2">Danger Zone</h3>
+                <div>
+                    <h3 className="text-white font-medium mb-2">Danger Zone</h3>
+                    {/* Remove from Favourites (If is favourite) */}
+                    <button
+                        onClick={onToggleFavourite}
+                        disabled={!isFavourite || !onToggleFavourite}
+                        className="px-4 py-2 border border-solid border-red-500/50 text-red-500 rounded-lg hover:bg-red-500/10 transition-colors text-sm w-full text-left mb-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    >
+                        Remove from Favourites
+                    </button>
+
+                    {isOwner && onDelete && (
                         <button
                             onClick={onDelete}
                             className="px-4 py-2 border border-solid border-red-500/50 text-red-500 rounded-lg hover:bg-red-500/10 transition-colors text-sm w-full text-left"
                         >
                             Delete Playlist
                         </button>
-                    </div>
-                )}
+                    )}
+                </div>
 
             </div>
         </div>

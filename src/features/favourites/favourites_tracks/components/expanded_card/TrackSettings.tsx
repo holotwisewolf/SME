@@ -1,42 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Copy, ExternalLink, Trash2, Heart, FolderPlus } from 'lucide-react';
-import { checkIsFavourite, addToFavourites } from '../../../services/favourites_services';
+import React from 'react';
+import { Copy, ExternalLink, Heart, FolderPlus } from 'lucide-react';
+// Services moved to parent
 import { useSuccess } from '../../../../../context/SuccessContext';
 import type { SpotifyTrack } from '../../../../spotify/type/spotify_types';
 
 interface TrackSettingsProps {
     track: SpotifyTrack;
     handleCopyLink: () => void;
-    handleRemoveFromFavourites: () => void;
+    isFavourite?: boolean;
+    onToggleFavourite?: () => void;
     onOpenPlaylistModal?: () => void;
 }
 
 export const TrackSettings: React.FC<TrackSettingsProps> = ({
     track,
     handleCopyLink,
-    handleRemoveFromFavourites,
+    isFavourite,
+    onToggleFavourite,
     onOpenPlaylistModal
 }) => {
     const { showSuccess } = useSuccess();
-    const [isFavorited, setIsFavorited] = useState(false);
-    const [showFavoriteTooltip, setShowFavoriteTooltip] = useState(false);
-
-    useEffect(() => {
-        // Check if track is favorited
-        checkIsFavourite(track.id, 'track').then(setIsFavorited);
-    }, [track.id]);
-
-    const handleAddToFavorites = async () => {
-        if (isFavorited) return; // Don't add if already favorited
-
-        try {
-            await addToFavourites(track.id, 'track');
-            setIsFavorited(true);
-            showSuccess('Track added to favorites!');
-        } catch (error) {
-            console.error('Error adding to favorites:', error);
-        }
-    };
 
     const handleCopyLinkWithSuccess = () => {
         handleCopyLink();
@@ -62,31 +45,17 @@ export const TrackSettings: React.FC<TrackSettingsProps> = ({
                             </div>
                         </button>
 
-                        {/* Add to Favorites - Always visible, greyed out when favorited */}
-                        <div className="relative">
-                            <button
-                                onClick={handleAddToFavorites}
-                                onMouseEnter={() => isFavorited && setShowFavoriteTooltip(true)}
-                                onMouseLeave={() => setShowFavoriteTooltip(false)}
-                                disabled={isFavorited}
-                                className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors group mb-3 ${isFavorited
-                                    ? 'bg-gray-800/30 cursor-not-allowed opacity-50'
-                                    : 'bg-white/5 hover:bg-white/10 cursor-pointer'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <Heart className={`w-5 h-5 ${isFavorited ? 'text-gray-600 fill-gray-600' : 'text-[#1DB954]'}`} />
-                                    <span className={isFavorited ? 'text-gray-600' : 'text-gray-300'}>Add to Favorites</span>
-                                </div>
-                            </button>
-
-                            {/* Tooltip */}
-                            {showFavoriteTooltip && isFavorited && (
-                                <div className="absolute left-0 top-full mt-1 bg-black/90 text-white text-xs px-3 py-2 rounded-lg shadow-lg z-10 whitespace-nowrap">
-                                    Already favorited
-                                </div>
-                            )}
-                        </div>
+                        {/* Add to Favorites */}
+                        <button
+                            onClick={onToggleFavourite}
+                            disabled={!onToggleFavourite || isFavourite}
+                            className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors group mb-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Heart className={`w-5 h-5 text-[#1DB954]`} />
+                                <span className="text-gray-300">Add to Favorites</span>
+                            </div>
+                        </button>
 
                         <button
                             onClick={handleCopyLinkWithSuccess}
@@ -114,17 +83,11 @@ export const TrackSettings: React.FC<TrackSettingsProps> = ({
                     <div>
                         <h3 className="text-white font-medium mb-2">Danger Zone</h3>
                         <button
-                            onClick={isFavorited ? handleRemoveFromFavourites : undefined}
-                            disabled={!isFavorited}
-                            className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors group border ${isFavorited
-                                ? 'bg-white/5 hover:bg-white/10 border-red-500/20 hover:border-red-500/50 cursor-pointer'
-                                : 'bg-gray-800/30 border-gray-700/20 cursor-not-allowed opacity-50'
-                                }`}
+                            onClick={onToggleFavourite}
+                            disabled={!isFavourite || !onToggleFavourite}
+                            className="px-4 py-2 border border-solid border-red-500/50 text-red-500 rounded-lg hover:bg-red-500/10 transition-colors text-sm w-full text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                         >
-                            <div className="flex items-center gap-3">
-                                <Trash2 className={`w-5 h-5 ${isFavorited ? 'text-red-500' : 'text-gray-600'}`} />
-                                <span className={isFavorited ? 'text-red-500' : 'text-gray-600'}>Remove from Favourites</span>
-                            </div>
+                            Remove from Favourites
                         </button>
                     </div>
                 </div>

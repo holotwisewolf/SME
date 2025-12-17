@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { SpotifyTrack } from '../../../../spotify/type/spotify_types';
 import { submitPersonalRating, getPersonalRating } from '../../../../ratings/services/rating_services';
-import { removeFromFavourites } from '../../../services/favourites_services';
+import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../../services/favourites_services';
 import { deleteItemRating } from '../../../services/item_services';
 import { getItemComments, createComment } from '../../../../comments/services/comment_services';
 import { getItemTags } from '../../../../tags/services/tag_services';
@@ -57,6 +57,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     const [tags, setTags] = useState<string[]>([]);
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [comments, setComments] = useState<any[]>([]);
+    const [isFavourite, setIsFavourite] = useState(false);
 
     // UI States
     const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
@@ -79,11 +80,12 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                 return;
             }
 
-            const [userRatingData, tagsData, globalRatingData, commentsData] = await Promise.all([
+            const [userRatingData, tagsData, globalRatingData, commentsData, isFav] = await Promise.all([
                 getPersonalRating(user.id, track.id, 'track'),
                 getItemTags(track.id, 'track'),
                 getTrackRating(track.id),
-                getItemComments(track.id, 'track')
+                getItemComments(track.id, 'track'),
+                checkIsFavourite(track.id, 'track')
             ]);
 
             // Fetch user profile for display name
@@ -98,6 +100,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
             setTags(tagsData.map(tag => tag.name));
             setRatingData(globalRatingData);
             setComments(commentsData);
+            setIsFavourite(isFav);
         } catch (error) {
             console.error('Error loading track data:', error);
         } finally {
@@ -179,13 +182,28 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
         }
     };
 
-    const handleRemoveFromFavourites = async () => {
+    const handleToggleFavourite = async () => {
+        const willBeFavourite = !isFavourite;
+        setIsFavourite(willBeFavourite);
         try {
-            await removeFromFavourites(track.id, 'track');
-            onRemove?.();
-            onClose();
+            if (willBeFavourite) {
+                await addToFavourites(track.id, 'track');
+                showSuccess('Track added to favourites');
+            } else {
+                await removeFromFavourites(track.id, 'track');
+                showSuccess('Track removed from favourites');
+                if (onRemove) {
+                    onRemove();
+                    // Optional: Close modal if removed from a context where it disappears? 
+                    // User might want to keep it open to undo. 
+                    // But existing behavior was onClose(). Let's keep it if onRemove is present.
+                    onClose();
+                }
+            }
         } catch (error) {
-            console.error('Error removing from favourites:', error);
+            console.error('Error toggling favourite:', error);
+            setIsFavourite(!willBeFavourite); // Revert
+            showError('Failed to update favourite status');
         }
     };
 
@@ -288,7 +306,8 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                             <TrackSettings
                                 track={track}
                                 handleCopyLink={handleCopyLink}
-                                handleRemoveFromFavourites={handleRemoveFromFavourites}
+                                isFavourite={isFavourite}
+                                onToggleFavourite={handleToggleFavourite}
                                 onOpenPlaylistModal={handleOpenPlaylistModal}
                             />
                         )}
