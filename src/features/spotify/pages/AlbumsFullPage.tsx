@@ -13,6 +13,7 @@ import { ResultMenuDropdown } from '../components/ResultMenuDropdown';
 import { useSuccess } from '../../../context/SuccessContext';
 import { useError } from '../../../context/ErrorContext';
 import { useSidebarBlur } from '../../../hooks/useSidebarBlur';
+import FavButton from '../../../components/ui/FavButton';
 
 interface AlbumTrack {
     id: string;
@@ -54,7 +55,7 @@ export function AlbumsFullPage() {
 
     // control Album Modal status
     const [selectedAlbum, setSelectedAlbum] = useState<SpotifyAlbum | null>(null);
-    
+
     // Track favorited albums
     const [favoritedAlbums, setFavoritedAlbums] = useState<Set<string>>(new Set());
 
@@ -137,7 +138,7 @@ export function AlbumsFullPage() {
                 }
             }
             setAlbumsWithTracks(tracksMap);
-            
+
             // Check which albums are favorited
             const favSet = new Set<string>();
             for (const album of results) {
@@ -185,7 +186,7 @@ export function AlbumsFullPage() {
     const handleAddToFavourites = async (id: string, type: 'track' | 'album' = 'track') => {
         try {
             const isFavorited = favoritedAlbums.has(id);
-            
+
             if (isFavorited) {
                 await removeFromFavourites(id, type);
                 setFavoritedAlbums(prev => {
@@ -272,26 +273,18 @@ export function AlbumsFullPage() {
                                             </h3>
 
                                             <div className="flex items-center gap-1 flex-shrink-0">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleAddToFavourites(album.id, 'album');
-                                                    }}
-                                                    className="p-1.5 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/10"
-                                                    title={favoritedAlbums.has(album.id) ? "Remove from Favourites" : "Add to Favourites"}
-                                                >
-                                                    <svg 
-                                                        className={`w-5 h-5 transition-all ${
-                                                            favoritedAlbums.has(album.id) 
-                                                                ? 'fill-red-500 text-red-500' 
-                                                                : 'fill-none'
-                                                        }`} 
-                                                        stroke="currentColor" 
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
-                                                </button>
+                                                <div onClick={(e) => e.stopPropagation()}>
+                                                    <FavButton
+                                                        isFavourite={favoritedAlbums.has(album.id)}
+                                                        onClick={() => handleAddToFavourites(album.id, 'album')}
+                                                        className={`p-2 rounded-full transition-colors ${favoritedAlbums.has(album.id)
+                                                            ? 'text-[#FFD1D1] hover:bg-[#282828]'
+                                                            : 'text-gray-400 hover:text-white hover:bg-[#282828]'
+                                                            }`}
+                                                        style={{ color: favoritedAlbums.has(album.id) ? '#FFD1D1' : undefined }}
+                                                        iconClassName="w-5 h-5"
+                                                    />
+                                                </div>
 
                                                 <div onClick={(e) => e.stopPropagation()}>
                                                     <ResultMenuDropdown
@@ -394,7 +387,7 @@ export function AlbumsFullPage() {
             {selectedAlbum && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
 
-                    <div 
+                    <div
                         className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
                         onClick={() => setSelectedAlbum(null)}
                     />
