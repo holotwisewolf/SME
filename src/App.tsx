@@ -167,7 +167,7 @@ function App() {
                   <Route path="/account" element={<></>} />
                   <Route path="/settings" element={<></>} />
 
-                  {/* 👇👇👇 在这里添加 PROFILE ROUTES 👇👇👇 */}
+                  {/* ADDED PROFILE ROUTES  */}
                   
                   {/* USER PROFILE PUBLIC PAGES */}
                   <Route
@@ -179,7 +179,7 @@ function App() {
                     }
                   />
                   
-                  {/* 👆👆👆 添加结束 👆👆👆 */}
+                  {/* DONE ADDED */}
 
                   {/* SPOTIFY FULL PAGES */}
                   <Route

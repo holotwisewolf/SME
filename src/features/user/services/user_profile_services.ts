@@ -24,7 +24,7 @@ export async function getUserAverageRating(userId: string): Promise<string> {
     if (!data || data.length === 0) return '0.0';
 
     const total = data.reduce((acc, curr) => acc + curr.rating, 0);
-    return (total / data.length).toFixed(1); // 返回 "4.5" 格式
+    return (total / data.length).toFixed(1);
 }
 
 // get user recent comments
@@ -32,7 +32,7 @@ export async function getUserComments(userId: string, page: number, limit: numbe
     const from = page * limit;
     const to = from + limit - 1;
 
-    // 这里我们需要 join 获取 item 的一些信息以便显示上下文
+    //  join get item details
     const { data, error, count } = await supabase
         .from('comments')
         .select(`

@@ -7,7 +7,6 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import ActivityCard from '../../trending/components/ActivityCard';
 import UserCommentsModal from '../components/UserCommentsModal';
 import UserItemsModal from '../components/UserItemsModal'; 
-// 引入通用的 ItemModals，它包含 Track, Album, Playlist 的所有详情逻辑
 import ItemModals from '../../trending/components/dashboard/ItemModals'; 
 import { spotifyFetch } from '../../../features/spotify/services/spotifyConnection';
 import { supabase } from '../../../lib/supabaseClient';
@@ -42,7 +41,7 @@ const UserProfile = () => {
     const [starFilter, setStarFilter] = useState<number>(0); 
     const [showCommentsModal, setShowCommentsModal] = useState(false);
     
-    // 详情弹窗控制状态
+    // window status 
     const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
     const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
@@ -219,7 +218,7 @@ const UserProfile = () => {
                                     </div>
                                 </section>
 
-                                {/* Favorites - 已将 LISTS 改为 PLAYLISTS */}
+                                {/* Favorites */}
                                 <section>
                                     <div className="flex justify-between items-end mb-6 px-1">
                                         <div className="flex items-center gap-8">
@@ -292,7 +291,7 @@ const UserProfile = () => {
                 </>
             )}
 
-            {/* 统一的详情弹窗逻辑 */}
+            {/* grouped window logic detail */}
             <ItemModals 
                 selectedPlaylist={selectedPlaylist}
                 selectedTrack={selectedTrack}
