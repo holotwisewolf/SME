@@ -63,17 +63,17 @@ export async function getEnhancedPlaylists(userId: string): Promise<{ playlists:
         const userTagNames = Array.from(new Set(userTags.map(t => t.tags?.name).filter(Boolean)));
 
         return {
-            // Base playlist data (from view)
+            // Base playlist data (from view) - provide defaults for nullable fields
             id: p.id!,
-            title: p.title,
+            title: p.title ?? 'Untitled Playlist',
             description: p.description,
             color: p.color,
-            is_public: p.is_public,
+            is_public: p.is_public ?? false,
             playlistimg_url: p.playlistimg_url,
             spotify_playlist_id: p.spotify_playlist_id,
-            user_id: p.user_id,
-            created_at: p.created_at,
-            updated_at: p.updated_at,
+            user_id: p.user_id ?? '',
+            created_at: p.created_at ?? new Date().toISOString(),
+            updated_at: p.updated_at ?? new Date().toISOString(),
             track_count: p.track_count,
             // Pre-calculated stats from view
             rating_avg: p.rating_avg ?? 0,
