@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, X } from 'lucide-react';
+import { Share2, Copy, Trash2, HeartOff, AlertCircle, X } from 'lucide-react';
 
 interface ConfirmationModalProps {
     isOpen: boolean;
@@ -12,6 +12,24 @@ interface ConfirmationModalProps {
     onConfirm: () => void;
     onCancel: () => void;
 }
+
+// Get the appropriate icon based on the action
+const getActionIcon = (title: string, variant: 'danger' | 'primary') => {
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes('export') || lowerTitle.includes('spotify')) {
+        return <Share2 className="w-5 h-5" />;
+    }
+    if (lowerTitle.includes('copy')) {
+        return <Copy className="w-5 h-5" />;
+    }
+    if (lowerTitle.includes('delete')) {
+        return <Trash2 className="w-5 h-5" />;
+    }
+    if (lowerTitle.includes('remove') || lowerTitle.includes('favourite')) {
+        return <HeartOff className="w-5 h-5" />;
+    }
+    return <AlertCircle className="w-5 h-5" />;
+};
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     isOpen,
@@ -25,9 +43,13 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 }) => {
     if (!isOpen) return null;
 
-    const confirmButtonClass = confirmVariant === 'danger'
-        ? 'bg-red-600 hover:bg-red-700 text-white'
-        : 'bg-[#1DB954] hover:bg-[#1ed760] text-black';
+    const isPrimary = confirmVariant === 'primary';
+    const iconColor = isPrimary ? 'text-[#FFD1D1]' : 'text-red-500';
+    const iconBg = isPrimary ? 'bg-[#FFD1D1]/10' : 'bg-red-500/10';
+
+    const confirmButtonStyles = isPrimary
+        ? 'bg-[#FFD1D1] hover:bg-[#FFD1D1]/90 text-black font-semibold'
+        : 'bg-red-600 hover:bg-red-600/90 text-white font-semibold';
 
     return createPortal(
         <div
@@ -35,43 +57,47 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             onClick={onCancel}
         >
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-            {/* Modal */}
+            {/* Modal Card */}
             <div
-                className="relative bg-[#1f1f1f] rounded-xl shadow-2xl max-w-md w-full p-6 border border-white/10"
+                className="relative bg-[#181818] rounded-xl shadow-xl max-w-md w-full border border-white/10 overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
-                {/* Close button */}
-                <button
-                    onClick={onCancel}
-                    className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition-colors"
-                >
-                    <X className="w-5 h-5 text-gray-400" />
-                </button>
-
-                {/* Icon */}
-                <div className="flex items-center gap-3 mb-4">
-                    <div className={`p-2 rounded-full ${confirmVariant === 'danger' ? 'bg-red-500/20' : 'bg-[#1DB954]/20'}`}>
-                        <AlertTriangle className={`w-6 h-6 ${confirmVariant === 'danger' ? 'text-red-500' : 'text-[#1DB954]'}`} />
+                {/* Header with icon and close button */}
+                <div className="flex items-center justify-between p-5 pb-0">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2.5 rounded-full ${iconBg}`}>
+                            <span className={iconColor}>
+                                {getActionIcon(title, confirmVariant)}
+                            </span>
+                        </div>
+                        <h2 className="text-lg font-semibold text-white">{title}</h2>
                     </div>
-                    <h2 className="text-xl font-semibold text-white">{title}</h2>
+                    <button
+                        onClick={onCancel}
+                        className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+                    >
+                        <X className="w-5 h-5 text-gray-400 hover:text-white" />
+                    </button>
                 </div>
 
                 {/* Message */}
-                <p className="text-gray-300 mb-6">{message}</p>
+                <div className="px-5 py-4">
+                    <p className="text-sm text-gray-400 leading-relaxed">{message}</p>
+                </div>
 
                 {/* Actions */}
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-3 p-5 pt-2 border-t border-white/5">
                     <button
                         onClick={onCancel}
-                        className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                        className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                     >
                         {cancelText}
                     </button>
                     <button
                         onClick={onConfirm}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${confirmButtonClass}`}
+                        className={`px-5 py-2 rounded-lg text-sm transition-all duration-200 ${confirmButtonStyles}`}
                     >
                         {confirmText}
                     </button>
