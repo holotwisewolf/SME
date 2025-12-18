@@ -162,7 +162,23 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
                                     step={currentFilter.ratingMode === 'global' ? 0.5 : 1} 
                                     value={currentFilter.minRating}
                                     onChange={(e) => handleRatingChange(e.target.value)}
-                                    className="flex-1 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#FFD1D1]"
+                                    className="
+                                        flex-1 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer
+                                        
+                                        /* Webkit (Chrome, Safari, Edge) Thumb Styles */
+                                        [&::-webkit-slider-thumb]:appearance-none
+                                        [&::-webkit-slider-thumb]:w-3.5
+                                        [&::-webkit-slider-thumb]:h-3.5
+                                        [&::-webkit-slider-thumb]:rounded-full
+                                        [&::-webkit-slider-thumb]:bg-[#FFD1D1]
+                                        
+                                        /* Firefox Thumb Styles */
+                                        [&::-moz-range-thumb]:w-3.5
+                                        [&::-moz-range-thumb]:h-3.5
+                                        [&::-moz-range-thumb]:rounded-full
+                                        [&::-moz-range-thumb]:bg-[#FFD1D1]
+                                        [&::-moz-range-thumb]:border-none
+                                    "
                                 />
                             </div>
                         </div>
