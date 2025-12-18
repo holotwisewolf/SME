@@ -533,3 +533,65 @@ export async function getAllTags(): Promise<string[]> {
     if (error) throw error;
     return Array.from(new Set(data.map(t => t.name)));
 }
+
+/**
+ * Copy a playlist to the current user's library
+ * Creates a new playlist with the same title + " (Copy)" and duplicates all tracks
+ */
+export async function copyPlaylist(sourcePlaylistId: string): Promise<Tables<'playlists'>> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // 1. Get source playlist details
+    const { data: sourcePlaylist, error: sourceError } = await supabase
+        .from('playlists')
+        .select('title, description, color, is_public')
+        .eq('id', sourcePlaylistId)
+        .single();
+
+    if (sourceError) throw sourceError;
+
+    // 2. Get all tracks from source playlist
+    const { data: sourceTracks, error: tracksError } = await supabase
+        .from('playlist_items')
+        .select('spotify_track_id, spotify_album_id, position')
+        .eq('playlist_id', sourcePlaylistId)
+        .order('position');
+
+    if (tracksError) throw tracksError;
+
+    // 3. Create new playlist with "(Copy)" suffix
+    const { data: newPlaylist, error: createError } = await supabase
+        .from('playlists')
+        .insert({
+            title: `${sourcePlaylist.title} (Copy)`,
+            description: sourcePlaylist.description,
+            color: sourcePlaylist.color,
+            is_public: false, // Default copied playlists to private
+            user_id: user.id,
+            track_count: sourceTracks?.length || 0
+        })
+        .select()
+        .single();
+
+    if (createError) throw createError;
+
+    // 4. Copy all tracks to new playlist
+    if (sourceTracks && sourceTracks.length > 0) {
+        const trackInserts = sourceTracks.map((track, index) => ({
+            playlist_id: newPlaylist.id,
+            spotify_track_id: track.spotify_track_id,
+            spotify_album_id: track.spotify_album_id,
+            position: index,
+            added_by: user.id
+        }));
+
+        const { error: insertError } = await supabase
+            .from('playlist_items')
+            .insert(trackInserts);
+
+        if (insertError) throw insertError;
+    }
+
+    return newPlaylist;
+}

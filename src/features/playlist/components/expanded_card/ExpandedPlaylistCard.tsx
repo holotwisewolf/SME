@@ -13,7 +13,8 @@ import {
     getUserPlaylistRating,
     deletePlaylist,
     updatePlaylistColor,
-    reorderPlaylistTracks
+    reorderPlaylistTracks,
+    copyPlaylist
 } from '../../services/playlist_services';
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../../favourites/services/favourites_services';
 import { getItemTags, getCreatorItemTags } from '../../../tags/services/tag_services';
@@ -27,7 +28,7 @@ import { PlaylistCommunity } from './PlaylistCommunity';
 import { PlaylistSettings } from './PlaylistSettings';
 import { PlaylistReview } from './PlaylistReview';
 import ExpandButton from '../../../../components/ui/ExpandButton';
-import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal'; 
+import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import type { EnhancedPlaylist } from '../../services/playlist_services';
 
 interface ExpandedPlaylistCardProps {
@@ -43,9 +44,9 @@ interface ExpandedPlaylistCardProps {
 
 type ActiveTab = 'tracks' | 'review' | 'community' | 'settings';
 
-export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ 
-    playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor, 
-    onPlaylistUpdate 
+export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
+    playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor,
+    onPlaylistUpdate
 }) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
@@ -70,9 +71,9 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [newComment, setNewComment] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
     const [isEditingEnabled, setIsEditingEnabled] = useState(false);
-    
-    const [selectedTrack, setSelectedTrack] = useState<any | null>(null); 
-    
+
+    const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
+
     const [searchQuery, setSearchQuery] = useState('');
     const [isOwner, setIsOwner] = useState(false);
     const [isFavourite, setIsFavourite] = useState(false);
@@ -157,7 +158,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         ]);
         setRatingData(ratingRes);
         setUserRating(userRatingRes);
-        
+
         if (onPlaylistUpdate) {
             const now = new Date().toISOString();
             onPlaylistUpdate(playlist.id, {
@@ -180,7 +181,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     };
 
     const handleReorderTracks = async (newOrder: any[]) => {
-        setTracks(newOrder); 
+        setTracks(newOrder);
         try {
             const updates = newOrder.map((track, index) => ({
                 id: track.id,
@@ -190,7 +191,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         } catch (error) {
             console.error('Error reordering tracks:', error);
             showError('Failed to save new order');
-            loadData(); 
+            loadData();
         }
     };
 
@@ -246,8 +247,14 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         showError('Export to Spotify feature coming soon!');
     };
 
-    const handleCopyPlaylist = () => {
-        showError('Copy playlist feature coming soon!');
+    const handleCopyPlaylist = async () => {
+        try {
+            const newPlaylist = await copyPlaylist(playlist.id);
+            showSuccess(`Playlist copied as "${newPlaylist.title}"`);
+        } catch (error) {
+            console.error('Error copying playlist:', error);
+            showError('Failed to copy playlist');
+        }
     };
 
     const handleDeletePlaylist = async () => {
@@ -416,7 +423,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     </div>
                 </div>
             </div>
-            
+
             {/* [Resolved] Render Correct Track Modal */}
             {selectedTrack && (
                 <TrackReviewModal
