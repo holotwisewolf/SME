@@ -142,7 +142,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                                 {recentActivity.map((activity) => (
                                     <div key={activity.id} className="text-sm border-b border-[#D1D1D1]/5 pb-2 last:border-0 last:pb-0">
                                         <p className="text-[#D1D1D1]/70 leading-relaxed">
-                                            <span className="text-[#FFD1D1] font-medium">
+                                            <span className="text-[#FFD1D1] text-xs font-medium">
                                                 @{typeof activity.user === 'object' ? (activity.user.display_name || activity.user.username) : (activity.user_display_name || activity.user || 'User')}
                                             </span>{' '}
                                             <span className="text-[#D1D1D1]/50 text-xs">
