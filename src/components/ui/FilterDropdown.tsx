@@ -131,7 +131,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
     return (
         <AnimatePresence>
             {isOpen && (
-                <motion.div ref={dropdownRef} initial={{ opacity: 0, scale: 0.95, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }} transition={{ duration: 0.15 }} className="absolute right-0 top-12 w-72 bg-[#1e1e1e] rounded-xl shadow-2xl border border-white/10 overflow-hidden z-50 flex flex-col max-h-[85vh]">
+                <motion.div ref={dropdownRef} initial={{ opacity: 0, scale: 0.95, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }} transition={{ duration: 0.15 }} className="absolute right-0 top-12 w-72 bg-[#1e1e1e] rounded-xl shadow-2xl border border-white/10 overflow-hidden z-50 flex flex-col max-h-[65vh]">
                     
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#252525]">
@@ -214,7 +214,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
                             
                             <div className="space-y-0.5">
                                 {/* Basic */}
-                                <SortItem label="Alphabetical (A-Z)" value="alphabetical" />
+                                <SortItem label="Alphabetical Order" value="alphabetical" />
                                 <SortItem label="Time (Date Added)" value="created_at" />
                                 
                                 <div className="py-1"></div>
