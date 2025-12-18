@@ -1,6 +1,6 @@
 // DiscoverySidebar - Right sidebar with community insights (ENHANCED)
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TrendingUp, Clock, Activity, ExternalLink } from 'lucide-react';
 import { getTrendingTags, getRecentActivity, getCommunityQuickStats } from '../services/trending_services';
 import { supabase } from '../../../lib/supabaseClient';
@@ -17,22 +17,36 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
     const [stats, setStats] = useState({ totalItems: 0, totalMembers: 0, currentActiveUsers: 0, thisWeek: 0 });
     const [loading, setLoading] = useState(true);
 
+    // Debounced fetch to prevent rapid-fire API calls
+    const fetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const debouncedFetch = useCallback(() => {
+        if (fetchDebounceRef.current) {
+            clearTimeout(fetchDebounceRef.current);
+        }
+        fetchDebounceRef.current = setTimeout(() => {
+            fetchSidebarData();
+        }, 1000); // 1 second debounce for community stats
+    }, []);
+
     useEffect(() => {
         fetchSidebarData();
 
-        // Realtime subscription for community stats updates
+        // Realtime subscription for community stats updates (debounced)
         const channel = supabase.channel('discovery-sidebar-realtime')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ratings' }, () => fetchSidebarData())
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, () => fetchSidebarData())
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'favorites' }, () => fetchSidebarData())
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'item_tags' }, () => fetchSidebarData())
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activities' }, () => fetchSidebarData())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ratings' }, () => debouncedFetch())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, () => debouncedFetch())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'favorites' }, () => debouncedFetch())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'item_tags' }, () => debouncedFetch())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activities' }, () => debouncedFetch())
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
+            if (fetchDebounceRef.current) {
+                clearTimeout(fetchDebounceRef.current);
+            }
         };
-    }, []);
+    }, [debouncedFetch]);
 
     const fetchSidebarData = async () => {
         setLoading(true);

@@ -175,6 +175,19 @@ async function getTrendingItems(
                 .slice(0, limit); // Apply limit after sorting
         }
 
+        // Sort by top-rated with secondary sort by rating count
+        // e.g., 5.0 stars with 3 ratings ranks higher than 5.0 stars with 1 rating
+        if (filters.sortBy === 'top-rated') {
+            trendingItems = trendingItems.sort((a, b) => {
+                // Primary: higher average rating wins
+                if (b.avgRating !== a.avgRating) {
+                    return b.avgRating - a.avgRating;
+                }
+                // Secondary: more ratings wins (tie-breaker)
+                return b.ratingCount - a.ratingCount;
+            });
+        }
+
         // Enrich with metadata (name, artist, image)
         let enrichedItems = await enrichWithMetadata(trendingItems);
 
@@ -328,9 +341,14 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
     }
 
     // Filter out items that didn't get valid metadata
+    // This also filters private playlists since they won't have metadata from the .eq('is_public', true) query
     return items.filter(item => {
         // Only include items that have a valid name (not empty, not fallback)
-        return item.name && !item.name.startsWith('Track ') && !item.name.startsWith('Album ');
+        if (!item.name) return false;
+        if (item.name.startsWith('Track ')) return false;
+        if (item.name.startsWith('Album ')) return false;
+        if (item.type === 'playlist' && item.name.startsWith('Playlist ')) return false;
+        return true;
     });
 }
 

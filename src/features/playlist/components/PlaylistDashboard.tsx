@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, LayoutGroup } from 'framer-motion';
 import PlaylistGrid from './PlaylistGrid';
 import AscendingButton from '../../../components/ui/AscendingButton';
@@ -72,6 +72,16 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   };
 
   // --- 2. Real-time Subscription ---
+  // Debounced loadData to prevent rapid-fire API calls\n  const loadDataDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedLoadData = useCallback(() => {
+    if (loadDataDebounceRef.current) {
+      clearTimeout(loadDataDebounceRef.current);
+    }
+    loadDataDebounceRef.current = setTimeout(() => {
+      loadData();
+    }, 500); // 500ms debounce
+  }, []);
+
   useEffect(() => {
     loadData();
 
@@ -90,7 +100,7 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'ratings', filter: 'item_type=eq.playlist' }, (payload) => handleRealtimeUpdate(payload))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: 'item_type=eq.playlist' }, (payload) => handleRealtimeUpdate(payload))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'item_tags', filter: 'item_type=eq.playlist' }, (payload) => handleRealtimeUpdate(payload))
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'playlists' }, () => loadData())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'playlists' }, () => debouncedLoadData())
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'playlists' }, (payload) => {
         const deletedId = payload.old?.id;
         if (deletedId) {
@@ -102,8 +112,11 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
     return () => {
       authSub.unsubscribe();
       supabase.removeChannel(channel);
+      if (loadDataDebounceRef.current) {
+        clearTimeout(loadDataDebounceRef.current);
+      }
     };
-  }, [source]);
+  }, [source, debouncedLoadData]);
 
   const handleRealtimeUpdate = async (payload: RealtimePostgresChangesPayload<any>) => {
     const record = payload.new || payload.old;
