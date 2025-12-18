@@ -5,7 +5,6 @@ import ExpandButton from '../../../components/ui/ExpandButton';
 import CollapseVerticalButton from '../../../components/ui/CollapseVerticalButton';
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../favourites/services/favourites_services';
 import { getPlaylistPreviewTracks } from '../services/playlist_services';
-import { supabase } from '../../../lib/supabaseClient';
 import { AddTrackModal } from './AddTrackModal';
 import { ExpandedPlaylistCard } from './expanded_card/ExpandedPlaylistCard';
 import { useDroppable, useDndMonitor } from '@dnd-kit/core';
@@ -13,6 +12,7 @@ import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-ki
 import { DraggableTrackRow } from './DraggableTrackRow';
 import type { EnhancedPlaylist } from '../services/playlist_services';
 
+// Note: Ensure your types.ts/Tables definition includes 'playlistimg_url'
 interface PlaylistCardProps {
     playlist: Tables<'playlists'>;
     onDelete?: () => void;
@@ -35,23 +35,20 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
     const [previewTracks, setPreviewTracks] = useState<any[]>([]);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
+    //REMOVED: const playlistImgUrl = ... (We use the DB column instead)
 
     const { setNodeRef, isOver } = useDroppable({
         id: playlist.id,
         data: { playlist }
     });
 
-    // Handle Track Reordering within the card
+    // ... (Your DnD logic remains unchanged) ...
     useDndMonitor({
         onDragEnd(event) {
             const { active, over } = event;
             if (!over) return;
-
             const activeId = active.id as string;
             const overId = over.id as string;
-
-            // Check if this drag event belongs to this playlist's tracks
             if (activeId.startsWith(`${playlist.id}::`) && overId.startsWith(`${playlist.id}::`)) {
                 if (activeId !== overId) {
                     setPreviewTracks((items) => {
@@ -59,14 +56,12 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                         const newIndex = items.findIndex((t) => `${playlist.id}::${t.id}` === overId);
                         return arrayMove(items, oldIndex, newIndex);
                     });
-                    // Note: We are not persisting this reorder to the backend for preview tracks
-                    // because preview tracks are just a subset, and reordering them might be complex 
-                    // without full context. But visual reordering is now supported.
                 }
             }
         },
     });
 
+    // ... (Your useEffects remain unchanged) ...
     useEffect(() => {
         if (initialIsLiked !== undefined) {
             setIsFavourite(initialIsLiked);
@@ -80,7 +75,6 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
         setColor(playlist.color);
     }, [playlist.title, playlist.color]);
 
-    // Staggered Loading Logic
     useEffect(() => {
         const delay = Math.random() * 2000;
         const timeoutId = setTimeout(async () => {
@@ -95,26 +89,18 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
     }, [playlist.id, lastUpdated, refreshTrigger]);
 
     const handleFavourite = async () => {
+        // ... (Your favorite logic remains unchanged) ...
         const willBeFavourite = !isFavourite;
         setIsFavourite(willBeFavourite);
-        
-        if (onToggleFavorite) {
-            onToggleFavorite(playlist.id, willBeFavourite);
-        }
-
+        if (onToggleFavorite) onToggleFavorite(playlist.id, willBeFavourite);
         try {
-            if (!willBeFavourite) {
-                await removeFromFavourites(playlist.id, "playlist");
-            } else {
-                await addToFavourites(playlist.id, "playlist");
-            }
+            if (!willBeFavourite) await removeFromFavourites(playlist.id, "playlist");
+            else await addToFavourites(playlist.id, "playlist");
         } catch (error) {
             console.error('Error toggling favourite:', error);
             setIsFavourite(!willBeFavourite);
             alert('Failed to update favorite status.');
-            if (onToggleFavorite) {
-                onToggleFavorite(playlist.id, !willBeFavourite);
-            }
+            if (onToggleFavorite) onToggleFavorite(playlist.id, !willBeFavourite);
         }
     };
 
@@ -145,9 +131,11 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                 <div className="space-y-3 flex-1 flex flex-col min-h-0">
                     {/* Playlist Image */}
                     <div className="bg-[#292929] rounded-2xl h-32 w-full shrink-0 overflow-hidden relative">
-                        {!imgError ? (
+                        {/*FIX: Check playlist.playlistimg_url directly */}
+                        {!imgError && playlist.playlistimg_url ? (
                             <img
-                                src={playlistImgUrl}
+                                //FIX: Use the DB column
+                                src={playlist.playlistimg_url}
                                 alt={title}
                                 className="w-full h-full object-cover"
                                 onError={() => setImgError(true)}
@@ -163,10 +151,10 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                         )}
                     </div>
 
-                    {/* Track Preview Area */}
+                    {/* Track Preview Area (Unchanged) */}
                     <div className="flex-1 min-h-0 overflow-hidden relative flex flex-col">
                         {isInlineExpanded ? (
-                            // Expanded: Scrollable List with Sorting
+                             // ... Expanded List (Your code remains the same) ...
                             <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
                                 {previewTracks.length > 0 ? (
                                     <SortableContext 
@@ -202,7 +190,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                                 )}
                             </div>
                         ) : (
-                            // Collapsed: First Track Only (No Sorting needed here usually, but kept simple)
+                            // ... Collapsed View (Your code remains the same) ...
                             <div className="pt-1">
                                 {previewTracks.length > 0 ? (
                                     <DraggableTrackRow track={previewTracks[0]} playlistId={playlist.id}>
@@ -234,7 +222,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                     </div>
                 </div>
 
-                {/* Footer */}
+                {/* Footer (Unchanged) */}
                 <div className="mt-4 pt-2 border-t border-white/5 flex flex-col items-center gap-2 shrink-0">
                     {isInlineExpanded ? (
                         <>

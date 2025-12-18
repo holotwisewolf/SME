@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom'; // [修复1] 引入 createPortal
+import { createPortal } from 'react-dom'; 
 import type { Tables } from '../../../../types/supabase';
 import { supabase } from '../../../../lib/supabaseClient';
 import {
@@ -50,12 +50,17 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor,
     onPlaylistUpdate
 }) => {
+    // --- Context Hooks ---
     const { showError } = useError();
     const { showSuccess } = useSuccess();
+    const { showConfirmation } = useConfirmation();
+
+    // --- State Management ---
     const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
 
+    // Data States
     const [tracks, setTracks] = useState<any[]>([]);
     const [creatorTags, setCreatorTags] = useState<string[]>([]);
     const [userTags, setUserTags] = useState<string[]>([]);
@@ -63,6 +68,8 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [userRating, setUserRating] = useState<number | null>(null);
     const [comments, setComments] = useState<any[]>([]);
+    
+    // UI States
     const [creatorName, setCreatorName] = useState('Creator');
     const [currentUserName, setCurrentUserName] = useState('You');
     const [playlistTitle, setPlaylistTitle] = useState(currentTitle ?? playlist.title);
@@ -80,8 +87,9 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [isOwner, setIsOwner] = useState(false);
     const [isFavourite, setIsFavourite] = useState(false);
 
-    const { showConfirmation } = useConfirmation();
-
+    // --- Effects ---
+    
+    // Check ownership and favorite status on mount
     useEffect(() => {
         const checkOwnership = async () => {
             const session = await getSession();
@@ -91,12 +99,20 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         checkIsFavourite(playlist.id, 'playlist').then(setIsFavourite);
     }, [playlist.user_id, playlist.id]);
 
+    // Filter tracks for search
     const filteredTracks = tracks.filter(track =>
         (track.details?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         track.details?.artists?.some((a: any) => (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    const playlistImgUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
+    // [FIX START] -------------------------------------------------------------
+    // Use the `playlistimg_url` if it exists (passed from the outside card).
+    // This ensures consistency: if you see it outside, you see it inside.
+    // We cast to `any` because Typescript might not know about this field yet.
+    const playlistImgUrl = (playlist as any).playlistimg_url 
+        ? (playlist as any).playlistimg_url 
+        : supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
+    // [FIX END] ---------------------------------------------------------------
 
     useEffect(() => {
         loadData();
@@ -136,6 +152,8 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
             setLoading(false);
         }
     };
+
+    // --- Handlers ---
 
     const handleTitleUpdate = async () => {
         if (!playlistTitle.trim() || playlistTitle === playlist.title) {
@@ -399,7 +417,6 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         );
     }
 
-    // [修复3] 主内容使用 createPortal
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
             <div
@@ -415,6 +432,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     <ExpandButton onClick={onClose} className="rotate-180 hover:bg-white/10 rounded-full p-1" strokeColor="white" title="Collapse" />
                 </div>
 
+                {/* Playlist Header containing the image */}
                 <PlaylistHeader
                     playlistId={playlist.id}
                     creatorName={creatorName}
@@ -502,10 +520,9 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                 </div>
             </div>
 
-            {/* [Resolved] Render Correct Track Modal */}
             {selectedTrack && (
                 <TrackReviewModal
-                    track={selectedTrack.details || selectedTrack} // Handle both structure types
+                    track={selectedTrack.details || selectedTrack} 
                     onClose={() => setSelectedTrack(null)}
                 />
             )}

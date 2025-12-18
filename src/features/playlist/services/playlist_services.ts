@@ -453,43 +453,42 @@ export async function reorderPlaylistTracks(tracks: { id: string; position: numb
 // services/playlist_services.ts
 
 export async function uploadPlaylistImage(playlistId: string, file: File): Promise<string> {
-    
-    // 1. Get current logged-in user
+    // 1. Authenticate user to ensure security and proper file path naming
     const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-        throw new Error("User not logged in");
-    }
+    if (!user) throw new Error("User not authenticated");
 
-    // 2. Define file path: "UserID/PlaylistID"
-    // This organizes images by user folder
+    // Define the file path within the bucket: userID/playlistID
+    // This structure prevents filename collisions between users
     const filePath = `${user.id}/${playlistId}`;
 
-    // 3. Upload image to 'playlisting' bucket
+    // 2. Upload the image file to Supabase Storage (Bucket: 'playlistimg')
+    // 'upsert: true' allows overwriting the existing file if one exists
     const { error: uploadError } = await supabase.storage
-        .from('playlistimg') 
+        .from('playlistimg')
         .upload(filePath, file, { upsert: true });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+        console.error("Storage Upload Error:", uploadError.message);
+        throw uploadError;
+    }
 
-    // 4. Get the Public URL
+    // 3. Retrieve the public URL for the uploaded file
+    // Note: The bucket must be set to 'public' in Supabase policies for this to work
     const { data: { publicUrl } } = supabase.storage
-        .from('playlistimg') 
+        .from('playlistimg')
         .getPublicUrl(filePath);
 
-    // =========== [NEW STEP] ===========
-    // 5. Update the Database with the new URL
-    // The website reads from this table to show the image
+    // 4. Update the playlist record in the database with the new image URL
     const { error: dbError } = await supabase
-        .from('playlists')             // Your table name
-        .update({ playlistimg_url: publicUrl })// <--- CHECK THIS: is your column named 'image_path' or 'image_url'?
-        .eq('id', playlistId);         // Find the correct playlist
+        .from('playlists')
+        .update({ playlistimg_url: publicUrl })
+        .eq('id', playlistId);
 
     if (dbError) {
-        console.error("Failed to update database:", dbError);
+        console.error("Database Update Error:", dbError.message);
+        // Optional: You might want to delete the uploaded file here to maintain consistency if the DB update fails
         throw dbError;
     }
-    // ==================================
 
     return publicUrl;
 }
