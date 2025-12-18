@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { TrendingItem } from '../types/trending';
 import { Star, Music, Heart, MessageCircle, Tag } from 'lucide-react';
+
+// Services & Types
+import type { TrendingItem } from '../types/trending';
 import { fetchPlaylistTracksWithDetails } from '../../playlist/services/playlist_services';
 import { getAlbumTracks } from '../../spotify/services/spotify_services';
+import { supabase } from '../../../lib/supabaseClient';
 
 interface FeaturedBannerProps {
     topItem: TrendingItem;
@@ -13,48 +16,83 @@ interface FeaturedBannerProps {
     onItemClick: (item: TrendingItem) => void;
 }
 
-const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onItemClick }) => {
+const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }) => {
+    // --- State ---
     const [currentIndex, setCurrentIndex] = useState(0);
     const [tracks, setTracks] = useState<any[]>([]);
     const [loadingTracks, setLoadingTracks] = useState(false);
-    const [resetKey, setResetKey] = useState(0); // Key to force timer reset
+    const [resetKey, setResetKey] = useState(0); 
     const [imgError, setImgError] = useState(false);
+    
+    // Initialize with existing artist name if available, otherwise 'Unknown'
+    const currentItem = topThree[currentIndex];
+    const [creatorName, setCreatorName] = useState<string>(currentItem.artist || 'Unknown');
 
-    // Reset image error state when item changes
+    // --- Effects ---
+
+    // 1. Reset image error when item changes
     useEffect(() => {
         setImgError(false);
     }, [currentIndex, topThree]);
 
-    // Auto-rotate carousel every 10 seconds
+    // 2. Auto-rotate carousel every 10 seconds
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % topThree.length);
-        }, 10000); // Changed to 10 seconds
+        }, 10000); 
         return () => clearInterval(interval);
-    }, [topThree.length, resetKey]); // Reset when resetKey changes
+    }, [topThree.length, resetKey]); 
 
-    const currentItem = topThree[currentIndex];
+    // 3. Fetch Creator Name (Supabase Profile Integration)
+    useEffect(() => {
+        const fetchCreator = async () => {
+            // Default: use the artist name already on the item
+            let resolvedName = currentItem.artist || 'Unknown';
 
-    // Fetch actual playlist tracks
+            if (currentItem.type === 'playlist') {
+                try {
+                    // A. Find the User ID owning this playlist
+                    const { data: playlistData, error: plError } = await supabase
+                        .from('playlists')
+                        .select('user_id')
+                        .eq('id', currentItem.id)
+                        .single();
+
+                    if (!plError && playlistData) {
+                        // B. Fetch the Display Name from Profiles
+                        const { data: profile, error: profError } = await supabase
+                            .from('profiles')
+                            .select('display_name, username')
+                            .eq('id', playlistData.user_id)
+                            .single();
+
+                        if (!profError && profile) {
+                            resolvedName = profile.display_name || profile.username || resolvedName;
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error fetching creator profile:", err);
+                }
+            } 
+            
+            // Only update state if the name is different/better than what we have
+            setCreatorName(resolvedName);
+        };
+
+        fetchCreator();
+    }, [currentItem.id, currentItem.type, currentItem.artist]);
+
+
+    // 4. Fetch Tracks (Playlist vs Album)
     useEffect(() => {
         const fetchTracks = async () => {
-            if (currentItem.type === 'playlist') {
-                setLoadingTracks(true);
-                try {
+            setLoadingTracks(true);
+            try {
+                if (currentItem.type === 'playlist') {
                     const playlistTracks = await fetchPlaylistTracksWithDetails(currentItem.id);
                     setTracks(playlistTracks || []);
-                } catch (error) {
-                    console.error('Error fetching playlist tracks:', error);
-                    setTracks([]);
-                } finally {
-                    setLoadingTracks(false);
-                }
-            } else if (currentItem.type === 'album') {
-                setLoadingTracks(true);
-                try {
+                } else if (currentItem.type === 'album') {
                     const data = await getAlbumTracks(currentItem.id);
-                    // Map album tracks to the structure expected by the renderer
-                    // Album tracks endpoint doesn't return images, use album's
                     const validTracks = data?.items?.map((track: any) => ({
                         details: {
                             name: track.name,
@@ -67,37 +105,36 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                         spotify_track_id: track.id
                     })) || [];
                     setTracks(validTracks);
-                } catch (error) {
-                    console.error('Error fetching album tracks:', error);
-                    setTracks([]);
-                } finally {
-                    setLoadingTracks(false);
+                } else {
+                    // Fallback dummy data if needed
+                    setTracks([
+                        { details: { name: 'Top Track 1', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 200000 }, spotify_track_id: '1' },
+                        { details: { name: 'Top Track 2', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 180000 }, spotify_track_id: '2' },
+                        { details: { name: 'Top Track 3', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 240000 }, spotify_track_id: '3' }
+                    ]);
                 }
-            } else {
-                // For other items, show mock data
-                setTracks([
-                    { details: { name: 'Top Track 1', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 200000 }, spotify_track_id: '1' },
-                    { details: { name: 'Top Track 2', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 180000 }, spotify_track_id: '2' },
-                    { details: { name: 'Top Track 3', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 240000 }, spotify_track_id: '3' }
-                ]);
+            } catch (error) {
+                console.error('Error fetching tracks:', error);
+                setTracks([]);
+            } finally {
+                setLoadingTracks(false);
             }
         };
 
         fetchTracks();
     }, [currentItem.id, currentItem.type]);
 
-    // Format duration from ms to mm:ss
+    // --- Helpers ---
+
     const formatDuration = (ms: number) => {
         const minutes = Math.floor(ms / 60000);
         const seconds = Math.floor((ms % 60000) / 1000);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
 
-    // Format large numbers (1000+ → 1k+)
+        // Format large numbers (1000+ → 1k+)
     const formatCount = (count: number) => {
-        if (count >= 1000) {
-            return `${Math.floor(count / 1000)}k+`;
-        }
+        if (count >= 1000) return `${Math.floor(count / 1000)}k+`;
         return count.toString();
     };
 
@@ -110,6 +147,8 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
             default: return { text: 'text-[#FFD1D1]', bg: 'bg-[#FFD1D1]/10' };
         }
     };
+
+    // --- Render ---
 
     return (
         <div className="mb-6">
@@ -125,22 +164,21 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <div className="flex">
+                        <div className="flex flex-col md:flex-row">
                             {/* Left Column - Playlist Info */}
-                            <div className="flex-shrink-0 w-64 bg-[#0a0a0a] p-4 flex flex-col">
+                            <div className="flex-shrink-0 w-full md:w-64 bg-[#0a0a0a] p-4 flex flex-col">
                                 {/* Title & Creator */}
                                 <div className="mb-3">
                                     <h2 className="text-white font-bold text-base mb-1 line-clamp-1">
                                         {currentItem.name || currentItem.id}
                                     </h2>
                                     <p className="text-[#D1D1D1]/60 text-xs">
-                                        Created by {currentItem.artist || 'Unknown'}
+                                        Created by {creatorName || 'Unknown'}
                                     </p>
                                 </div>
 
                                 {/* Image with Rank Badge */}
                                 <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-[#292929]/50 mb-3 group flex items-center justify-center">
-
                                     {currentItem.imageUrl && !imgError ? (
                                         <img
                                             src={currentItem.imageUrl}
@@ -148,18 +186,16 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             onError={() => setImgError(true)}
                                         />
-                                    ) : currentItem.color ? (
-                                        <div
-                                            className="w-full h-full group-hover:scale-105 transition-transform duration-300"
-                                            style={{ backgroundColor: currentItem.color }}
-                                        />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-[#292929]">
+                                        <div 
+                                            className="w-full h-full flex items-center justify-center"
+                                            style={{ backgroundColor: currentItem.color || '#292929' }}
+                                        >
                                             <Music className="w-12 h-12 text-[#D1D1D1]/20" />
                                         </div>
                                     )}
 
-                                    {/* Rank Badge Overlay - Top Left */}
+                                    {/* Rank Badge Overlay - top left*/}
                                     <div className="absolute top-2 left-2 z-10">
                                         <div className={`flex items-center justify-center h-8 px-3 ${getRankBadgeColor(currentIndex + 1).bg} backdrop-blur-md rounded-xl transition-colors duration-300`}>
                                             <span className={`${getRankBadgeColor(currentIndex + 1).text} font-bold text-sm`}>
@@ -179,7 +215,7 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                                                     className={`w-3.5 h-3.5 ${star <= Math.round(currentItem.avgRating)
                                                         ? 'fill-yellow-400 text-yellow-400'
                                                         : 'text-[#D1D1D1]/20 fill-none'
-                                                        }`}
+                                                    }`}
                                                 />
                                             ))}
                                         </div>
@@ -193,7 +229,7 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                                 </div>
 
                                 {/* Stats Footer */}
-                                <div className="flex items-center gap-3 text-xs text-[#D1D1D1]/60">
+                                <div className="flex items-center gap-3 text-xs text-[#D1D1D1]/60 mt-auto">
                                     <div className="flex items-center gap-1">
                                         <Heart className="w-3.5 h-3.5" />
                                         <span>{currentItem.favoriteCount || 0}</span>
@@ -210,16 +246,14 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                             </div>
 
                             {/* Right Column - Tracks */}
-                            <div className="flex-1 p-4">
-                                {/* Header */}
+                            <div className="flex-1 p-4 bg-[#1a1a1a]">
                                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#D1D1D1]/10">
                                     <span className="text-[#D1D1D1]/60 text-sm"># Title</span>
                                     <span className="text-[#D1D1D1]/60 text-sm">Duration</span>
                                 </div>
 
-                                {/* Track List with Scrollbar */}
                                 <div
-                                    className="max-h-[200px] overflow-y-auto pr-2"
+                                    className="max-h-[200px] overflow-y-auto pr-2 custom-scrollbar"
                                     style={{
                                         scrollbarWidth: 'thin',
                                         scrollbarColor: '#3a3a3a #1a1a1a'
@@ -265,7 +299,7 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                                                         </p>
                                                     </div>
 
-                                                    <span className="text-[#D1D1D1]/40 text-sm">
+                                                    <span className="text-[#D1D1D1]/40 text-sm whitespace-nowrap">
                                                         {track.details?.duration_ms ? formatDuration(track.details.duration_ms) : '--:--'}
                                                     </span>
                                                 </div>
@@ -283,19 +317,20 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topItem, topThree, onIt
                 </AnimatePresence>
             </div>
 
-            {/* Carousel Dots - Below Banner */}
+            {/* Carousel Dots */}
             <div className="flex justify-center gap-2 mt-3">
                 {topThree.map((_, index) => (
                     <button
                         key={index}
                         onClick={() => {
                             setCurrentIndex(index);
-                            setResetKey(prev => prev + 1); // Reset the timer
+                            setResetKey(prev => prev + 1);
                         }}
                         className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex
                             ? 'bg-[#FFD1D1] w-6'
                             : 'bg-[#D1D1D1]/30 hover:bg-[#D1D1D1]/50'
-                            }`}
+                        }`}
+                        aria-label={`Go to slide ${index + 1}`}
                     />
                 ))}
             </div>
