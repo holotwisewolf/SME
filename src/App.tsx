@@ -12,7 +12,7 @@ import PageWrapper from "./components/shared/PageWrapper";
 import LibraryPlaylists from "./pages/library/LibraryPlaylists";
 import LibraryTracks from "./pages/library/LibraryTracks";
 import LibraryAlbums from "./pages/library/LibraryAlbums";
-import Songs from "./pages/Songs";
+
 import Info from "./pages/Info";
 import SignUpPage from "./features/auth/pages/SignUp";
 import TestingGround from "./features/dev/dev_pages/testing_ground";
@@ -104,15 +104,7 @@ function App() {
                     />
                   </Route>
 
-                  {/* SONGS */}
-                  <Route
-                    path="/songs"
-                    element={
-                      <PageWrapper>
-                        <Songs />
-                      </PageWrapper>
-                    }
-                  />
+
 
                   {/* INFO */}
                   <Route
@@ -168,7 +160,7 @@ function App() {
                   <Route path="/settings" element={<></>} />
 
                   {/* ADDED PROFILE ROUTES  */}
-                  
+
                   {/* USER PROFILE PUBLIC PAGES */}
                   <Route
                     path="/profile/:userId"
@@ -178,7 +170,7 @@ function App() {
                       </PageWrapper>
                     }
                   />
-                  
+
                   {/* DONE ADDED */}
 
                   {/* SPOTIFY FULL PAGES */}

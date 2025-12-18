@@ -51,7 +51,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
                 { path: '/discovery/for-you', icon: Sparkles, label: 'For You' }
             ]
         },
-        { path: '/songs', icon: musicIcon, label: 'Songs' },
         { path: '/Info', icon: infoIcon, label: 'Info' },
         { path: '/testing-ground', icon: SettingsIcon, label: 'Testing Ground', requiredRole: 'dev' },
     ];
@@ -69,23 +68,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
 
     return (
         <motion.aside
-        initial={false}
-        animate={isExpanded ? "expanded" : "collapsed"}
-        variants={sidebarVariants}
-        // added rounded-br-[20px] to the end of the list below
-        className="relative h-screen bg-[#2a2a2e] flex flex-col z-30 overflow-visible rounded-br-[20px]"
-    >
-        {/* FIXED LOGO SECTION */}
-        <SidebarLogo isExpanded={isExpanded} />
+            initial={false}
+            animate={isExpanded ? "expanded" : "collapsed"}
+            variants={sidebarVariants}
+            // added rounded-br-[20px] to the end of the list below
+            className="relative h-screen bg-[#2a2a2e] flex flex-col z-30 overflow-visible rounded-br-[20px]"
+        >
+            {/* FIXED LOGO SECTION */}
+            <SidebarLogo isExpanded={isExpanded} />
 
-        {/* Navigation Items */}
-        <SidebarMenu isExpanded={isExpanded} menuItems={menuItems} />
+            {/* Navigation Items */}
+            <SidebarMenu isExpanded={isExpanded} menuItems={menuItems} />
 
-        {/* Expand/Collapse Button */}
-        <div className="mb-8 flex justify-center shrink-0">
-            <ExpandSidebarButton isExpanded={isExpanded} toggleSidebar={toggleSidebar} />
-        </div>
-    </motion.aside>
+            {/* Expand/Collapse Button */}
+            <div className="mb-8 flex justify-center shrink-0">
+                <ExpandSidebarButton isExpanded={isExpanded} toggleSidebar={toggleSidebar} />
+            </div>
+        </motion.aside>
     );
 };
 
