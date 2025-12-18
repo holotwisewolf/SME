@@ -127,7 +127,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                         className="text-[#D1D1D1]/60 hover:text-[#FFD1D1] transition-colors"
                         title="View full activity"
                     >
-                        <ExternalLink className="w-4 h-4" />
+                        <ExternalLink className="w-5 h-5" />
                     </a>
                 </div>
 
@@ -145,7 +145,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                                             <span className="text-[#FFD1D1] font-medium">
                                                 @{typeof activity.user === 'object' ? (activity.user.display_name || activity.user.username) : (activity.user_display_name || activity.user || 'User')}
                                             </span>{' '}
-                                            <span className="text-[#D1D1D1]/50">
+                                            <span className="text-[#D1D1D1]/50 text-xs">
                                                 {activity.type === 'rating' && `rated ${activity.itemType || 'item'}`}
                                                 {activity.type === 'comment' && `commented on ${activity.itemType || 'item'}`}
                                                 {activity.type === 'favorite' && `favorited ${activity.itemType || 'item'}`}
