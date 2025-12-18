@@ -24,15 +24,25 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }
     const [resetKey, setResetKey] = useState(0); 
     const [imgError, setImgError] = useState(false);
     
-    // Initialize with existing artist name if available, otherwise 'Unknown'
+    // Get the current item
     const currentItem = topThree[currentIndex];
     const [creatorName, setCreatorName] = useState<string>(currentItem.artist || 'Unknown');
+    
+    // NEW: State to hold the image fetched directly from DB
+    const [dbImage, setDbImage] = useState<string | null>(null);
+
+    // --- LOGIC UPDATE: Image Priority ---
+    // 1. dbImage (Fresh from DB fetch inside this component)
+    // 2. playlistimg_url (Passed from parent if available)
+    // 3. imageUrl (Standard fallback / Spotify image)
+    const displayImage = dbImage || (currentItem as any).playlistimg_url || currentItem.imageUrl;
 
     // --- Effects ---
 
-    // 1. Reset image error when item changes
+    // 1. Reset image error and dbImage when item changes
     useEffect(() => {
         setImgError(false);
+        setDbImage(null); // Reset local image state so we don't show the wrong one while loading
     }, [currentIndex, topThree]);
 
     // 2. Auto-rotate carousel every 10 seconds
@@ -43,22 +53,29 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }
         return () => clearInterval(interval);
     }, [topThree.length, resetKey]); 
 
-    // 3. Fetch Creator Name (Supabase Profile Integration)
+    // 3. Fetch Creator Name AND Image (Supabase Integration)
+    // We combined the image fetch here to ensure we get the latest 'playlistimg_url'
     useEffect(() => {
-        const fetchCreator = async () => {
-            // Default: use the artist name already on the item
+        const fetchCreatorAndImage = async () => {
             let resolvedName = currentItem.artist || 'Unknown';
+            let resolvedImage = null;
 
             if (currentItem.type === 'playlist') {
                 try {
-                    // A. Find the User ID owning this playlist
+                    // A. Find the User ID AND the Custom Image from playlists table
+                    // CHANGED: Added 'playlistimg_url' to the select
                     const { data: playlistData, error: plError } = await supabase
                         .from('playlists')
-                        .select('user_id')
+                        .select('user_id, playlistimg_url') 
                         .eq('id', currentItem.id)
                         .single();
 
                     if (!plError && playlistData) {
+                        // Capture the image from DB
+                        if (playlistData.playlistimg_url) {
+                            resolvedImage = playlistData.playlistimg_url;
+                        }
+
                         // B. Fetch the Display Name from Profiles
                         const { data: profile, error: profError } = await supabase
                             .from('profiles')
@@ -71,15 +88,17 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }
                         }
                     }
                 } catch (err) {
-                    console.error("Error fetching creator profile:", err);
+                    console.error("Error fetching creator profile/image:", err);
                 }
             } 
             
-            // Only update state if the name is different/better than what we have
             setCreatorName(resolvedName);
+            if (resolvedImage) {
+                setDbImage(resolvedImage);
+            }
         };
 
-        fetchCreator();
+        fetchCreatorAndImage();
     }, [currentItem.id, currentItem.type, currentItem.artist]);
 
 
@@ -99,14 +118,15 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }
                             artists: track.artists,
                             duration_ms: track.duration_ms,
                             album: {
-                                images: [{ url: currentItem.imageUrl }]
+                                // Use the resolved displayImage here too for consistency
+                                images: [{ url: displayImage }]
                             }
                         },
                         spotify_track_id: track.id
                     })) || [];
                     setTracks(validTracks);
                 } else {
-                    // Fallback dummy data if needed
+                    // Fallback dummy data
                     setTracks([
                         { details: { name: 'Top Track 1', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 200000 }, spotify_track_id: '1' },
                         { details: { name: 'Top Track 2', artists: [{ name: currentItem.artist || 'Artist' }], duration_ms: 180000 }, spotify_track_id: '2' },
@@ -122,7 +142,7 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }
         };
 
         fetchTracks();
-    }, [currentItem.id, currentItem.type]);
+    }, [currentItem.id, currentItem.type, displayImage]); 
 
     // --- Helpers ---
 
@@ -132,18 +152,16 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
 
-        // Format large numbers (1000+ → 1k+)
     const formatCount = (count: number) => {
         if (count >= 1000) return `${Math.floor(count / 1000)}k+`;
         return count.toString();
     };
 
-    // Get rank badge color
     const getRankBadgeColor = (rank: number) => {
         switch (rank) {
-            case 1: return { text: 'text-red-500', bg: 'bg-red-500/10' }; // Red
-            case 2: return { text: 'text-purple-500', bg: 'bg-purple-500/10' }; // Purple
-            case 3: return { text: 'text-blue-500', bg: 'bg-blue-500/10' }; // Blue
+            case 1: return { text: 'text-red-500', bg: 'bg-red-500/10' };
+            case 2: return { text: 'text-purple-500', bg: 'bg-purple-500/10' };
+            case 3: return { text: 'text-blue-500', bg: 'bg-blue-500/10' };
             default: return { text: 'text-[#FFD1D1]', bg: 'bg-[#FFD1D1]/10' };
         }
     };
@@ -179,9 +197,9 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }
 
                                 {/* Image with Rank Badge */}
                                 <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-[#292929]/50 mb-3 group flex items-center justify-center">
-                                    {currentItem.imageUrl && !imgError ? (
+                                    {displayImage && !imgError ? (
                                         <img
-                                            src={currentItem.imageUrl}
+                                            src={displayImage}
                                             alt={currentItem.name}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             onError={() => setImgError(true)}
@@ -195,7 +213,7 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }
                                         </div>
                                     )}
 
-                                    {/* Rank Badge Overlay - top left*/}
+                                    {/* Rank Badge Overlay */}
                                     <div className="absolute top-2 left-2 z-10">
                                         <div className={`flex items-center justify-center h-8 px-3 ${getRankBadgeColor(currentIndex + 1).bg} backdrop-blur-md rounded-xl transition-colors duration-300`}>
                                             <span className={`${getRankBadgeColor(currentIndex + 1).text} font-bold text-sm`}>

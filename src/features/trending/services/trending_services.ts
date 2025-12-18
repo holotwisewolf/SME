@@ -242,34 +242,22 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
         const playlistIds = playlists.map(p => p.id);
         const { data: playlistData } = await supabase
             .from('playlists')
-            .select('id, title, description, color, is_public')
+            // UPDATED: Added playlistimg_url to selection
+            .select('id, title, description, color, is_public, playlistimg_url')
             .in('id', playlistIds)
             .eq('is_public', true); // Only fetch public playlists
 
         if (playlistData) {
-            // Check which playlists have images in storage
-            const imageChecks = await Promise.all(
-                playlistData.map(async (meta) => {
-                    const { data, error } = await supabase.storage
-                        .from('playlists')
-                        .list('', { search: meta.id });
-
-                    const hasImage = data && data.length > 0 && !error;
-                    return { id: meta.id, hasImage };
-                })
-            );
-
-            const imageMap = new Map(imageChecks.map(check => [check.id, check.hasImage]));
-
+            // UPDATED: Removed the slow storage loop. We now map directly from the DB field.
             playlists.forEach(playlist => {
                 const meta = playlistData.find(p => p.id === playlist.id);
                 if (meta) {
                     playlist.name = meta.title;
                     playlist.color = meta.color || undefined;
 
-                    // Only set imageUrl if image actually exists in storage
-                    if (imageMap.get(meta.id)) {
-                        playlist.imageUrl = supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
+                    // UPDATED: Use the URL directly from the database row
+                    if (meta.playlistimg_url) {
+                        playlist.imageUrl = meta.playlistimg_url;
                     }
                 }
             });
