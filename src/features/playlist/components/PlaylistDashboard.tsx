@@ -58,7 +58,6 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
 
     setLoading(true);
     try {
-      // 依然使用 Service 加载数据，保持架构整洁
       const { playlists: enhancedData, favoriteIds: ids } = await getEnhancedPlaylists(session.user.id);
 
       setPlaylists(enhancedData);
@@ -72,7 +71,8 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   };
 
   // --- 2. Real-time Subscription ---
-  // Debounced loadData to prevent rapid-fire API calls\n  const loadDataDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Debounced loadData to prevent rapid-fire API calls
+  const loadDataDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedLoadData = useCallback(() => {
     if (loadDataDebounceRef.current) {
       clearTimeout(loadDataDebounceRef.current);
