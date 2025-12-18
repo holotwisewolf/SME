@@ -493,6 +493,36 @@ export async function uploadPlaylistImage(playlistId: string, file: File): Promi
     return publicUrl;
 }
 
+export async function resetPlaylistImage(playlistId: string): Promise<void> {
+    // 1. Authenticate user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    // 2. Define the file path (same structure as upload)
+    const filePath = `${user.id}/${playlistId}`;
+
+    // 3. Delete the image from storage bucket (ignore errors if file doesn't exist)
+    const { error: deleteError } = await supabase.storage
+        .from('playlistimg')
+        .remove([filePath]);
+
+    if (deleteError) {
+        console.warn("Storage delete warning:", deleteError.message);
+        // Continue anyway - file might not exist
+    }
+
+    // 4. Clear the playlistimg_url in the database
+    const { error: dbError } = await supabase
+        .from('playlists')
+        .update({ playlistimg_url: null })
+        .eq('id', playlistId);
+
+    if (dbError) {
+        console.error("Database Update Error:", dbError.message);
+        throw dbError;
+    }
+}
+
 export async function addPlaylistTag(playlistId: string, tag: string): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');

@@ -1,4 +1,54 @@
 import { spotifyFetch, getSpotifyToken } from './spotifyConnection';
+import { supabase } from '../../../lib/supabaseClient';
+
+// ============================================
+// Cache Helper Functions
+// ============================================
+
+const CACHE_TTL_HOURS = 24;
+
+async function getCachedItems(ids: string[], type: 'track' | 'album' | 'artist'): Promise<Map<string, any>> {
+  if (ids.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from('spotify_cache')
+    .select('resource_id, data')
+    .eq('resource_type', type)
+    .in('resource_id', ids)
+    .gt('expires_at', new Date().toISOString());
+
+  if (error) {
+    console.warn('Cache read error:', error.message);
+    return new Map();
+  }
+
+  const map = new Map<string, any>();
+  data?.forEach(row => map.set(row.resource_id, row.data));
+  return map;
+}
+
+async function cacheItems(items: any[], type: 'track' | 'album' | 'artist'): Promise<void> {
+  if (items.length === 0) return;
+
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + CACHE_TTL_HOURS);
+
+  const rows = items.filter(Boolean).map(item => ({
+    resource_id: item.id,
+    resource_type: type,
+    data: item,
+    expires_at: expiresAt.toISOString()
+  }));
+
+  // Use upsert to update existing or insert new
+  const { error } = await supabase
+    .from('spotify_cache')
+    .upsert(rows, { onConflict: 'resource_id' });
+
+  if (error) {
+    console.warn('Cache write error:', error.message);
+  }
+}
 
 // ============================================
 // Search Functions
@@ -78,54 +128,104 @@ export async function getArtistDetails(artistId: string) {
 
 /**
  * Get multiple tracks at once (batch request)
- * Handles chunking to respect Spotify's 50 ID limit
+ * Uses cache-first strategy to minimize API calls
  */
 export async function getMultipleTracks(trackIds: string[]) {
   if (!trackIds.length) return { tracks: [] };
 
-  // Spotify limit: 50 IDs per request
-  const chunks = [];
-  for (let i = 0; i < trackIds.length; i += 50) {
-    chunks.push(trackIds.slice(i, i + 50));
+  // 1. Check cache first
+  const cachedMap = await getCachedItems(trackIds, 'track');
+  const cachedTracks: any[] = [];
+  const uncachedIds: string[] = [];
+
+  for (const id of trackIds) {
+    if (cachedMap.has(id)) {
+      cachedTracks.push(cachedMap.get(id));
+    } else {
+      uncachedIds.push(id);
+    }
   }
 
-  const results = await Promise.all(chunks.map(async chunk => {
-    const ids = chunk.join(',');
-    return await spotifyFetch(`tracks?ids=${ids}`);
-  }));
+  // 2. Fetch only uncached tracks from Spotify API
+  let fetchedTracks: any[] = [];
+  if (uncachedIds.length > 0) {
+    // Spotify limit: 50 IDs per request
+    const chunks = [];
+    for (let i = 0; i < uncachedIds.length; i += 50) {
+      chunks.push(uncachedIds.slice(i, i + 50));
+    }
 
-  // Merge results
-  const allTracks = results.reduce((acc, curr) => {
-    return [...acc, ...(curr?.tracks || [])];
-  }, []);
+    const results = await Promise.all(chunks.map(async chunk => {
+      const ids = chunk.join(',');
+      return await spotifyFetch(`tracks?ids=${ids}`);
+    }));
 
-  return { tracks: allTracks };
+    fetchedTracks = results.reduce((acc, curr) => {
+      return [...acc, ...(curr?.tracks || [])];
+    }, []);
+
+    // 3. Cache the newly fetched tracks
+    await cacheItems(fetchedTracks, 'track');
+  }
+
+  // 4. Merge and return in original order
+  const allTracksMap = new Map<string, any>();
+  cachedTracks.forEach(t => t && allTracksMap.set(t.id, t));
+  fetchedTracks.forEach(t => t && allTracksMap.set(t.id, t));
+
+  const orderedTracks = trackIds.map(id => allTracksMap.get(id)).filter(Boolean);
+  return { tracks: orderedTracks };
 }
 
 /**
  * Get multiple albums at once (batch request)
- * Handles chunking to respect Spotify's 20 ID limit
+ * Uses cache-first strategy to minimize API calls
  */
 export async function getMultipleAlbums(albumIds: string[]) {
   if (!albumIds.length) return { albums: [] };
 
-  // Spotify limit: 20 IDs per request
-  const chunks = [];
-  for (let i = 0; i < albumIds.length; i += 20) {
-    chunks.push(albumIds.slice(i, i + 20));
+  // 1. Check cache first
+  const cachedMap = await getCachedItems(albumIds, 'album');
+  const cachedAlbums: any[] = [];
+  const uncachedIds: string[] = [];
+
+  for (const id of albumIds) {
+    if (cachedMap.has(id)) {
+      cachedAlbums.push(cachedMap.get(id));
+    } else {
+      uncachedIds.push(id);
+    }
   }
 
-  const results = await Promise.all(chunks.map(async chunk => {
-    const ids = chunk.join(',');
-    return await spotifyFetch(`albums?ids=${ids}`);
-  }));
+  // 2. Fetch only uncached albums from Spotify API
+  let fetchedAlbums: any[] = [];
+  if (uncachedIds.length > 0) {
+    // Spotify limit: 20 IDs per request
+    const chunks = [];
+    for (let i = 0; i < uncachedIds.length; i += 20) {
+      chunks.push(uncachedIds.slice(i, i + 20));
+    }
 
-  // Merge results
-  const allAlbums = results.reduce((acc, curr) => {
-    return [...acc, ...(curr?.albums || [])];
-  }, []);
+    const results = await Promise.all(chunks.map(async chunk => {
+      const ids = chunk.join(',');
+      return await spotifyFetch(`albums?ids=${ids}`);
+    }));
 
-  return { albums: allAlbums };
+    fetchedAlbums = results.reduce((acc, curr) => {
+      return [...acc, ...(curr?.albums || [])];
+    }, []);
+
+    // 3. Cache the newly fetched albums
+    await cacheItems(fetchedAlbums, 'album');
+  }
+
+  // 4. Merge and return in original order
+  const allAlbumsMap = new Map<string, any>();
+  cachedAlbums.forEach(a => a && allAlbumsMap.set(a.id, a));
+  fetchedAlbums.forEach(a => a && allAlbumsMap.set(a.id, a));
+
+  const orderedAlbums = albumIds.map(id => allAlbumsMap.get(id)).filter(Boolean);
+  return { albums: orderedAlbums };
 }
 
 /**
@@ -286,7 +386,7 @@ export const logoutSpotify = () => {
   localStorage.removeItem('spotify_token_expiry');
   localStorage.removeItem('spotify_token_timestamp');
   localStorage.removeItem('spotify_verifier');
-  
+
   console.log('Spotify tokens cleared from local storage');
 };
 

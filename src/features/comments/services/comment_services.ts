@@ -75,7 +75,7 @@ export async function getComment(commentId: string): Promise<CommentWithProfile>
         .from('comments')
         .select(`
       *,
-      profiles (
+      public_profiles (
         username,
         avatar_url,
         display_name
@@ -85,7 +85,12 @@ export async function getComment(commentId: string): Promise<CommentWithProfile>
         .single();
 
     if (error) throw new Error(`Failed to fetch comment: ${error.message}`);
-    return data as CommentWithProfile;
+
+    // Map public_profiles to profiles for backward compatibility
+    return {
+        ...data,
+        profiles: (data as any).public_profiles
+    } as CommentWithProfile;
 }
 
 // ==========================================
@@ -102,7 +107,7 @@ export async function getItemComments(
         .from('comments')
         .select(`
       *,
-      profiles (
+      public_profiles (
         username,
         avatar_url,
         display_name
@@ -122,7 +127,14 @@ export async function getItemComments(
     const { data, error } = await query;
 
     if (error) throw new Error(`Failed to fetch comments: ${error.message}`);
-    return data as CommentWithProfile[];
+
+    // Map public_profiles to profiles for backward compatibility with UI
+    const processedData = (data || []).map((comment: any) => ({
+        ...comment,
+        profiles: comment.public_profiles
+    }));
+
+    return processedData as CommentWithProfile[];
 }
 
 export async function getUserComments(
@@ -145,7 +157,7 @@ export async function getCommentReplies(parentCommentId: string) {
         .from('comments')
         .select(`
       *,
-      profiles (
+      public_profiles (
         username,
         avatar_url,
         display_name
@@ -155,7 +167,14 @@ export async function getCommentReplies(parentCommentId: string) {
         .order('created_at', { ascending: true });
 
     if (error) throw new Error(`Failed to fetch replies: ${error.message}`);
-    return data as CommentWithProfile[];
+
+    // Map public_profiles to profiles for backward compatibility
+    const processedData = (data || []).map((comment: any) => ({
+        ...comment,
+        profiles: comment.public_profiles
+    }));
+
+    return processedData as CommentWithProfile[];
 }
 
 // ==========================================

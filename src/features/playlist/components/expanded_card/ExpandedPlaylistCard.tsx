@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom'; 
+import { createPortal } from 'react-dom';
 import type { Tables } from '../../../../types/supabase';
 import { supabase } from '../../../../lib/supabaseClient';
 import {
@@ -58,6 +58,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     // --- State Management ---
     const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
     const [imgError, setImgError] = useState(false);
+    const [imageUrl, setImageUrl] = useState<string | null>((playlist as any).playlistimg_url || null);
     const [loading, setLoading] = useState(true);
 
     // Data States
@@ -68,7 +69,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [userRating, setUserRating] = useState<number | null>(null);
     const [comments, setComments] = useState<any[]>([]);
-    
+
     // UI States
     const [creatorName, setCreatorName] = useState('Creator');
     const [currentUserName, setCurrentUserName] = useState('You');
@@ -88,7 +89,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [isFavourite, setIsFavourite] = useState(false);
 
     // --- Effects ---
-    
+
     // Check ownership and favorite status on mount
     useEffect(() => {
         const checkOwnership = async () => {
@@ -105,14 +106,29 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         track.details?.artists?.some((a: any) => (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    // [FIX START] -------------------------------------------------------------
-    // Use the `playlistimg_url` if it exists (passed from the outside card).
-    // This ensures consistency: if you see it outside, you see it inside.
-    // We cast to `any` because Typescript might not know about this field yet.
-    const playlistImgUrl = (playlist as any).playlistimg_url 
-        ? (playlist as any).playlistimg_url 
+    // Use local state for image URL to enable real-time updates
+    // Falls back to storage URL if no custom image is set
+    const playlistImgUrl = imageUrl
+        ? `${imageUrl}?t=${Date.now()}`  // Add timestamp to bust cache
         : supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
     // [FIX END] ---------------------------------------------------------------
+
+    // Handle image updates from PlaylistHeader
+    const handleImageUpdate = async () => {
+        // Refetch the playlist to get the new image URL
+        const { data: updatedPlaylist } = await supabase
+            .from('playlists')
+            .select('playlistimg_url')
+            .eq('id', playlist.id)
+            .single();
+
+        setImageUrl(updatedPlaylist?.playlistimg_url || null);
+        if (!updatedPlaylist?.playlistimg_url) {
+            setImgError(true); // Show default placeholder
+        } else {
+            setImgError(false);
+        }
+    };
 
     useEffect(() => {
         loadData();
@@ -449,6 +465,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     handleTitleUpdate={handleTitleUpdate}
                     isEditingEnabled={isEditingEnabled}
                     onRatingUpdate={handleRatingUpdate}
+                    onImageUpdate={handleImageUpdate}
                     trackCount={tracks.length}
                     isOwner={isOwner}
                 />
@@ -522,7 +539,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
 
             {selectedTrack && (
                 <TrackReviewModal
-                    track={selectedTrack.details || selectedTrack} 
+                    track={selectedTrack.details || selectedTrack}
                     onClose={() => setSelectedTrack(null)}
                 />
             )}

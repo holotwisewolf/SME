@@ -483,7 +483,8 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
         const uniqueUserIds = [...new Set(activities.map(item => item.user_id).filter(Boolean))] as string[];
         let profiles: any[] = [];
         if (uniqueUserIds.length > 0) {
-            const { data } = await supabase.from('profiles').select('id, username, display_name, avatar_url').in('id', uniqueUserIds);
+            // Use public_profiles view which automatically anonymizes private users
+            const { data } = await supabase.from('public_profiles').select('id, username, display_name, avatar_url').in('id', uniqueUserIds);
             profiles = data || [];
         }
 
@@ -504,7 +505,7 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
         const [trackData, albumData, internalPLData] = await Promise.all([
             trackIds.length > 0 ? getMultipleTracks(trackIds) : Promise.resolve(null),
             albumIds.length > 0 ? getMultipleAlbums(albumIds) : Promise.resolve(null),
-            internalPlaylistIds.length > 0 ? supabase.from('playlists').select('id, title, user_id, profiles:user_id(display_name)').in('id', internalPlaylistIds) : Promise.resolve({ data: [] })
+            internalPlaylistIds.length > 0 ? supabase.from('playlists').select('id, title, user_id, profiles:user_id(display_name, is_private_profile)').in('id', internalPlaylistIds) : Promise.resolve({ data: [] })
         ]);
 
 
@@ -515,7 +516,9 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
         // 3. Map Final Data
         return activities.map(item => {
             const userProfile = profiles.find(p => p.id === item.user_id);
-            const displayName = userProfile?.display_name || userProfile?.username || 'Anonymous';
+            // View already anonymizes private profiles - just use values directly
+            const displayName = userProfile?.display_name || userProfile?.username || 'Private User';
+            const avatarUrl = userProfile?.avatar_url;
             const type = item.item_type?.toLowerCase();
 
             let mediaTitle = 'Unknown Title';
@@ -553,7 +556,7 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
                 created_at: item.created_at,
                 content: item.content,
                 itemType: type,
-                user: { id: item.user_id, display_name: displayName, avatar_url: userProfile?.avatar_url },
+                user: { id: item.user_id, display_name: displayName, avatar_url: avatarUrl },
                 track: { id: item.item_id, title: mediaTitle, artist: mediaArtist }
             };
         });

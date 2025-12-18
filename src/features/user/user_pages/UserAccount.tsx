@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import TextInput from "../../../components/ui/TextInput";
 import DefUserAvatar from "../../../components/ui/DefUserAvatar";
 import EditIcon from "../../../components/ui/EditIcon";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
+import ImageOptionsModal from "../../../components/ui/ImageOptionsModal";
 import { AuthService } from "../../auth/services/auth_services";
 import { useLogin } from "../../auth/components/LoginProvider";
 import { useError } from "../../../context/ErrorContext";
@@ -25,6 +26,8 @@ const UserAccount = () => {
     const [initializing, setInitializing] = useState(true);
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [bioPlaceholder, setBioPlaceholder] = useState("Tell us about yourself...");
+    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Random Bio Placeholder on Mount
     useEffect(() => {
@@ -116,7 +119,18 @@ const UserAccount = () => {
             setAvatarUrl(url);
         } catch (error) {
             console.error("Avatar upload failed:", error);
-            alert("Failed to upload avatar.");
+            showError("Failed to upload avatar.");
+        }
+    };
+
+    const handleAvatarRemove = async () => {
+        if (!avatarUrl) return;
+        try {
+            await AuthService.deleteAvatar(avatarUrl);
+            setAvatarUrl(null);
+        } catch (error) {
+            console.error("Failed to delete avatar:", error);
+            showError("Failed to delete avatar.");
         }
     };
 
@@ -223,7 +237,11 @@ const UserAccount = () => {
                         {/* Header */}
                         <div className="flex items-center gap-5 mb-8 pr-8">
                             <div className="relative group cursor-pointer shrink-0">
-                                <label htmlFor="edit-avatar-upload" className="cursor-pointer block">
+                                {/* Click to open modal */}
+                                <div
+                                    onClick={() => setIsAvatarModalOpen(true)}
+                                    className="cursor-pointer block"
+                                >
                                     <div className="w-20 h-20 rounded-full overflow-hidden bg-[#2a2a2a] flex items-center justify-center border-2 border-transparent group-hover:border-[#FFD1D1] transition-colors">
                                         {avatarUrl ? (
                                             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -236,33 +254,11 @@ const UserAccount = () => {
                                     <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                         <EditIcon className="w-5 h-5 text-white" />
                                     </div>
-                                </label>
+                                </div>
 
-                                {/* Delete Avatar Button - Only show if avatar exists */}
-                                {avatarUrl && (
-                                    <button
-                                        onClick={async () => {
-                                            if (confirm("Remove profile picture?")) {
-                                                try {
-                                                    await AuthService.deleteAvatar(avatarUrl);
-                                                    setAvatarUrl(null);
-                                                } catch (error) {
-                                                    console.error("Failed to delete avatar:", error);
-                                                    alert("Failed to delete avatar.");
-                                                }
-                                            }
-                                        }}
-                                        className="absolute top-0 left-0 w-5 h-5 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center transition-all backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100"
-                                        title="Remove avatar"
-                                    >
-                                        <svg className="w-2.5 h-2.5 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                            <path d="M18 6L6 18M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                )}
-
+                                {/* Hidden file input */}
                                 <input
-                                    id="edit-avatar-upload"
+                                    ref={fileInputRef}
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
@@ -355,6 +351,15 @@ const UserAccount = () => {
                     </>
                 )}
             </motion.div>
+
+            {/* Avatar Options Modal */}
+            <ImageOptionsModal
+                isOpen={isAvatarModalOpen}
+                onClose={() => setIsAvatarModalOpen(false)}
+                onUpload={() => fileInputRef.current?.click()}
+                onReset={handleAvatarRemove}
+                hasCustomImage={!!avatarUrl}
+            />
         </motion.div>
     );
 };
