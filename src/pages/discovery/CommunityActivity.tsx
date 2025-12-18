@@ -82,65 +82,22 @@ const CommunityActivity: React.FC = () => {
         if (activities.length === 0) setLoading(true);
 
         try {
-            // 1. Get raw activity feed
+            // Get activity feed - RLS now handles privacy filtering at DB level
             const data = await getRecentActivity(50);
 
-            // 2. COLLECT IDs: Identify all playlist IDs in this batch
-            const playlistIds: string[] = [];
-            data.forEach((item: any) => {
-                const type = (item.itemType || item.item_type || item.type || '').toLowerCase();
-                const isPlaylist = type === 'playlist' || (item.track && item.track.type === 'playlist');
-
-                // If it looks like a playlist, grab the ID
-                if (isPlaylist && item.track && item.track.id) {
-                    playlistIds.push(item.track.id);
-                }
-            });
-
-            // 3. VERIFY STATUS: Fetch fresh 'is_public' status directly from DB
-            // This ensures we don't rely on potentially missing fields in the activity join
-            const privacyMap = new Map<string, boolean>();
-            if (playlistIds.length > 0) {
-                const { data: statusData } = await supabase
-                    .from('playlists')
-                    .select('id, is_public')
-                    .in('id', playlistIds); // RLS will filter this too
-
-                if (statusData) {
-                    statusData.forEach(p => privacyMap.set(p.id, p.is_public ?? false));
-                }
-            }
-
-            // 4. FILTER: The Vacuum Cleaner
-            const validActivities = data.filter(activity => {
+            // Filter for data integrity only (not privacy - RLS handles that)
+            const validActivities = data.filter((activity: any) => {
                 const type = (activity.itemType || activity.item_type || activity.type || '').toLowerCase();
-                const isPlaylistActivity =
-                    type === 'playlist' ||
-                    (activity.track && activity.track.type === 'playlist');
+                const isPlaylistActivity = type === 'playlist' || (activity.track && activity.track.type === 'playlist');
 
+                // For playlists, ensure we have valid data
                 if (isPlaylistActivity) {
                     const playlistData = activity.track;
-
-                    // A. Data Integrity Check
-                    if (!playlistData || !playlistData.id || !playlistData.title) {
-                        return false;
-                    }
-
-                    // B. Privacy Verification
-                    // We check our fresh "privacyMap".
-                    const isPublic = privacyMap.get(playlistData.id);
-
-                    // Case 1: ID not found in map (RLS hid it, or it was deleted) -> REMOVE
-                    if (isPublic === undefined) return false;
-
-                    // Case 2: ID found, but is_public is false -> REMOVE
-                    if (isPublic === false) return false;
-
-                    // Case 3: Public -> KEEP
-                    return true;
+                    // Data integrity check only - privacy is handled by RLS
+                    return playlistData && playlistData.id && playlistData.title;
                 }
 
-                // Keep all other activities (Song ratings, artist follows, etc.)
+                // Keep all other activities
                 return true;
             });
 
