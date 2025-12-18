@@ -81,13 +81,13 @@ export const TrackCommunity: React.FC<TrackCommunityProps> = ({
                                     <img src={comment.profiles.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold">
-                                        {(comment.profiles?.display_name || comment.profiles?.username)?.[0]?.toUpperCase() || '?'}
+                                        {(comment.profiles?.display_name || comment.profiles?.username)?.[0]?.toUpperCase() || 'P'}
                                     </div>
                                 )}
                             </div>
                             <div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-white text-sm font-bold">{comment.profiles?.display_name || comment.profiles?.username || 'Unknown'}</span>
+                                    <span className="text-white text-sm font-bold">{comment.profiles?.display_name || comment.profiles?.username || 'Private User'}</span>
                                     <span className="text-gray-500 text-xs">{new Date(comment.created_at).toLocaleDateString()}</span>
                                 </div>
                                 <p className="text-gray-300 text-sm mt-1">{comment.content}</p>
