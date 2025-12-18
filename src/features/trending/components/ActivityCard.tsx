@@ -8,7 +8,12 @@ interface ActivityItem {
     created_at: string;
     value?: number;
     content?: string;
-    itemType?: string;
+    
+    // Support both casings for compatibility
+    itemType?: string; 
+    item_type?: string; 
+    
+    item_id?: string; // Fallback ID if not in track object
     
     user?: {
         id: string;
@@ -19,34 +24,58 @@ interface ActivityItem {
         id: string;
         title: string;
         artist: string;
+        // Check for both ID formats
+        artistId?: string; 
+        artist_id?: string;
+        albumId?: string;
     };
 }
 
 interface ActivityCardProps {
     activity: ActivityItem;
     index: number;
+    // Callbacks
+    onTrackClick?: (id: string) => void;
+    onArtistClick?: (idOrName: string) => void;
+    onAlbumClick?: (id: string) => void;
+    // [NEW] Added Prop
+    onPlaylistClick?: (id: string) => void;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ activity, index }) => {
+const ActivityCard: React.FC<ActivityCardProps> = ({ 
+    activity, 
+    index, 
+    onTrackClick, 
+    onArtistClick, 
+    onAlbumClick,
+    onPlaylistClick 
+}) => {
     if (!activity) return null;
+
+    // --- Safe Data Resolution ---
+    const type = activity.itemType || activity.item_type || '';
     
+    // Determine the ID: Use track.id if available, otherwise fallback to item_id
+    const itemId = activity.track?.id || activity.item_id;
+
+    // --- Helpers ---
+    const getBadgeInfo = () => {
+        if (type === 'playlist') return { text: 'PLAYLIST', icon: <ListMusic className="w-3 h-3 text-[#FFD1D1]" /> };
+        if (type === 'album') return { text: 'ALBUM', icon: <Disc className="w-3 h-3 text-[#FFD1D1]" /> };
+        return { text: 'TRACK', icon: <Music className="w-3 h-3 text-[#FFD1D1]" /> };
+    };
     const getRelativeTime = (dateString: string) => {
         if (!dateString) return '';
         const now = new Date();
         const then = new Date(dateString);
         const diffMs = now.getTime() - then.getTime();
         const diffMins = Math.floor(diffMs / 60000);
-
         if (diffMins < 1) return 'just now';
         if (diffMins < 60) return `${diffMins}m ago`;
-
         const diffHours = Math.floor(diffMins / 60);
         if (diffHours < 24) return `${diffHours}h ago`;
-
-        const diffDays = Math.floor(diffHours / 24);
-        return `${diffDays}d ago`;
+        return `${Math.floor(diffHours / 24)}d ago`;
     };
-
     const getActionText = () => {
         switch (activity.type) {
             case 'rating': return 'rated';
@@ -57,30 +86,46 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, index }) => {
         }
     };
 
-    const getBadgeInfo = () => {
-        if (activity.itemType === 'playlist') {
-            return { text: 'PLAYLIST', icon: <ListMusic className="w-3 h-3 text-[#FFD1D1]" /> };
-        }
-        if (activity.itemType === 'album') {
-            return { text: 'ALBUM', icon: <Disc className="w-3 h-3 text-[#FFD1D1]" /> };
-        }
-        return { text: 'MUSIC', icon: <Music className="w-3 h-3 text-[#FFD1D1]" /> };
-    };
-
+    // --- Data Extraction ---
     const badge = getBadgeInfo();
     const displayName = activity.user?.display_name || 'Anonymous';
-    const avatarUrl = activity.user?.avatar_url;
     const title = activity.track?.title || 'Unknown Title';
-    const artist = activity.track?.artist || 'Unknown Artist';
+    const artistName = activity.track?.artist || 'Unknown Artist';
+    
+    const artistId = activity.track?.artistId || activity.track?.artist_id;
 
-    // DEBUG: Log ONLY if the title is missing so we don't spam the console
-if (!activity.track?.title) {
-    console.warn('⚠️ Found broken activity:', {
-        id: activity.id,
-        type: activity.type,
-        fullObject: activity
-    });
-}
+    // --- Click Handlers ---
+
+    const handleArtistClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (artistId) {
+            onArtistClick?.(artistId);
+        } 
+        else if (artistName) {
+            onArtistClick?.(artistName);
+        }
+    };
+
+    const handleTitleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        
+        // [UPDATED] Robust Check for Playlist Type
+        if (type === 'playlist' && itemId) {
+            if (onPlaylistClick) {
+                onPlaylistClick(itemId);
+            } else {
+                console.warn("onPlaylistClick prop is missing or undefined");
+            }
+            return;
+        }
+
+        // Existing Checks
+        if (type === 'album' && (itemId || activity.track?.albumId)) {
+            onAlbumClick?.(itemId || activity.track?.albumId!);
+        } else if (itemId) {
+            onTrackClick?.(itemId);
+        }
+    };
 
     return (
         <motion.div
@@ -92,36 +137,50 @@ if (!activity.track?.title) {
             <div className="flex gap-4">
                 {/* --- LEFT ICON SECTION  --- */}
                 <div className="flex-shrink-0">
-                    {/* Always show the Icon, never the Profile Picture */}
                     <div className="w-10 h-10 rounded-full bg-[#FFD1D1]/10 flex items-center justify-center border border-[#D1D1D1]/5">
                         {activity.type === 'rating' && <Star className="w-5 h-5 fill-[#FFD1D1] text-[#FFD1D1]" />}
                         {activity.type === 'comment' && <MessageCircle className="w-5 h-5 text-[#FFD1D1]" />}
                         {activity.type === 'favorite' && <Heart className="w-5 h-5 fill-[#FFD1D1] text-[#FFD1D1]" />}
                         {activity.type === 'tag' && <Tag className="w-5 h-5 text-[#FFD1D1]" />}
-                        {/* Fallback for unknown types */}
                         {!['rating', 'comment', 'favorite', 'tag'].includes(activity.type) && <Activity className="w-5 h-5 text-[#FFD1D1]" />}
                     </div>
                 </div>
 
                 {/* --- CONTENT SECTION --- */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="text-sm text-[#D1D1D1] leading-relaxed">
-                            <span className="font-semibold text-[#FFD1D1] hover:underline cursor-pointer">
-                                {displayName}
-                            </span>
-                            {' '}{getActionText()}{' '}
-                            
-                            <span className="font-medium text-white">
-                                {title}
-                            </span>
-                            
-                            <span className="text-[#D1D1D1]/50 ml-1">
-                                by {artist}
-                            </span>
-                        </div>
+                    <div className="flex flex-wrap items-center gap-x-1 mb-1 text-sm text-[#D1D1D1] leading-relaxed">
+                        
+                        <span className="font-semibold text-[#FFD1D1] hover:underline cursor-pointer">
+                            {displayName}
+                        </span>
+                        <span>{getActionText()}</span>
+                        
+                        <button 
+                            onClick={handleTitleClick}
+                            className="font-bold text-white hover:text-[#FFD1D1] hover:underline transition-colors text-left"
+                        >
+                            {title}
+                        </button>
+                        
+                        <span className="text-[#D1D1D1]/50">by</span>
 
-                        <div className="flex items-center gap-1 text-xs text-[#D1D1D1]/40 flex-shrink-0 whitespace-nowrap mt-1">
+                        {/* --- CONDITIONAL ARTIST RENDERING --- */}
+                        {type === 'playlist' ? (
+                            <span className="font-medium text-[#D1D1D1]">
+                                {artistName}
+                            </span>
+                        ) : (
+                            <button 
+                                onClick={handleArtistClick}
+                                disabled={!artistId && !artistName} 
+                                className="font-medium text-[#D1D1D1] hover:text-white hover:underline transition-colors cursor-pointer"
+                            >
+                                {artistName}
+                            </button>
+                        )}
+                        {/* ------------------------------------ */}
+
+                        <div className="flex items-center gap-1 text-xs text-[#D1D1D1]/40 flex-shrink-0 whitespace-nowrap ml-auto">
                             <Clock className="w-3 h-3" />
                             {getRelativeTime(activity.created_at)}
                         </div>

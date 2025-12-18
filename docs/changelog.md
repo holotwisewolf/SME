@@ -195,3 +195,10 @@
   - **added route in App.tsx**
     - import UserProfile from "./features/user/user_pages/UserProfile";
     - have added comment "{/* ADDED PROFILE ROUTES */}" for easy find out.
+
+### 2025-12-18(Eric)
+  - **src/pages/discovery/CommunityActivity.tsx**
+    - Implemeted 4 clickable popups (ExpandedPlaylistCard for playlist, ArtistDetailModal for artist,ExpandedAlbumCard for album and TrackReviewModal for tracks) inside CommunityActivity
+
+  - **src/features/trending/components/ActivityCard.tsx**
+    - Made Changes to help support the community activity such as hovering to the artist, albums, tracks and playlists. ((Display underline) 

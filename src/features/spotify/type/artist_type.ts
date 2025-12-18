@@ -8,7 +8,7 @@ export interface Artist {
 }
 
 export interface ArtistFullDetail extends Artist {
-    followers?: number;
+    followers?: { total: number } | number;
     externalUrl?: string;
     topTracks?: string[];
     relatedArtists?: string[];
