@@ -15,7 +15,7 @@ const MAX_CONCURRENT_REQUESTS = 3;
 const REQUEST_DELAY_MS = 100; // Delay between requests
 const MAX_RETRIES = 3;
 const RETRY_DELAY_BASE = 1000; // Base delay for exponential backoff
-const CIRCUIT_BREAKER_COOLDOWN_MS = 30000; // 30 second cooldown when rate limited
+const CIRCUIT_BREAKER_COOLDOWN_MS = 60000; // 60 second (1 minute) cooldown when rate limited
 
 // Request queue management
 let activeRequests = 0;
@@ -71,7 +71,7 @@ function openCircuitBreaker(retryAfterSeconds: number) {
   requestQueue.length = 0;
 
   const message = `Spotify rate limit hit. Requests paused for ${Math.ceil(cooldownMs / 1000)} seconds.`;
-  console.warn(`🛑 Circuit breaker opened: ${message}`);
+  console.warn(`Circuit breaker opened: ${message}`);
   notifyRateLimitError(message);
 }
 
