@@ -8,7 +8,7 @@ import { getRecentActivity } from '../../features/trending/services/trending_ser
 import { supabase } from '../../lib/supabaseClient';
 import { getSession } from '../../features/auth/services/auth_services';
 import { useError } from '../../context/ErrorContext';
-import { ExpandedPlaylistCard } from '../../features/playlist/components/expanded_card/ExpandedPlaylistCard'; 
+import { ExpandedPlaylistCard } from '../../features/playlist/components/expanded_card/ExpandedPlaylistCard';
 import type { Tables } from '../../types/supabase';
 
 // Import Modals
@@ -17,10 +17,10 @@ import { ArtistDetailModal } from '../../features/spotify/components/ArtistDetai
 import { ExpandedAlbumCard } from '../../features/favourites/favourites_albums/components/expanded_card/ExpandedAlbumCard';
 
 // Import Services
-import { 
-    getTrackDetails, 
-    getArtistDetails, 
-    searchArtists 
+import {
+    getTrackDetails,
+    getArtistDetails,
+    searchArtists
 } from '../../features/spotify/services/spotify_services';
 
 import type { SpotifyTrack } from '../../features/spotify/type/spotify_types';
@@ -40,7 +40,7 @@ const CommunityActivity: React.FC = () => {
     const [selectedArtist, setSelectedArtist] = useState<ArtistFullDetail | null>(null);
     const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Tables<'playlists'> | null>(null);
-    
+
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
     // --- REALTIME SUBSCRIPTION ---
@@ -59,12 +59,12 @@ const CommunityActivity: React.FC = () => {
                 { event: 'INSERT', schema: 'public', table: 'activities' },
                 (payload) => {
                     console.log('⚡ New Activity Detected:', payload);
-                    fetchActivities(); 
+                    fetchActivities();
                 }
             )
             .on(
                 'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'playlists' }, 
+                { event: 'UPDATE', schema: 'public', table: 'playlists' },
                 (payload) => {
                     console.log('⚡ Playlist Updated (Privacy Change):', payload);
                     fetchActivities(); // Re-fetch to apply filtering rules based on new privacy status
@@ -80,7 +80,7 @@ const CommunityActivity: React.FC = () => {
     const fetchActivities = async () => {
         // Only show spinner on empty list to prevent flashing during live updates
         if (activities.length === 0) setLoading(true);
-        
+
         try {
             // 1. Get raw activity feed
             const data = await getRecentActivity(50);
@@ -90,7 +90,7 @@ const CommunityActivity: React.FC = () => {
             data.forEach((item: any) => {
                 const type = (item.itemType || item.item_type || item.type || '').toLowerCase();
                 const isPlaylist = type === 'playlist' || (item.track && item.track.type === 'playlist');
-                
+
                 // If it looks like a playlist, grab the ID
                 if (isPlaylist && item.track && item.track.id) {
                     playlistIds.push(item.track.id);
@@ -105,7 +105,7 @@ const CommunityActivity: React.FC = () => {
                     .from('playlists')
                     .select('id, is_public')
                     .in('id', playlistIds); // RLS will filter this too
-                
+
                 if (statusData) {
                     statusData.forEach(p => privacyMap.set(p.id, p.is_public ?? false));
                 }
@@ -114,8 +114,8 @@ const CommunityActivity: React.FC = () => {
             // 4. FILTER: The Vacuum Cleaner
             const validActivities = data.filter(activity => {
                 const type = (activity.itemType || activity.item_type || activity.type || '').toLowerCase();
-                const isPlaylistActivity = 
-                    type === 'playlist' || 
+                const isPlaylistActivity =
+                    type === 'playlist' ||
                     (activity.track && activity.track.type === 'playlist');
 
                 if (isPlaylistActivity) {
@@ -123,7 +123,7 @@ const CommunityActivity: React.FC = () => {
 
                     // A. Data Integrity Check
                     if (!playlistData || !playlistData.id || !playlistData.title) {
-                        return false; 
+                        return false;
                     }
 
                     // B. Privacy Verification
@@ -132,14 +132,14 @@ const CommunityActivity: React.FC = () => {
 
                     // Case 1: ID not found in map (RLS hid it, or it was deleted) -> REMOVE
                     if (isPublic === undefined) return false;
-                    
+
                     // Case 2: ID found, but is_public is false -> REMOVE
                     if (isPublic === false) return false;
 
                     // Case 3: Public -> KEEP
                     return true;
                 }
-                
+
                 // Keep all other activities (Song ratings, artist follows, etc.)
                 return true;
             });
@@ -247,7 +247,7 @@ const CommunityActivity: React.FC = () => {
             if (!isPublic && !isOwner) {
                 showError("Cant view this playlist cz it is private");
                 setIsLoadingDetails(false);
-                return; 
+                return;
             }
 
             setSelectedPlaylist(playlist);
@@ -286,7 +286,7 @@ const CommunityActivity: React.FC = () => {
                             <Activity className="w-6 h-6 text-[#FFD1D1]" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-bold text-[#D1D1D1] tracking-tight">Community Activity</h1>
+                            <h1 className="text-4xl font-bold text-[#FFD1D1] tracking-tight">Community Activity</h1>
                             <p className="text-[#D1D1D1]/60 mt-1">Real-time feed of community interactions</p>
                         </div>
                     </div>
@@ -307,17 +307,15 @@ const CommunityActivity: React.FC = () => {
                     <button
                         key={type.value}
                         onClick={() => setFilterType(type.value)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                            filterType === type.value
-                                ? 'bg-[#FFD1D1] text-black'
-                                : 'bg-[#292929] text-[#D1D1D1]/70 hover:text-[#D1D1D1] border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30'
-                        }`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${filterType === type.value
+                            ? 'bg-[#FFD1D1] text-black'
+                            : 'bg-[#292929] text-[#D1D1D1]/70 hover:text-[#D1D1D1] border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30'
+                            }`}
                     >
                         {type.label}
                         {type.count > 0 && (
-                            <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs ${
-                                filterType === type.value ? 'bg-black/20' : 'bg-[#FFD1D1]/10'
-                            }`}>
+                            <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs ${filterType === type.value ? 'bg-black/20' : 'bg-[#FFD1D1]/10'
+                                }`}>
                                 {type.count}
                             </span>
                         )}
@@ -338,14 +336,14 @@ const CommunityActivity: React.FC = () => {
                 ) : (
                     <div className="space-y-3 pb-4">
                         {filteredActivities.map((activity, index) => (
-                            <ActivityCard 
-                                key={activity.id} 
-                                activity={activity} 
-                                index={index} 
+                            <ActivityCard
+                                key={activity.id}
+                                activity={activity}
+                                index={index}
                                 onTrackClick={handleTrackClick}
                                 onArtistClick={handleArtistClick}
                                 onAlbumClick={handleAlbumClick}
-                                onPlaylistClick={handlePlaylistClick} 
+                                onPlaylistClick={handlePlaylistClick}
                             />
                         ))}
                     </div>
@@ -353,30 +351,30 @@ const CommunityActivity: React.FC = () => {
             </div>
 
             {/* --- MODALS --- */}
-            
+
             {selectedTrack && (
-                <TrackReviewModal 
-                    track={selectedTrack} 
-                    onClose={() => setSelectedTrack(null)} 
+                <TrackReviewModal
+                    track={selectedTrack}
+                    onClose={() => setSelectedTrack(null)}
                 />
             )}
 
             {selectedArtist && (
-                <ArtistDetailModal 
-                    artist={selectedArtist} 
+                <ArtistDetailModal
+                    artist={selectedArtist}
                     onClose={handleCloseArtistModal}
                 />
             )}
 
             {selectedAlbumId && (
-                <ExpandedAlbumCard 
-                    albumId={selectedAlbumId} 
-                    onClose={() => setSelectedAlbumId(null)} 
+                <ExpandedAlbumCard
+                    albumId={selectedAlbumId}
+                    onClose={() => setSelectedAlbumId(null)}
                 />
             )}
 
             {selectedPlaylist && (
-                <ExpandedPlaylistCard 
+                <ExpandedPlaylistCard
                     playlist={selectedPlaylist}
                     onClose={() => setSelectedPlaylist(null)}
                     onTitleChange={(newTitle) => setSelectedPlaylist(prev => prev ? { ...prev, title: newTitle } : null)}
@@ -389,9 +387,9 @@ const CommunityActivity: React.FC = () => {
             )}
 
             {isLoadingDetails && (
-                 <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-none">
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-none">
                     <LoadingSpinner />
-                 </div>
+                </div>
             )}
         </div>
     );
