@@ -559,6 +559,7 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
 
 /**
  * Get community quick statistics
+ * * ENHANCED: Now includes favorites and tagging as active behavior
  */
 export async function getCommunityQuickStats(): Promise<{
     totalItems: number;
@@ -567,36 +568,37 @@ export async function getCommunityQuickStats(): Promise<{
     thisWeek: number;
 }> {
     try {
-        // Get total items count
+        // 1. Get basic counts
         const { count: totalItems } = await supabase
             .from('item_stats')
             .select('*', { count: 'exact', head: true });
 
-        // Get total members (all users in profiles table)
         const { count: totalMembers } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true });
 
-        // Get current active users (users who have rated/commented in last 30 days)
+        // 2. Define 30-day threshold
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const threshold = thirtyDaysAgo.toISOString();
 
-        const { data: activeRaters } = await supabase
-            .from('ratings')
-            .select('user_id')
-            .gte('created_at', thirtyDaysAgo.toISOString());
-
-        const { data: activeCommenters } = await supabase
-            .from('comments')
-            .select('user_id')
-            .gte('created_at', thirtyDaysAgo.toISOString());
-
-        const uniqueActiveUsers = new Set([
-            ...(activeRaters?.map(r => r.user_id) || []),
-            ...(activeCommenters?.map(c => c.user_id) || [])
+        // 3. Fetch user IDs from ALL interactive tables to determine activity
+        const [ratings, comments, favorites, tags] = await Promise.all([
+            supabase.from('ratings').select('user_id').gte('created_at', threshold),
+            supabase.from('comments').select('user_id').gte('created_at', threshold),
+            supabase.from('favorites').select('user_id').gte('created_at', threshold),
+            supabase.from('item_tags').select('user_id').gte('created_at', threshold)
         ]);
 
-        // Get items added this week
+        // 4. Combine into a Set to get unique active users
+        const activeUsersSet = new Set([
+            ...(ratings.data?.map(r => r.user_id) || []),
+            ...(comments.data?.map(c => c.user_id) || []),
+            ...(favorites.data?.map(f => f.user_id) || []),
+            ...(tags.data?.map(t => t.user_id) || [])
+        ]);
+
+        // 5. Get new items added this week
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -608,17 +610,12 @@ export async function getCommunityQuickStats(): Promise<{
         return {
             totalItems: totalItems || 0,
             totalMembers: totalMembers || 0,
-            currentActiveUsers: uniqueActiveUsers.size,
+            currentActiveUsers: activeUsersSet.size, // This will now be more accurate
             thisWeek: thisWeek || 0,
         };
 
     } catch (error) {
         console.error('Error fetching community stats:', error);
-        return {
-            totalItems: 0,
-            totalMembers: 0,
-            currentActiveUsers: 0,
-            thisWeek: 0,
-        };
+        return { totalItems: 0, totalMembers: 0, currentActiveUsers: 0, thisWeek: 0 };
     }
 }

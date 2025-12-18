@@ -199,7 +199,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                                 <span className="text-sm font-bold text-[#FFD1D1]">{stats.totalMembers.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-xs text-[#D1D1D1]/60">Current Active Users</span>
+                                <span className="text-xs text-[#D1D1D1]/60">Active Users This Month</span>
                                 <span className="text-sm font-bold text-[#FFD1D1]">{stats.currentActiveUsers.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center">
