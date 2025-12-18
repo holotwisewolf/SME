@@ -54,8 +54,6 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     }, [initialTags]);
 
     const handleRate = async (rating: number) => {
-        if (!isEditingEnabled) return;
-
         try {
             if (userRating === rating) {
                 // Toggle off (delete rating)
@@ -125,32 +123,6 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
         } catch (error) {
             console.error('Error removing tag:', error);
             setTags(tags); // Revert
-        }
-    };
-
-    const [tempRating, setTempRating] = useState<string>(userRating?.toString() || '');
-
-    // Sync tempRating with userRating
-    React.useEffect(() => {
-        setTempRating(userRating?.toString() || '');
-    }, [userRating]);
-
-    const handleNumericRate = async (rating: number) => {
-        if (!isEditingEnabled) return;
-        try {
-            await updatePlaylistRating(playlistId, rating);
-            onRatingUpdate();
-        } catch (error) {
-            console.error('Error updating rating:', error);
-        }
-    };
-
-    const handleNumericSubmit = () => {
-        const val = parseFloat(tempRating);
-        if (!isNaN(val) && val >= 0 && val <= 5) {
-            handleNumericRate(val);
-        } else {
-            setTempRating(userRating?.toString() || ''); // Revert if invalid
         }
     };
 
@@ -243,8 +215,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                         <button
                             key={star}
                             onClick={() => handleRate(star)}
-                            disabled={!isEditingEnabled}
-                            className={`focus:outline-none transition-transform ${isEditingEnabled ? 'hover:scale-110 cursor-pointer' : 'cursor-default'}`}
+                            className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
                         >
                             <svg
                                 className={`w-5 h-5 ${star <= (userRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
@@ -256,23 +227,6 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                             </svg>
                         </button>
                     ))}
-                    {isEditingEnabled && (
-                        <div className="flex items-center gap-2 ml-2">
-                            <input
-                                type="number"
-                                min="0"
-                                max="5"
-                                step="0.1"
-                                value={tempRating}
-                                onChange={(e) => setTempRating(e.target.value)}
-                                onBlur={handleNumericSubmit}
-                                onKeyDown={(e) => e.key === 'Enter' && handleNumericSubmit()}
-                                className="w-12 px-0 py-0.5 bg-transparent border-b border-white/20 text-sm text-white focus:outline-none focus:border-[#1DB954] text-center font-medium appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                placeholder="-"
-                            />
-                            <span className="text-gray-500 text-sm font-light">/ 5</span>
-                        </div>
-                    )}
                 </div>
                 <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">{isOwner ? 'Rated by You' : `Rated by ${creatorName}`}</span>
             </div>

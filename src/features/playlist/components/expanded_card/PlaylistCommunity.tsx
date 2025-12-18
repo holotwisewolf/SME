@@ -104,7 +104,7 @@ export const PlaylistCommunity: React.FC<PlaylistCommunityProps> = ({
             {/* Community Tags Section */}
             <div className="mb-2">
                 <p className="text-gray-400 text-xs mb-2">Community Tags:</p>
-                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 max-h-[80px] overflow-y-auto custom-scrollbar flex items-start">
+                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 max-h-[80px] overflow-y-auto subtle-scrollbar flex items-start">
                     {tags && tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {tags.map((tag, index) => (
