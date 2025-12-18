@@ -62,12 +62,12 @@ export async function spotifyFetch<T = any>(
       "Content-Type": "application/json",
       ...(fetchOptions.headers || {}),
     },
-  });
+  })
 
-  // ✅ 新增：检查 429 错误和 Retry-After 时间
+  // Check for 429 errors and retry-after headers
   if (res.status === 429) {
     const retryAfter = res.headers.get('Retry-After');
-    console.error(`🚫 API Rate Limit Hit! You are banned for ${retryAfter} seconds.`);
+    console.error(`API Rate Limit Hit! You are banned for ${retryAfter} seconds.`);
     throw new Error(`Spotify API Rate Limit Exceeded. Try again in ${retryAfter} seconds.`);
   }
 
