@@ -15,11 +15,65 @@ const MAX_CONCURRENT_REQUESTS = 3;
 const REQUEST_DELAY_MS = 100; // Delay between requests
 const MAX_RETRIES = 3;
 const RETRY_DELAY_BASE = 1000; // Base delay for exponential backoff
+const CIRCUIT_BREAKER_COOLDOWN_MS = 30000; // 30 second cooldown when rate limited
 
 // Request queue management
 let activeRequests = 0;
 const requestQueue: (() => void)[] = [];
 const pendingRequests = new Map<string, Promise<any>>(); // Deduplication
+
+// Circuit breaker state - blocks ALL requests when rate limited
+let isCircuitOpen = false;
+let circuitOpenUntil: number = 0;
+let rateLimitCallbacks: ((message: string) => void)[] = [];
+
+/**
+ * Register a callback to be notified when rate limit is hit
+ * Used by components to show error messages via ErrorContext
+ */
+export function onRateLimitError(callback: (message: string) => void): () => void {
+  rateLimitCallbacks.push(callback);
+  return () => {
+    rateLimitCallbacks = rateLimitCallbacks.filter(cb => cb !== callback);
+  };
+}
+
+/**
+ * Notify all registered callbacks about rate limit
+ */
+function notifyRateLimitError(message: string) {
+  rateLimitCallbacks.forEach(cb => cb(message));
+}
+
+/**
+ * Check if circuit breaker is open (blocking requests)
+ */
+export function isRateLimited(): boolean {
+  if (isCircuitOpen && Date.now() < circuitOpenUntil) {
+    return true;
+  }
+  // Auto-reset circuit if cooldown passed
+  if (isCircuitOpen && Date.now() >= circuitOpenUntil) {
+    isCircuitOpen = false;
+  }
+  return false;
+}
+
+/**
+ * Open the circuit breaker - blocks ALL requests for cooldown period
+ */
+function openCircuitBreaker(retryAfterSeconds: number) {
+  const cooldownMs = Math.max(retryAfterSeconds * 1000, CIRCUIT_BREAKER_COOLDOWN_MS);
+  isCircuitOpen = true;
+  circuitOpenUntil = Date.now() + cooldownMs;
+
+  // Clear the request queue - don't process any more
+  requestQueue.length = 0;
+
+  const message = `Spotify rate limit hit. Requests paused for ${Math.ceil(cooldownMs / 1000)} seconds.`;
+  console.warn(`🛑 Circuit breaker opened: ${message}`);
+  notifyRateLimitError(message);
+}
 
 /**
  * Process the next request in queue if capacity available
@@ -94,15 +148,21 @@ export async function getSpotifyToken(): Promise<string> {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Authenticated Spotify Fetch with Rate Limiting
+ * Authenticated Spotify Fetch with Rate Limiting + Circuit Breaker
  * - Limits concurrent requests to MAX_CONCURRENT_REQUESTS
  * - Deduplicates identical concurrent requests
- * - Retries on 429 with exponential backoff
+ * - Opens circuit breaker on 429 to block ALL requests
  */
 export async function spotifyFetch<T = any>(
   endpoint: string,
   fetchOptions: RequestInit = {}
 ): Promise<T> {
+  // Circuit breaker check - block immediately if rate limited
+  if (isRateLimited()) {
+    const waitTime = Math.ceil((circuitOpenUntil - Date.now()) / 1000);
+    throw new Error(`Spotify rate limited. Please wait ${waitTime} seconds.`);
+  }
+
   const url = endpoint.startsWith("http")
     ? endpoint
     : `https://api.spotify.com/v1/${endpoint}`;
@@ -114,64 +174,47 @@ export async function spotifyFetch<T = any>(
   }
 
   const executeRequest = async (): Promise<T> => {
-    let lastError: Error | null = null;
+    await waitForSlot();
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      await waitForSlot();
+    try {
+      const token = await getSpotifyToken();
 
-      try {
-        const token = await getSpotifyToken();
+      const res = await fetch(url, {
+        ...fetchOptions,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          ...(fetchOptions.headers || {}),
+        },
+      });
 
-        const res = await fetch(url, {
-          ...fetchOptions,
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            ...(fetchOptions.headers || {}),
-          },
-        });
-
-        // Handle rate limiting with retry
-        if (res.status === 429) {
-          releaseSlot();
-          const retryAfter = parseInt(res.headers.get('Retry-After') || '1', 10);
-          const delayMs = Math.max(retryAfter * 1000, RETRY_DELAY_BASE * Math.pow(2, attempt));
-          console.warn(`Rate limited. Retrying in ${delayMs}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
-          await sleep(delayMs);
-          continue;
-        }
-
+      // Handle rate limiting - OPEN CIRCUIT BREAKER to block all requests
+      if (res.status === 429) {
         releaseSlot();
-
-        if (!res.ok) {
-          const errorBody = await res.json().catch(() => null);
-          console.error("Spotify error response:", errorBody);
-
-          const msg =
-            errorBody?.error?.message ||
-            res.statusText ||
-            "Unknown Spotify API error";
-
-          throw new Error(`Spotify API Error ${res.status}: ${msg}`);
-        }
-
-        return res.json();
-      } catch (error) {
-        releaseSlot();
-        lastError = error as Error;
-
-        // Only retry on network errors or rate limits, not on other API errors
-        if (attempt < MAX_RETRIES - 1 && (error as Error).message?.includes('Rate Limit')) {
-          const delayMs = RETRY_DELAY_BASE * Math.pow(2, attempt);
-          console.warn(`Request failed. Retrying in ${delayMs}ms...`);
-          await sleep(delayMs);
-          continue;
-        }
-        throw error;
+        const retryAfter = parseInt(res.headers.get('Retry-After') || '30', 10);
+        openCircuitBreaker(retryAfter);
+        throw new Error(`Spotify rate limited. Please wait ${retryAfter} seconds.`);
       }
-    }
 
-    throw lastError || new Error('Max retries exceeded');
+      releaseSlot();
+
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => null);
+        console.error("Spotify error response:", errorBody);
+
+        const msg =
+          errorBody?.error?.message ||
+          res.statusText ||
+          "Unknown Spotify API error";
+
+        throw new Error(`Spotify API Error ${res.status}: ${msg}`);
+      }
+
+      return res.json();
+    } catch (error) {
+      releaseSlot();
+      throw error;
+    }
   };
 
   // Store promise for deduplication
