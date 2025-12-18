@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Clock, Activity, ExternalLink } from 'lucide-react';
 import { getTrendingTags, getRecentActivity, getCommunityQuickStats } from '../services/trending_services';
+import { supabase } from '../../../lib/supabaseClient';
 import type { TrendingFilters } from '../types/trending';
 
 interface DiscoverySidebarProps {
@@ -18,6 +19,19 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
 
     useEffect(() => {
         fetchSidebarData();
+
+        // Realtime subscription for community stats updates
+        const channel = supabase.channel('discovery-sidebar-realtime')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ratings' }, () => fetchSidebarData())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, () => fetchSidebarData())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'favorites' }, () => fetchSidebarData())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'item_tags' }, () => fetchSidebarData())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activities' }, () => fetchSidebarData())
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     const fetchSidebarData = async () => {
