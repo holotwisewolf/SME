@@ -450,17 +450,47 @@ export async function reorderPlaylistTracks(tracks: { id: string; position: numb
     await Promise.all(updates);
 }
 
+// services/playlist_services.ts
+
 export async function uploadPlaylistImage(playlistId: string, file: File): Promise<string> {
-    const fileName = `${playlistId}`;
-    const filePath = `${fileName}`;
+    
+    // 1. Get current logged-in user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+        throw new Error("User not logged in");
+    }
+
+    // 2. Define file path: "UserID/PlaylistID"
+    // This organizes images by user folder
+    const filePath = `${user.id}/${playlistId}`;
+
+    // 3. Upload image to 'playlisting' bucket
     const { error: uploadError } = await supabase.storage
-        .from('playlists')
+        .from('playlistimg') 
         .upload(filePath, file, { upsert: true });
 
     if (uploadError) throw uploadError;
+
+    // 4. Get the Public URL
     const { data: { publicUrl } } = supabase.storage
-        .from('playlists')
+        .from('playlistimg') 
         .getPublicUrl(filePath);
+
+    // =========== [NEW STEP] ===========
+    // 5. Update the Database with the new URL
+    // The website reads from this table to show the image
+    const { error: dbError } = await supabase
+        .from('playlists')             // Your table name
+        .update({ playlistimg_url: publicUrl })// <--- CHECK THIS: is your column named 'image_path' or 'image_url'?
+        .eq('id', playlistId);         // Find the correct playlist
+
+    if (dbError) {
+        console.error("Failed to update database:", dbError);
+        throw dbError;
+    }
+    // ==================================
+
     return publicUrl;
 }
 
