@@ -29,6 +29,8 @@ import { PlaylistSettings } from './PlaylistSettings';
 import { PlaylistReview } from './PlaylistReview';
 import ExpandButton from '../../../../components/ui/ExpandButton';
 import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
+import { exportPlaylistToSpotify, isSpotifyConnected } from '../../../spotify/services/spotify_auth';
+import { useConfirmation } from '../../../../context/ConfirmationContext';
 import type { EnhancedPlaylist } from '../../services/playlist_services';
 
 interface ExpandedPlaylistCardProps {
@@ -77,6 +79,8 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [searchQuery, setSearchQuery] = useState('');
     const [isOwner, setIsOwner] = useState(false);
     const [isFavourite, setIsFavourite] = useState(false);
+
+    const { showConfirmation } = useConfirmation();
 
     useEffect(() => {
         const checkOwnership = async () => {
@@ -244,10 +248,59 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     };
 
     const handleExportToSpotify = async () => {
-        showError('Export to Spotify feature coming soon!');
+        const confirmed = await showConfirmation({
+            title: 'Export to Spotify',
+            message: `Export "${playlist.title}" to your Spotify account? This will create a new playlist.`,
+            confirmText: 'Export',
+            variant: 'primary'
+        });
+        if (!confirmed) return;
+
+        try {
+            const connected = await isSpotifyConnected();
+            if (!connected) {
+                showError('Please sign in with Spotify to export playlists');
+                return;
+            }
+
+            const trackSpotifyIds = tracks
+                .map(t => t.spotify_track_id)
+                .filter((id): id is string => !!id);
+
+            if (trackSpotifyIds.length === 0) {
+                showError('No tracks to export');
+                return;
+            }
+
+            const result = await exportPlaylistToSpotify(
+                playlist.title || 'Untitled Playlist',
+                playlist.description,
+                trackSpotifyIds
+            );
+
+            if (result.success) {
+                showSuccess(`Playlist exported to Spotify!${result.playlistUrl ? ' Opening...' : ''}`);
+                if (result.playlistUrl) {
+                    window.open(result.playlistUrl, '_blank');
+                }
+            } else {
+                showError(result.error || 'Failed to export playlist');
+            }
+        } catch (error) {
+            console.error('Error exporting to Spotify:', error);
+            showError('Failed to export playlist to Spotify');
+        }
     };
 
     const handleCopyPlaylist = async () => {
+        const confirmed = await showConfirmation({
+            title: 'Copy Playlist',
+            message: `Create a copy of "${playlist.title}" in your library?`,
+            confirmText: 'Copy',
+            variant: 'primary'
+        });
+        if (!confirmed) return;
+
         try {
             const newPlaylist = await copyPlaylist(playlist.id);
             showSuccess(`Playlist copied as "${newPlaylist.title}"`);
@@ -258,34 +311,59 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     };
 
     const handleDeletePlaylist = async () => {
-        if (window.confirm('Are you sure you want to delete this playlist?')) {
-            try {
-                await deletePlaylist(playlist.id);
-                showSuccess('Playlist deleted');
-                if (onDeletePlaylist) onDeletePlaylist();
-                if (onClose) onClose();
-            } catch (error) {
-                console.error('Error deleting playlist:', error);
-                showError('Failed to delete playlist');
-            }
+        const confirmed = await showConfirmation({
+            title: 'Delete Playlist',
+            message: `Are you sure you want to delete "${playlist.title}"? This action cannot be undone.`,
+            confirmText: 'Delete',
+            variant: 'danger'
+        });
+        if (!confirmed) return;
+
+        try {
+            await deletePlaylist(playlist.id);
+            showSuccess('Playlist deleted');
+            if (onDeletePlaylist) onDeletePlaylist();
+            if (onClose) onClose();
+        } catch (error) {
+            console.error('Error deleting playlist:', error);
+            showError('Failed to delete playlist');
         }
     };
 
     const handleToggleFavourite = async () => {
         const willBeFavourite = !isFavourite;
-        setIsFavourite(willBeFavourite);
-        try {
-            if (willBeFavourite) {
-                await addToFavourites(playlist.id, 'playlist');
-                showSuccess('Playlist added to favourites');
-            } else {
+
+        if (!willBeFavourite) {
+            // Removing favourite - show confirmation first
+            const confirmed = await showConfirmation({
+                title: 'Remove from Favourites',
+                message: `Remove "${playlist.title}" from your favourites?`,
+                confirmText: 'Remove',
+                variant: 'danger'
+            });
+            if (!confirmed) return;
+
+            setIsFavourite(false);
+            try {
                 await removeFromFavourites(playlist.id, 'playlist');
                 showSuccess('Playlist removed from favourites');
+            } catch (error) {
+                console.error('Error removing from favourites:', error);
+                setIsFavourite(true);
+                showError('Failed to remove from favourites');
             }
+            return;
+        }
+
+        // Adding favourite - no confirmation needed
+        setIsFavourite(true);
+        try {
+            await addToFavourites(playlist.id, 'playlist');
+            showSuccess('Playlist added to favourites');
         } catch (error) {
-            console.error('Error toggling favourite:', error);
-            setIsFavourite(!willBeFavourite); // Revert
-            showError('Failed to update favourite status');
+            console.error('Error adding to favourites:', error);
+            setIsFavourite(false);
+            showError('Failed to add to favourites');
         }
     };
 

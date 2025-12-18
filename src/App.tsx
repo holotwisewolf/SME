@@ -32,6 +32,7 @@ import { ErrorProvider } from "./context/ErrorContext";
 import ErrorMessage from "./components/ui/ErrorMessage";
 import { SuccessProvider } from "./context/SuccessContext";
 import SuccessMessage from "./components/ui/SuccessMessage";
+import { ConfirmationProvider } from "./context/ConfirmationContext";
 
 //new added for UserProfile
 import UserProfile from "./features/user/user_pages/UserProfile";
@@ -41,173 +42,175 @@ function App() {
   return (
     <ErrorProvider>
       <SuccessProvider>
-        <ErrorMessage />
-        <SuccessMessage />
-        <LoginProvider>
-          <AnimatePresence mode="wait">
-            {location.pathname === "/signup" && (
-              <SignUpPage key="signup" />
-            )}
-            {location.pathname === "/setup-profile" && (
-              <SetUpUserProfile key="setup-profile" />
-            )}
-            {location.pathname === "/account" && (
-              <UserAccount key="account" />
-            )}
-            {location.pathname === "/settings" && (
-              <UserSettings key="settings" />
-            )}
-          </AnimatePresence>
+        <ConfirmationProvider>
+          <ErrorMessage />
+          <SuccessMessage />
+          <LoginProvider>
+            <AnimatePresence mode="wait">
+              {location.pathname === "/signup" && (
+                <SignUpPage key="signup" />
+              )}
+              {location.pathname === "/setup-profile" && (
+                <SetUpUserProfile key="setup-profile" />
+              )}
+              {location.pathname === "/account" && (
+                <UserAccount key="account" />
+              )}
+              {location.pathname === "/settings" && (
+                <UserSettings key="settings" />
+              )}
+            </AnimatePresence>
 
-          <Layout>
-            <div className="flex flex-col h-full">
+            <Layout>
+              <div className="flex flex-col h-full">
 
-              {/* Sticky Header */}
-              <div className="shrink-0 z-40 sticky top-0">
-                <Header />
+                {/* Sticky Header */}
+                <div className="shrink-0 z-40 sticky top-0">
+                  <Header />
+                </div>
+
+                {/* Animated Page Transitions */}
+                <AnimatePresence mode="wait">
+                  <Routes location={location} key={location.pathname}>
+
+                    {/* HOME → redirect */}
+                    <Route path="/" element={<Navigate to="/library/playlists" replace />} />
+
+                    {/* LIBRARY --------------------- */}
+                    <Route path="/library">
+                      <Route index element={<Navigate to="playlists" replace />} />
+
+                      <Route
+                        path="playlists"
+                        element={
+                          <PageWrapper>
+                            <LibraryPlaylists />
+                          </PageWrapper>
+                        }
+                      />
+                      <Route
+                        path="tracks"
+                        element={
+                          <PageWrapper>
+                            <LibraryTracks />
+                          </PageWrapper>
+                        }
+                      />
+                      <Route
+                        path="albums"
+                        element={
+                          <PageWrapper>
+                            <LibraryAlbums />
+                          </PageWrapper>
+                        }
+                      />
+                    </Route>
+
+
+
+                    {/* INFO */}
+                    <Route
+                      path="/info"
+                      element={
+                        <PageWrapper>
+                          <Info />
+                        </PageWrapper>
+                      }
+                    />
+
+                    {/* DISCOVERY --------------------- */}
+                    <Route path="/discovery">
+                      <Route
+                        path="dashboard"
+                        element={
+                          <PageWrapper>
+                            <Dashboard />
+                          </PageWrapper>
+                        }
+                      />
+                      <Route
+                        path="community-activity"
+                        element={
+                          <PageWrapper>
+                            <CommunityActivity />
+                          </PageWrapper>
+                        }
+                      />
+                      <Route
+                        path="for-you"
+                        element={
+                          <PageWrapper>
+                            <ForYou />
+                          </PageWrapper>
+                        }
+                      />
+                    </Route>
+
+                    <Route path="/testing-ground" element={
+                      <DevRoute>
+                        <PageWrapper>
+                          <TestingGround />
+                        </PageWrapper>
+                      </DevRoute>
+                    }
+                    />
+
+                    {/* Overlay Routes (rendered by AnimatePresence above, but needed here for router matching) */}
+                    <Route path="/signup" element={<></>} />
+                    <Route path="/setup-profile" element={<></>} />
+                    <Route path="/account" element={<></>} />
+                    <Route path="/settings" element={<></>} />
+
+                    {/* ADDED PROFILE ROUTES  */}
+
+                    {/* USER PROFILE PUBLIC PAGES */}
+                    <Route
+                      path="/profile/:userId"
+                      element={
+                        <PageWrapper>
+                          <UserProfile />
+                        </PageWrapper>
+                      }
+                    />
+
+                    {/* DONE ADDED */}
+
+                    {/* SPOTIFY FULL PAGES */}
+                    <Route
+                      path="/tracksfullpage"
+                      element={
+                        <PageWrapper>
+                          <TracksFullPage />
+                        </PageWrapper>
+                      }
+                    />
+                    <Route
+                      path="/albumsfullpage"
+                      element={
+                        <PageWrapper>
+                          <AlbumsFullPage />
+                        </PageWrapper>
+                      }
+                    />
+                    <Route
+                      path="/artistsfullpage"
+                      element={
+                        <PageWrapper>
+                          <ArtistsFullPage />
+                        </PageWrapper>
+                      }
+                    />
+
+                  </Routes>
+
+
+                </AnimatePresence>
               </div>
+            </Layout>
 
-              {/* Animated Page Transitions */}
-              <AnimatePresence mode="wait">
-                <Routes location={location} key={location.pathname}>
-
-                  {/* HOME → redirect */}
-                  <Route path="/" element={<Navigate to="/library/playlists" replace />} />
-
-                  {/* LIBRARY --------------------- */}
-                  <Route path="/library">
-                    <Route index element={<Navigate to="playlists" replace />} />
-
-                    <Route
-                      path="playlists"
-                      element={
-                        <PageWrapper>
-                          <LibraryPlaylists />
-                        </PageWrapper>
-                      }
-                    />
-                    <Route
-                      path="tracks"
-                      element={
-                        <PageWrapper>
-                          <LibraryTracks />
-                        </PageWrapper>
-                      }
-                    />
-                    <Route
-                      path="albums"
-                      element={
-                        <PageWrapper>
-                          <LibraryAlbums />
-                        </PageWrapper>
-                      }
-                    />
-                  </Route>
-
-
-
-                  {/* INFO */}
-                  <Route
-                    path="/info"
-                    element={
-                      <PageWrapper>
-                        <Info />
-                      </PageWrapper>
-                    }
-                  />
-
-                  {/* DISCOVERY --------------------- */}
-                  <Route path="/discovery">
-                    <Route
-                      path="dashboard"
-                      element={
-                        <PageWrapper>
-                          <Dashboard />
-                        </PageWrapper>
-                      }
-                    />
-                    <Route
-                      path="community-activity"
-                      element={
-                        <PageWrapper>
-                          <CommunityActivity />
-                        </PageWrapper>
-                      }
-                    />
-                    <Route
-                      path="for-you"
-                      element={
-                        <PageWrapper>
-                          <ForYou />
-                        </PageWrapper>
-                      }
-                    />
-                  </Route>
-
-                  <Route path="/testing-ground" element={
-                    <DevRoute>
-                      <PageWrapper>
-                        <TestingGround />
-                      </PageWrapper>
-                    </DevRoute>
-                  }
-                  />
-
-                  {/* Overlay Routes (rendered by AnimatePresence above, but needed here for router matching) */}
-                  <Route path="/signup" element={<></>} />
-                  <Route path="/setup-profile" element={<></>} />
-                  <Route path="/account" element={<></>} />
-                  <Route path="/settings" element={<></>} />
-
-                  {/* ADDED PROFILE ROUTES  */}
-
-                  {/* USER PROFILE PUBLIC PAGES */}
-                  <Route
-                    path="/profile/:userId"
-                    element={
-                      <PageWrapper>
-                        <UserProfile />
-                      </PageWrapper>
-                    }
-                  />
-
-                  {/* DONE ADDED */}
-
-                  {/* SPOTIFY FULL PAGES */}
-                  <Route
-                    path="/tracksfullpage"
-                    element={
-                      <PageWrapper>
-                        <TracksFullPage />
-                      </PageWrapper>
-                    }
-                  />
-                  <Route
-                    path="/albumsfullpage"
-                    element={
-                      <PageWrapper>
-                        <AlbumsFullPage />
-                      </PageWrapper>
-                    }
-                  />
-                  <Route
-                    path="/artistsfullpage"
-                    element={
-                      <PageWrapper>
-                        <ArtistsFullPage />
-                      </PageWrapper>
-                    }
-                  />
-
-                </Routes>
-
-
-              </AnimatePresence>
-            </div>
-          </Layout>
-
-          <LoginDrawer />
-        </LoginProvider>
+            <LoginDrawer />
+          </LoginProvider>
+        </ConfirmationProvider>
       </SuccessProvider>
     </ErrorProvider>
   );

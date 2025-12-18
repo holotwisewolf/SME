@@ -35,26 +35,52 @@ export const getLatestTime = (item: { created_at: string; updated_at?: string | 
 // ==========================================
 
 export async function getEnhancedPlaylists(userId: string): Promise<{ playlists: EnhancedPlaylist[], favoriteIds: Set<string> }> {
-    // Use the enhanced_playlists_master view for pre-calculated stats
-    const { data: basePlaylists, error } = await supabase
+    // 1. First get user's favourited playlist IDs
+    const { data: favoritesRes, error: favError } = await supabase
+        .from('favorites')
+        .select('item_id')
+        .eq('user_id', userId)
+        .eq('item_type', 'playlist');
+
+    if (favError) throw favError;
+    const favoriteIds = new Set((favoritesRes || []).map(f => f.item_id));
+    const favoritedPlaylistIds = Array.from(favoriteIds);
+
+    // 2. Fetch owned playlists from view
+    const { data: ownedPlaylists, error: ownedError } = await supabase
         .from('enhanced_playlists_master')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    if (!basePlaylists || basePlaylists.length === 0) return { playlists: [], favoriteIds: new Set() };
+    if (ownedError) throw ownedError;
+
+    // 3. Fetch favourited playlists (from other users) if any exist
+    let favouritedPlaylists: typeof ownedPlaylists = [];
+    if (favoritedPlaylistIds.length > 0) {
+        const { data: favPlaylists, error: favPlaylistsError } = await supabase
+            .from('enhanced_playlists_master')
+            .select('*')
+            .in('id', favoritedPlaylistIds)
+            .neq('user_id', userId) // Exclude already-fetched owned playlists
+            .order('created_at', { ascending: false });
+
+        if (favPlaylistsError) throw favPlaylistsError;
+        favouritedPlaylists = favPlaylists || [];
+    }
+
+    // 4. Combine both lists
+    const basePlaylists = [...(ownedPlaylists || []), ...favouritedPlaylists];
+
+    if (basePlaylists.length === 0) return { playlists: [], favoriteIds };
 
     const playlistIds = basePlaylists.map(p => p.id).filter(Boolean) as string[];
 
-    // Fetch user-specific data (favorites, user ratings, user tags) - view doesn't include these
-    const [favoritesRes, userRatingsRes, userTagsRes] = await Promise.all([
-        supabase.from('favorites').select('item_id').eq('user_id', userId).eq('item_type', 'playlist'),
+    // Fetch user-specific data (user ratings, user tags) - view doesn't include these
+    const [userRatingsRes, userTagsRes] = await Promise.all([
         supabase.from('ratings').select('item_id, rating, created_at, updated_at').eq('item_type', 'playlist').eq('user_id', userId).in('item_id', playlistIds),
         supabase.from('item_tags').select('item_id, created_at, tags(name)').eq('item_type', 'playlist').eq('user_id', userId).in('item_id', playlistIds),
     ]);
-
-    const favoriteIds = new Set((favoritesRes.data || []).map(f => f.item_id));
 
     const playlists: EnhancedPlaylist[] = basePlaylists.map(p => {
         const userRating = userRatingsRes.data?.find(r => r.item_id === p.id);
