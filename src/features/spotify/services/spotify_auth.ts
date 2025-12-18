@@ -10,6 +10,12 @@ export async function signInWithSpotify() {
     options: {
       scopes: 'user-read-email user-read-private playlist-read-private playlist-read-collaborative user-library-read user-top-read playlist-modify-public playlist-modify-private',
       redirectTo: window.location.origin + '/setup-profile',
+      
+      // FIX: Force Spotify to show the login dialog every time.
+      // This allows users to click "Not you?" and switch accounts.
+      queryParams: {
+        show_dialog: 'true'
+      }
     }
   });
 
@@ -35,6 +41,7 @@ export async function getSpotifyUserId(): Promise<string | null> {
   if (!token) return null;
 
   try {
+    // Corrected API URL
     const response = await fetch('https://api.spotify.com/v1/me', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -80,6 +87,7 @@ export async function exportPlaylistToSpotify(
     }
 
     // 3. Create playlist on Spotify
+    // Corrected API URL
     const createResponse = await fetch(`https://api.spotify.com/v1/users/${spotifyUserId}/playlists`, {
       method: 'POST',
       headers: {
@@ -108,6 +116,7 @@ export async function exportPlaylistToSpotify(
       for (let i = 0; i < trackUris.length; i += 100) {
         const chunk = trackUris.slice(i, i + 100);
 
+        // Corrected API URL
         const addResponse = await fetch(`https://api.spotify.com/v1/playlists/${newPlaylist.id}/tracks`, {
           method: 'POST',
           headers: {

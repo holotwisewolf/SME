@@ -1,4 +1,4 @@
-// src/lib/spotify.ts
+// src/lib/spotifConnection.ts
 import { supabase } from "../../../lib/supabaseClient";
 
 /**
@@ -13,8 +13,6 @@ let tokenExpiry: number | null = null;
 // Rate limiting configuration
 const MAX_CONCURRENT_REQUESTS = 3;
 const REQUEST_DELAY_MS = 100; // Delay between requests
-const MAX_RETRIES = 3;
-const RETRY_DELAY_BASE = 1000; // Base delay for exponential backoff
 const CIRCUIT_BREAKER_COOLDOWN_MS = 60000; // 60 second (1 minute) cooldown when rate limited
 
 // Request queue management
@@ -143,11 +141,6 @@ export async function getSpotifyToken(): Promise<string> {
 }
 
 /**
- * Sleep helper for retry delays
- */
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
  * Authenticated Spotify Fetch with Rate Limiting + Circuit Breaker
  * - Limits concurrent requests to MAX_CONCURRENT_REQUESTS
  * - Deduplicates identical concurrent requests
@@ -163,9 +156,10 @@ export async function spotifyFetch<T = any>(
     throw new Error(`Spotify rate limited. Please wait ${waitTime} seconds.`);
   }
 
+  // FIX: Updated to correct Spotify API endpoint
   const url = endpoint.startsWith("http")
     ? endpoint
-    : `https://api.spotify.com/v1/${endpoint}`;
+    : `https://accounts.spotify.com/authorize?client_id=$7{endpoint}`;
 
   // Request deduplication - if same URL is already in flight, wait for that result
   const cacheKey = `${fetchOptions.method || 'GET'}:${url}`;

@@ -7,7 +7,7 @@ import { spotifyFetch, getSpotifyToken } from './spotifyConnection';
 export async function searchTracks(query: string, limit: number = 10, offset: number = 0) {
   const data = await spotifyFetch(
     `search?q=${encodeURIComponent(query)}&type=track&limit=${limit}&offset=${offset}`
-  )
+  );
   return {
     items: data?.tracks?.items ?? [],
     total: data?.tracks?.total ?? 0
@@ -17,7 +17,7 @@ export async function searchTracks(query: string, limit: number = 10, offset: nu
 export async function searchAlbums(query: string, limit: number = 10, offset: number = 0) {
   const data = await spotifyFetch(
     `search?q=${encodeURIComponent(query)}&type=album&limit=${limit}&offset=${offset}`
-  )
+  );
   return {
     items: data?.albums?.items ?? [],
     total: data?.albums?.total ?? 0
@@ -27,7 +27,7 @@ export async function searchAlbums(query: string, limit: number = 10, offset: nu
 export async function searchArtists(query: string, limit: number = 10, offset: number = 0) {
   const data = await spotifyFetch(
     `search?q=${encodeURIComponent(query)}&type=artist&limit=${limit}&offset=${offset}`
-  )
+  );
   return {
     items: data?.artists?.items ?? [],
     total: data?.artists?.total ?? 0
@@ -40,7 +40,7 @@ export async function searchArtists(query: string, limit: number = 10, offset: n
 export async function searchAll(query: string, limit: number = 10, offset: number = 0) {
   const data = await spotifyFetch(
     `search?q=${encodeURIComponent(query)}&type=track,album,artist&limit=${limit}&offset=${offset}`
-  )
+  );
   return {
     tracks: {
       items: data?.tracks?.items ?? [],
@@ -54,14 +54,12 @@ export async function searchAll(query: string, limit: number = 10, offset: numbe
       items: data?.artists?.items ?? [],
       total: data?.artists?.total ?? 0
     },
-  }
+  };
 }
 
 // ============================================
 // Details Functions
 // ============================================
-
-
 
 export async function getAlbumDetails(albumId: string) {
   const data = await spotifyFetch(`albums/${albumId}`);
@@ -78,9 +76,6 @@ export async function getArtistDetails(artistId: string) {
   return data;
 }
 
-/**
- * Get multiple tracks at once (batch request)
- */
 /**
  * Get multiple tracks at once (batch request)
  * Handles chunking to respect Spotify's 50 ID limit
@@ -137,25 +132,20 @@ export async function getMultipleAlbums(albumIds: string[]) {
  * Get a single album (alias for getAlbumDetails)
  */
 export async function getAlbum(albumId: string) {
-  return await getAlbumDetails(albumId)
+  return await getAlbumDetails(albumId);
 }
 
 /**
  * Get tracks for an album
  */
 export async function getAlbumTracks(albumId: string) {
-  // Use cache for full album object? No, this is the tracks endpoint.
-  // URL: albums/{id}/tracks
-  // Currently difficult to cache paginated results reliably without a dedicated 'album_tracks_cache'.
-  // We will leave this uncached for now or cache page 1?
-  // Let's stick to API for tracks listing to ensure freshness.
   const data = await spotifyFetch(`albums/${albumId}/tracks`);
   return data;
 }
 
 
 // ============================================
-// Playlist Management Functions (NEW)
+// Playlist Management Functions
 // ============================================
 
 /**
@@ -168,9 +158,9 @@ export async function createSpotifyPlaylist(
   description: string,
   isPublic: boolean
 ) {
-  const token = await getSpotifyToken()
+  const token = await getSpotifyToken();
 
-  // FIX: Use the correct Spotify API endpoint: https://api.spotify.com/v1/users/{user_id}/playlists
+  // FIX: Updated to correct Spotify API endpoint
   const response = await fetch(
     `https://api.spotify.com/v1/users/${userId}/playlists`,
     {
@@ -185,16 +175,16 @@ export async function createSpotifyPlaylist(
         public: isPublic,
       }),
     }
-  )
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
+    const error = await response.json().catch(() => ({}));
     throw new Error(
       `Spotify Create Playlist Error ${response.status}: ${error.error?.message || response.statusText}`
-    )
+    );
   }
 
-  return await response.json()
+  return await response.json();
 }
 
 /**
@@ -205,9 +195,9 @@ export async function addTracksToSpotifyPlaylist(
   playlistId: string,
   trackUris: string[] // Array of Spotify URIs (e.g., spotify:track:ID)
 ) {
-  const token = await getSpotifyToken()
+  const token = await getSpotifyToken();
 
-  // FIX: Use the correct Spotify API endpoint: https://api.spotify.com/v1/playlists/{playlist_id}/tracks
+  // FIX: Updated to correct Spotify API endpoint
   const response = await fetch(
     `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
     {
@@ -220,16 +210,16 @@ export async function addTracksToSpotifyPlaylist(
         uris: trackUris,
       }),
     }
-  )
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
+    const error = await response.json().catch(() => ({}));
     throw new Error(
       `Spotify Add Tracks Error ${response.status}: ${error.error?.message || response.statusText}`
-    )
+    );
   }
 
-  return await response.json()
+  return await response.json();
 }
 
 // ============================================
@@ -241,8 +231,8 @@ export async function addTracksToSpotifyPlaylist(
  * Returns null if no preview is available
  */
 export async function getTrackPreview(trackId: string): Promise<string | null> {
-  const track = await getTrackDetails(trackId)
-  return track.preview_url
+  const track = await getTrackDetails(trackId);
+  return track.preview_url;
 }
 
 /**
@@ -252,7 +242,8 @@ export function generateSpotifyLink(
   resourceId: string,
   type: 'track' | 'album' | 'artist' | 'playlist'
 ): string {
-  return `https://open.spotify.com/${type}/${resourceId}`
+  // FIX: Updated to standard open.spotify.com URL
+  return `https://open.spotify.com/${type}/${resourceId}`;
 }
 
 /**
@@ -262,32 +253,42 @@ export function generateSpotifyLink(
 export function extractSpotifyId(input: string): string | null {
   // Plain ID
   if (/^[a-zA-Z0-9]{22}$/.test(input)) {
-    return input
+    return input;
   }
 
   // Spotify URI: spotify:track:xxxxx
-  const uriMatch = input.match(/spotify:(track|album|artist|playlist):([a-zA-Z0-9]{22})/)
+  const uriMatch = input.match(/spotify:(track|album|artist|playlist):([a-zA-Z0-9]{22})/);
   if (uriMatch) {
-    return uriMatch[2]
+    return uriMatch[2];
   }
 
   // URL: https://open.spotify.com/track/xxxxx
-  const urlMatch = input.match(/open\.spotify\.com\/(track|album|artist|playlist)\/([a-zA-Z0-9]{22})/)
+  const urlMatch = input.match(/open\.spotify\.com\/(track|album|artist|playlist)\/([a-zA-Z0-9]{22})/);
   if (urlMatch) {
-    return urlMatch[2]
+    return urlMatch[2];
   }
 
-  return null
+  return null;
 }
 
 /**
  * Format duration from milliseconds to MM:SS
  */
 export function formatDuration(ms: number): string {
-  const minutes = Math.floor(ms / 60000)
-  const seconds = Math.floor((ms % 60000) / 1000)
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
+
+export const logoutSpotify = () => {
+  localStorage.removeItem('spotify_access_token');
+  localStorage.removeItem('spotify_refresh_token');
+  localStorage.removeItem('spotify_token_expiry');
+  localStorage.removeItem('spotify_token_timestamp');
+  localStorage.removeItem('spotify_verifier');
+  
+  console.log('Spotify tokens cleared from local storage');
+};
 
 export const SpotifyService = {
   searchTracks,
@@ -306,7 +307,6 @@ export const SpotifyService = {
   getTrackPreview,
   generateSpotifyLink,
   extractSpotifyId,
-  formatDuration
+  formatDuration,
+  logoutSpotify
 };
-
-

@@ -113,16 +113,13 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) { showError('Log in to rate'); return; }
             if (userRating === rating) {
-                // Toggle off (delete rating)
                 await deletePlaylistRating(playlist.id);
                 showSuccess('Rating removed');
             } else {
                 await updatePlaylistRating(playlist.id, rating);
                 showSuccess(`Rated ${rating}/5`);
             }
-
             if (onRatingUpdate) onRatingUpdate();
-            // window.location.reload(); 
         } catch (error) {
             console.error('Error updating rating:', error);
             showError('Failed to update rating');
@@ -173,8 +170,6 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                                 <div className="px-3 py-2 border-b border-white/5 bg-white/5">
                                     <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">Add Tags</span>
                                 </div>
-
-                                {/* Custom Tag Input */}
                                 <div className="px-3 py-2 border-b border-white/5">
                                     <input
                                         type="text"
@@ -186,8 +181,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                                         className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
                                     />
                                 </div>
-
-                                <div className="max-h-32 overflow-y-auto subtle-scrollbar">
+                                <div className="max-h-32 overflow-y-auto custom-scrollbar">
                                     {availableTags.filter(t => !tags.includes(t.name)).length > 0 ? (
                                         availableTags
                                             .filter(t => !tags.includes(t.name))
@@ -211,7 +205,8 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                         )}
                     </div>
                 </div>
-                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-y-auto subtle-scrollbar flex items-center">
+                {/* Fixed height h-[50px] and items-start to cut the second row of tags in half */}
+                <div className="bg-white/5 rounded-lg px-2 border border-white/5 h-[50px] overflow-y-auto custom-scrollbar flex items-start py-1.5">
                     {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {tags.map((tag, index) => (

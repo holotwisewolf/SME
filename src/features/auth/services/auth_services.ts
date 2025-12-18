@@ -1,24 +1,24 @@
 // src/services/auth_services.ts
 
 // Import the initialized Supabase client
-// NOTE: Adjust this path if your supabase client is located elsewhere (e.g., '../lib/supabase')
 import { supabase } from '../../../lib/supabaseClient';
 import type { IAuthService } from '../contracts/auth_contracts';
 
+const DEV_INVITE = import.meta.env.VITE_DEV_INVITE || '';
+
 /**
  * Registers a new user.
- * * Usage: Call this when the user submits the sign-up form.
- * Logic: Creates a user in Supabase Auth and passes metadata (username) 
- * which should be handled by a Database Trigger to create a row in the 'profiles' table.
- * * @param data - Object containing { email, password, username }
+ * Usage: Call this when the user submits the sign-up form.
+ * Logic: Creates a user in Supabase Auth and passes metadata (username).
+ * This relies on a Database Trigger to create a corresponding row in the 'profiles' table.
+ * @param data - Object containing { email, password, username, inviteCode }
  */
-const DEV_INVITE = import.meta.env.VITE_DEV_INVITE;
-
 export async function register(data: any) {
   const { email, password, username, inviteCode } = data;
 
   // Determine role based on code match
-  const isDev = inviteCode && inviteCode === DEV_INVITE;
+  // Ensure DEV_INVITE is actually set to avoid security holes with empty strings
+  const isDev = DEV_INVITE && inviteCode && inviteCode === DEV_INVITE;
 
   const { data: authData, error } = await supabase.auth.signUp({
     email,
@@ -39,34 +39,31 @@ export async function register(data: any) {
 
 /**
  * Logs in an existing user.
- * * Usage: Call this when the user submits the login form.
- * Logic: Authenticates using email/password and establishes a session (JWT).
- * * @param data - Object containing { email, password, remember }
+ * Usage: Call this when the user submits the login form.
+ * Logic: Authenticates using email/password. Supports Username login by looking up the email first.
+ * @param data - Object containing { email, password, remember }
  */
 export async function login(data: any) {
-  let { email, password, remember } = data;
+  let { email, password } = data; // 'remember' is handled by Supabase client config
 
   // Check if input is an email
   const isEmail = email.includes('@');
 
   if (!isEmail) {
     // Treat as username and lookup email
+    // NOTE: This requires the 'profiles' table to be readable (RLS Policy) for the email column
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('email') // NOTE: This requires 'email' column in 'profiles' table
+      .select('email')
       .eq('username', email)
       .single();
 
     if (profileError || !profile) {
-      throw new Error("Username not found");
+      throw new Error("Username not found or invalid.");
     }
 
-    email = (profile as any).email;
+    email = profile.email;
   }
-
-  // Note: Supabase v2 persistence is handled at client initialization.
-  // Dynamic persistence switching is not directly supported in the same way.
-  // Defaulting to configured persistence (usually 'local').
 
   const { data: session, error } = await supabase.auth.signInWithPassword({
     email,
@@ -79,8 +76,8 @@ export async function login(data: any) {
 
 /**
  * Logs out the current user.
- * * Usage: Call this when the user clicks the "Logout" button.
- * Logic: Invalidates the local session and clears tokens from local storage.
+ * Usage: Call this when the user clicks the "Logout" button.
+ * Logic: Invalidates the Supabase session and clears local storage.
  */
 export async function logout() {
   const { error } = await supabase.auth.signOut();
@@ -89,9 +86,9 @@ export async function logout() {
 
 /**
  * Initiates the password reset process.
- * * Usage: Call this from the "Forgot Password" page.
+ * Usage: Call this from the "Forgot Password" page.
  * Logic: Sends an email to the user with a magic link to reset their password.
- * * @param email - The user's email address.
+ * @param email - The user's email address.
  */
 export async function resetPassword(email: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -104,9 +101,8 @@ export async function resetPassword(email: string) {
 
 /**
  * Verifies an email address or OTP (One-Time Password).
- * * Usage: Call this if you are handling manual 6-digit code verification.
- * Note: Standard email links usually handle this automatically.
- * * @param token - The 6-digit token or hash.
+ * Usage: Call this if you are handling manual 6-digit code verification.
+ * @param token - The 6-digit token or hash.
  * @param email - The user's email address.
  */
 export async function verifyEmail(token: string, email: string) {
@@ -122,9 +118,9 @@ export async function verifyEmail(token: string, email: string) {
 
 /**
  * Updates user profile details.
- * * Usage: Call this from the Settings/Profile page.
- * Logic: Updates the public 'profiles' table in the database, NOT the auth user object.
- * * @param userId - The UUID of the user to update.
+ * Usage: Call this from the Settings/Profile page.
+ * Logic: Updates the public 'profiles' table in the database.
+ * @param userId - The UUID of the user to update.
  * @param updates - Object containing fields to update (e.g., { bio: 'Hi', avatar_url: '...' })
  */
 export async function updateProfile(userId: string, updates: any) {
@@ -140,7 +136,7 @@ export async function updateProfile(userId: string, updates: any) {
 
 /**
  * Retrieves the current active session.
- * * Usage: Call this to get the Access Token (JWT) for making authenticated API requests.
+ * Usage: Call this to get the Access Token (JWT) for making authenticated API requests.
  * @returns The session object or null if no session exists.
  */
 export async function getSession() {
@@ -151,9 +147,8 @@ export async function getSession() {
 
 /**
  * Checks if the user is currently authenticated.
- * * Usage: Call this on app load or in route guards to determine if the user 
- * should see the Login page or the Home page.
- * * @returns true if logged in, false otherwise.
+ * Usage: Call this on app load or in route guards.
+ * @returns true if logged in, false otherwise.
  */
 export async function checkAuthStatus() {
   const { data } = await supabase.auth.getSession();
@@ -169,11 +164,15 @@ export async function checkAuthStatus() {
  */
 export async function uploadAvatar(file: File, userId: string) {
   const fileExt = file.name.split('.').pop();
-  const filePath = `${userId}/${Math.random()}.${fileExt}`;
+  // Use Date.now() for better uniqueness than Math.random()
+  const fileName = `${Date.now()}.${fileExt}`;
+  const filePath = `${userId}/${fileName}`;
 
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(filePath, file);
+    .upload(filePath, file, {
+        upsert: true // Overwrite if exists to save space
+    });
 
   if (uploadError) throw uploadError;
 
@@ -191,11 +190,15 @@ export async function deleteAvatar(avatarUrl: string) {
     // URL format: https://{project}.supabase.co/storage/v1/object/public/avatars/{userId}/{filename}
     const url = new URL(avatarUrl);
     const pathParts = url.pathname.split('/');
+    
     // Find 'avatars' in the path and get everything after it
     const avatarsIndex = pathParts.indexOf('avatars');
     if (avatarsIndex === -1) {
-      throw new Error('Invalid avatar URL format');
+      // Fail silently or log warning if URL isn't from our bucket
+      console.warn('Invalid avatar URL format, skipping deletion');
+      return;
     }
+    
     const filePath = pathParts.slice(avatarsIndex + 1).join('/');
 
     const { error } = await supabase.storage
@@ -205,7 +208,7 @@ export async function deleteAvatar(avatarUrl: string) {
     if (error) throw error;
   } catch (error) {
     console.error('Error deleting avatar:', error);
-    // Don't throw - we don't want to block the user if deletion fails
+    // Don't throw - we don't want to block the user flow if deletion fails
   }
 }
 
@@ -234,8 +237,10 @@ export async function updatePassword(password: string) {
 }
 
 /**
- * Updates the user's username (stored in user_metadata).
+ * Updates the user's username.
+ * Logic: Updates both Auth Metadata AND the public 'profiles' table to ensure consistency.
  * @param username - The new username.
+ * @param displayName - Optional display name.
  */
 export async function updateUsername(username: string, displayName?: string) {
   const dataToUpdate: any = { username };
@@ -243,21 +248,31 @@ export async function updateUsername(username: string, displayName?: string) {
     dataToUpdate.display_name = displayName;
   }
 
+  // 1. Update Supabase Auth User Metadata
   const { data, error } = await supabase.auth.updateUser({
     data: dataToUpdate
   });
 
   if (error) throw error;
+
+  // 2. Update Public Profiles table explicitly
+  // (In case the database trigger only handles INSERTs, not UPDATEs)
+  if (data.user) {
+      await updateProfile(data.user.id, {
+          username: username,
+          ...(displayName && { display_name: displayName })
+      });
+  }
+
   return data;
 }
 
 /**
  * Validates an invite code for developer access.
- * Logic: Checks a 'codes' table or uses a hardcoded check for now.
  * @param code - The invite code to check.
  */
 export async function validateInviteCode(code: string) {
-  return code === DEV_INVITE;
+  return !!DEV_INVITE && code === DEV_INVITE;
 }
 
 export const AuthService: IAuthService = {
