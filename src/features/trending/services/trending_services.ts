@@ -457,48 +457,42 @@ export async function getTrendingTags(timeRange: TimeRange, limit = 20): Promise
  */
 export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
     try {
-        const fetchLimit = limit * page;
-        const activities: any[] = [];
+        const offset = (page - 1) * limit;
 
-        // 1. Fetch Raw Data
-        const [ratingsResponse, commentsResponse, favoritesResponse] = await Promise.all([
-            supabase.from('ratings').select('id, item_id, item_type, rating, created_at, user_id').order('created_at', { ascending: false }).limit(fetchLimit),
-            supabase.from('comments').select('id, item_id, item_type, content, created_at, user_id').order('created_at', { ascending: false }).limit(fetchLimit),
-            supabase.from('favorites').select('id, item_id, item_type, created_at, user_id').order('created_at', { ascending: false }).limit(fetchLimit)
-        ]);
+        // Use the recent_activity_feed view (pre-merged activity stream)
+        const { data: activities, error } = await supabase
+            .from('recent_activity_feed')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
 
-        if (ratingsResponse.data) ratingsResponse.data.forEach(r => activities.push({ ...r, type: 'rating', value: r.rating }));
-        if (commentsResponse.data) commentsResponse.data.forEach(c => activities.push({ ...c, type: 'comment', content: c.content }));
-        if (favoritesResponse.data) favoritesResponse.data.forEach(f => activities.push({ ...f, type: 'favorite' }));
+        if (error) {
+            console.error('Error fetching recent activity from view:', error);
+            return [];
+        }
 
-        activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        const startIndex = (page - 1) * limit;
-        const paginatedItems = activities.slice(startIndex, startIndex + limit);
-
-        if (paginatedItems.length === 0) return [];
+        if (!activities || activities.length === 0) return [];
 
         // 2. ENRICHMENT
-        const uniqueUserIds = [...new Set(paginatedItems.map(item => item.user_id).filter(Boolean))];
+        const uniqueUserIds = [...new Set(activities.map(item => item.user_id).filter(Boolean))] as string[];
         let profiles: any[] = [];
         if (uniqueUserIds.length > 0) {
             const { data } = await supabase.from('profiles').select('id, username, display_name, avatar_url').in('id', uniqueUserIds);
             profiles = data || [];
         }
 
-        const trackIds = paginatedItems.filter(a => a.item_type?.toLowerCase() === 'track').map(a => a.item_id);
-        const albumIds = paginatedItems.filter(a => a.item_type?.toLowerCase() === 'album').map(a => a.item_id);
-        const playlistIds = paginatedItems.filter(a => a.item_type?.toLowerCase() === 'playlist').map(a => a.item_id);
+        const trackIds = activities.filter(a => a.item_type?.toLowerCase() === 'track').map(a => a.item_id).filter(Boolean) as string[];
+        const albumIds = activities.filter(a => a.item_type?.toLowerCase() === 'album').map(a => a.item_id).filter(Boolean) as string[];
+        const playlistIds = activities.filter(a => a.item_type?.toLowerCase() === 'playlist').map(a => a.item_id).filter(Boolean) as string[];
 
         // Helper to detect if it's a Spotify ID (usually 22 chars) vs Supabase UUID
         const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-        
+
         const internalPlaylistIds = playlistIds.filter(id => isUUID(id));
-        const spotifyPlaylistIds = playlistIds.filter(id => !isUUID(id));
 
         let spotifyTracks: any[] = [];
         let spotifyAlbums: any[] = [];
         let internalPlaylists: any[] = [];
-        let spotifyPlaylists: any[] = [];
 
         // Fetch Metadata in Parallel
         const [trackData, albumData, internalPLData] = await Promise.all([
@@ -507,15 +501,13 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
             internalPlaylistIds.length > 0 ? supabase.from('playlists').select('id, title, user_id, profiles:user_id(display_name)').in('id', internalPlaylistIds) : Promise.resolve({ data: [] })
         ]);
 
-        // Optional: Fetch Spotify Playlist names if your service supports it
-        // If not, we'll just name them "Spotify Playlist"
-        
+
         if (trackData?.tracks) spotifyTracks = trackData.tracks;
         if (albumData?.albums) spotifyAlbums = albumData.albums;
         if (internalPLData?.data) internalPlaylists = internalPLData.data;
 
         // 3. Map Final Data
-        return paginatedItems.map(item => {
+        return activities.map(item => {
             const userProfile = profiles.find(p => p.id === item.user_id);
             const displayName = userProfile?.display_name || userProfile?.username || 'Anonymous';
             const type = item.item_type?.toLowerCase();
@@ -527,19 +519,19 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
                 const t = spotifyTracks.find(track => track && track.id === item.item_id);
                 mediaTitle = t ? t.name : 'Track';
                 mediaArtist = t ? t.artists[0]?.name : 'Spotify';
-            } 
+            }
             else if (type === 'album') {
                 const a = spotifyAlbums.find(album => album && album.id === item.item_id);
                 mediaTitle = a ? a.name : 'Album';
                 mediaArtist = a ? a.artists[0]?.name : 'Spotify';
-            } 
+            }
             else if (type === 'playlist') {
                 const p = internalPlaylists.find(pl => pl.id === item.item_id);
                 if (p) {
                     mediaTitle = p.title || p.name || 'Untitled Playlist';
                     const creator = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
                     mediaArtist = creator?.display_name || 'Community Member';
-                } else if (!isUUID(item.item_id)) {
+                } else if (item.item_id && !isUUID(item.item_id)) {
                     // It's a Spotify Playlist ID
                     mediaTitle = 'Spotify Playlist';
                     mediaArtist = 'Spotify';
@@ -553,7 +545,6 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
                 id: item.id,
                 type: item.type,
                 created_at: item.created_at,
-                value: item.value,
                 content: item.content,
                 itemType: type,
                 user: { id: item.user_id, display_name: displayName, avatar_url: userProfile?.avatar_url },

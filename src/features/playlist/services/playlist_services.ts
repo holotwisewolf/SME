@@ -9,7 +9,7 @@ export interface EnhancedPlaylist extends Tables<'playlists'> {
     comment_count?: number;
     tag_count?: number;
     tags?: string[];
-    
+
     // Global Timestamps
     commented_at?: string;
     rated_at?: string;
@@ -19,7 +19,7 @@ export interface EnhancedPlaylist extends Tables<'playlists'> {
     user_rating?: number;
     user_rated_at?: string;
     user_tags?: string[];
-    user_tag_count?: number; 
+    user_tag_count?: number;
     user_tagged_at?: string;
 }
 
@@ -35,8 +35,9 @@ export const getLatestTime = (item: { created_at: string; updated_at?: string | 
 // ==========================================
 
 export async function getEnhancedPlaylists(userId: string): Promise<{ playlists: EnhancedPlaylist[], favoriteIds: Set<string> }> {
+    // Use the enhanced_playlists_master view for pre-calculated stats
     const { data: basePlaylists, error } = await supabase
-        .from('playlists')
+        .from('enhanced_playlists_master')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -44,56 +45,47 @@ export async function getEnhancedPlaylists(userId: string): Promise<{ playlists:
     if (error) throw error;
     if (!basePlaylists || basePlaylists.length === 0) return { playlists: [], favoriteIds: new Set() };
 
-    const playlistIds = basePlaylists.map(p => p.id);
+    const playlistIds = basePlaylists.map(p => p.id).filter(Boolean) as string[];
 
-    const [ratingsRes, commentsRes, tagsRes, favoritesRes] = await Promise.all([
-        supabase.from('ratings').select('item_id, rating, created_at, updated_at, user_id').eq('item_type', 'playlist').in('item_id', playlistIds),
-        supabase.from('comments').select('item_id, created_at, updated_at').eq('item_type', 'playlist').in('item_id', playlistIds),
-        supabase.from('item_tags').select('item_id, created_at, user_id, tags(name)').eq('item_type', 'playlist').in('item_id', playlistIds),
-        supabase.from('favorites').select('item_id').eq('user_id', userId).eq('item_type', 'playlist')
+    // Fetch user-specific data (favorites, user ratings, user tags) - view doesn't include these
+    const [favoritesRes, userRatingsRes, userTagsRes] = await Promise.all([
+        supabase.from('favorites').select('item_id').eq('user_id', userId).eq('item_type', 'playlist'),
+        supabase.from('ratings').select('item_id, rating, created_at, updated_at').eq('item_type', 'playlist').eq('user_id', userId).in('item_id', playlistIds),
+        supabase.from('item_tags').select('item_id, created_at, tags(name)').eq('item_type', 'playlist').eq('user_id', userId).in('item_id', playlistIds),
     ]);
 
     const favoriteIds = new Set((favoritesRes.data || []).map(f => f.item_id));
 
     const playlists: EnhancedPlaylist[] = basePlaylists.map(p => {
-        const allRatings = ratingsRes.data?.filter(r => r.item_id === p.id) || [];
-        const userRatings = allRatings.filter(r => r.user_id === userId);
-        
-        const ratingAvg = allRatings.length > 0 ? allRatings.reduce((acc, curr) => acc + curr.rating, 0) / allRatings.length : 0;
-        const ratedAt = allRatings.length > 0 ? allRatings.reduce((latest, curr) => { const currTime = getLatestTime(curr); return new Date(currTime) > new Date(latest) ? currTime : latest; }, getLatestTime(allRatings[0])) : undefined;
-
-        const myRating = userRatings.length > 0 ? userRatings[0].rating : 0;
-        const myRatedAt = userRatings.length > 0 ? getLatestTime(userRatings[0]) : undefined;
-
-        const pComments = commentsRes.data?.filter(c => c.item_id === p.id) || [];
-        const commentedAt = pComments.length > 0 ? pComments.reduce((latest, curr) => { const currTime = getLatestTime(curr); return new Date(currTime) > new Date(latest) ? currTime : latest; }, getLatestTime(pComments[0])) : undefined;
-
-        const allTags = tagsRes.data?.filter(t => t.item_id === p.id) || [];
-        const myTagsRaw = allTags.filter(t => t.user_id === userId);
-
+        const userRating = userRatingsRes.data?.find(r => r.item_id === p.id);
+        const userTags = userTagsRes.data?.filter(t => t.item_id === p.id) || [];
         // @ts-ignore
-        const globalTagNames = Array.from(new Set(allTags.map(t => t.tags?.name).filter(Boolean)));
-        // @ts-ignore
-        const myTagNames = Array.from(new Set(myTagsRaw.map(t => t.tags?.name).filter(Boolean)));
-
-        const taggedAt = allTags.length > 0 ? allTags.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, allTags[0].created_at) : undefined;
-        const myTaggedAt = myTagsRaw.length > 0 ? myTagsRaw.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, myTagsRaw[0].created_at) : undefined;
+        const userTagNames = Array.from(new Set(userTags.map(t => t.tags?.name).filter(Boolean)));
 
         return {
-            ...p,
-            rating_avg: ratingAvg,
-            rating_count: allRatings.length,
-            rated_at: ratedAt,
-            comment_count: pComments.length,
-            commented_at: commentedAt,
-            tag_count: allTags.length,
-            tags: globalTagNames,
-            tagged_at: taggedAt,
-            user_rating: myRating,
-            user_rated_at: myRatedAt,
-            user_tags: myTagNames,
-            user_tag_count: myTagsRaw.length,
-            user_tagged_at: myTaggedAt
+            // Base playlist data (from view)
+            id: p.id!,
+            title: p.title,
+            description: p.description,
+            color: p.color,
+            is_public: p.is_public,
+            playlistimg_url: p.playlistimg_url,
+            spotify_playlist_id: p.spotify_playlist_id,
+            user_id: p.user_id,
+            created_at: p.created_at,
+            updated_at: p.updated_at,
+            track_count: p.track_count,
+            // Pre-calculated stats from view
+            rating_avg: p.rating_avg ?? 0,
+            rating_count: p.rating_count ?? 0,
+            comment_count: p.comment_count ?? 0,
+            tag_count: p.tag_count ?? 0,
+            // User-specific data
+            user_rating: userRating?.rating ?? 0,
+            user_rated_at: userRating ? getLatestTime(userRating) : undefined,
+            user_tags: userTagNames as string[],
+            user_tag_count: userTags.length,
+            user_tagged_at: userTags.length > 0 ? userTags.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, userTags[0].created_at) : undefined
         };
     });
 
@@ -101,43 +93,38 @@ export async function getEnhancedPlaylists(userId: string): Promise<{ playlists:
 }
 
 export async function getPlaylistStats(playlistId: string, userId: string): Promise<Partial<EnhancedPlaylist>> {
-    const [ratingsRes, commentsRes, tagsRes] = await Promise.all([
-        supabase.from('ratings').select('rating, created_at, updated_at, user_id').eq('item_type', 'playlist').eq('item_id', playlistId),
-        supabase.from('comments').select('created_at, updated_at').eq('item_type', 'playlist').eq('item_id', playlistId),
-        supabase.from('item_tags').select('created_at, user_id, tags(name)').eq('item_type', 'playlist').eq('item_id', playlistId),
+    // Fetch pre-calculated stats from view
+    const { data: viewData, error: viewError } = await supabase
+        .from('enhanced_playlists_master')
+        .select('rating_avg, rating_count, comment_count, tag_count')
+        .eq('id', playlistId)
+        .single();
+
+    if (viewError && viewError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error fetching playlist stats from view:', viewError);
+    }
+
+    // Fetch user-specific data
+    const [userRatingRes, userTagsRes] = await Promise.all([
+        supabase.from('ratings').select('rating, created_at, updated_at').eq('item_type', 'playlist').eq('item_id', playlistId).eq('user_id', userId).single(),
+        supabase.from('item_tags').select('created_at, tags(name)').eq('item_type', 'playlist').eq('item_id', playlistId).eq('user_id', userId),
     ]);
 
-    const allRatings = ratingsRes.data || [];
-    const userRatings = allRatings.filter(r => r.user_id === userId);
-    const ratingAvg = allRatings.length > 0 ? allRatings.reduce((acc, curr) => acc + curr.rating, 0) / allRatings.length : 0;
-    const ratedAt = allRatings.length > 0 ? allRatings.reduce((latest, curr) => { const currTime = getLatestTime(curr); return new Date(currTime) > new Date(latest) ? currTime : latest; }, getLatestTime(allRatings[0])) : undefined;
-    
-    const pComments = commentsRes.data || [];
-    const commentedAt = pComments.length > 0 ? pComments.reduce((latest, curr) => { const currTime = getLatestTime(curr); return new Date(currTime) > new Date(latest) ? currTime : latest; }, getLatestTime(pComments[0])) : undefined;
-
-    const allTags = tagsRes.data || [];
-    const myTagsRaw = allTags.filter(t => t.user_id === userId);
     // @ts-ignore
-    const globalTagNames = Array.from(new Set(allTags.map(t => t.tags?.name).filter(Boolean)));
-    // @ts-ignore
-    const myTagNames = Array.from(new Set(myTagsRaw.map(t => t.tags?.name).filter(Boolean)));
-    const taggedAt = allTags.length > 0 ? allTags.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, allTags[0].created_at) : undefined;
-    const myTaggedAt = myTagsRaw.length > 0 ? myTagsRaw.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, myTagsRaw[0].created_at) : undefined;
+    const userTagNames = Array.from(new Set((userTagsRes.data || []).map(t => t.tags?.name).filter(Boolean)));
+    const userTags = userTagsRes.data || [];
+    const userTaggedAt = userTags.length > 0 ? userTags.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, userTags[0].created_at) : undefined;
 
     return {
-        rating_avg: ratingAvg,
-        rating_count: allRatings.length,
-        rated_at: ratedAt,
-        comment_count: pComments.length,
-        commented_at: commentedAt,
-        tag_count: allTags.length,
-        tags: globalTagNames,
-        tagged_at: taggedAt,
-        user_rating: userRatings.length > 0 ? userRatings[0].rating : 0,
-        user_rated_at: userRatings.length > 0 ? getLatestTime(userRatings[0]) : undefined,
-        user_tags: myTagNames,
-        user_tag_count: myTagsRaw.length,
-        user_tagged_at: myTaggedAt
+        rating_avg: viewData?.rating_avg ?? 0,
+        rating_count: viewData?.rating_count ?? 0,
+        comment_count: viewData?.comment_count ?? 0,
+        tag_count: viewData?.tag_count ?? 0,
+        user_rating: userRatingRes.data?.rating ?? 0,
+        user_rated_at: userRatingRes.data ? getLatestTime(userRatingRes.data) : undefined,
+        user_tags: userTagNames as string[],
+        user_tag_count: userTags.length,
+        user_tagged_at: userTaggedAt
     };
 }
 
@@ -355,16 +342,18 @@ export async function getPlaylistTags(playlistId: string): Promise<string[]> {
 }
 
 export async function getPlaylistRating(playlistId: string): Promise<{ average: number; count: number }> {
+    // Use the enhanced_playlists_master view for pre-calculated rating data
     const { data, error } = await supabase
-        .from('ratings')
-        .select('rating')
-        .eq('item_id', playlistId)
-        .eq('item_type', 'playlist');
+        .from('enhanced_playlists_master')
+        .select('rating_avg, rating_count')
+        .eq('id', playlistId)
+        .single();
 
-    if (error) throw error;
-    if (!data || data.length === 0) return { average: 0, count: 0 };
-    const sum = data.reduce((acc, curr) => acc + curr.rating, 0);
-    return { average: sum / data.length, count: data.length };
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error fetching playlist rating from view:', error);
+    }
+
+    return { average: data?.rating_avg ?? 0, count: data?.rating_count ?? 0 };
 }
 
 export async function getPlaylistComments(playlistId: string): Promise<any[]> {
