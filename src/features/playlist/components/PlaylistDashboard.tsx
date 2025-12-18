@@ -6,33 +6,12 @@ import DescendingButton from '../../../components/ui/DescendingButton';
 import FilterButton from '../../../components/ui/FilterButton';
 import SearchField from '../../../components/ui/SearchField';
 import FilterDropdown, { type FilterState, type SortOptionType } from '../../../components/ui/FilterDropdown';
-import { getUserPlaylists } from '../services/playlist_services';
-import type { Tables } from '../../../types/supabase';
+import { getEnhancedPlaylists, getPlaylistStats, getLatestTime, type EnhancedPlaylist } from '../services/playlist_services';
 import { CreatePlaylistModal } from './CreatePlaylistModal';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { supabase } from '../../../lib/supabaseClient';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
-// Enhanced interface strictly separating Global vs Personal
-export interface EnhancedPlaylist extends Tables<'playlists'> {
-    // --- Global Stats (Everyone) ---
-    rating_avg?: number;      
-    rating_count?: number;
-    comment_count?: number;
-    tag_count?: number;       
-    tags?: string[];          
-    
-    commented_at?: string;
-    rated_at?: string;
-    tagged_at?: string;
-
-    // --- Personal Stats (Current User Only) ---
-    user_rating?: number;     
-    user_rated_at?: string;
-    user_tags?: string[];     
-    user_tag_count?: number; 
-    user_tagged_at?: string;
-}
 
 interface PlaylistDashboardProps {
   source: "library" | "favourites";
@@ -59,15 +38,15 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   
-  // Use HTMLDivElement because it's attached to a <div>
   const filterButtonRef = useRef<HTMLDivElement>(null);
 
-  // Helper to get the latest timestamp
+  /* already moved to services/playlist_services.ts
   const getLatestTime = (item: { created_at: string; updated_at?: string | null }) => {
       const created = new Date(item.created_at).getTime();
       const updated = item.updated_at ? new Date(item.updated_at).getTime() : 0;
       return updated > created ? item.updated_at! : item.created_at;
   };
+  */
 
   // --- 1. Initial Load (Bulk) ---
   const loadData = async () => {
@@ -76,93 +55,14 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
         setLoading(false);
         return; 
     }
-    const currentUserId = session.user.id;
 
     setLoading(true);
     try {
-      const basePlaylists = await getUserPlaylists();
-      const playlistIds = basePlaylists.map(p => p.id);
-
-      if (playlistIds.length === 0) {
-          setPlaylists([]);
-          setLoading(false);
-          return;
-      }
-
-      const [ratingsRes, commentsRes, tagsRes, favoritesRes] = await Promise.all([
-          supabase.from('ratings').select('item_id, rating, created_at, updated_at, user_id').eq('item_type', 'playlist').in('item_id', playlistIds),
-          supabase.from('comments').select('item_id, created_at, updated_at').eq('item_type', 'playlist').in('item_id', playlistIds),
-          supabase.from('item_tags').select('item_id, created_at, user_id, tags(name)').eq('item_type', 'playlist').in('item_id', playlistIds),
-          supabase.from('favorites').select('item_id').eq('user_id', currentUserId).eq('item_type', 'playlist')
-      ]);
-
-      const favIds = new Set((favoritesRes.data || []).map(f => f.item_id));
-      setFavoriteIds(favIds);
-
-      const enhancedData: EnhancedPlaylist[] = basePlaylists.map(p => {
-          // --- Ratings ---
-          const allRatings = ratingsRes.data?.filter(r => r.item_id === p.id) || [];
-          const userRatings = allRatings.filter(r => r.user_id === currentUserId);
-          
-          const ratingAvg = allRatings.length > 0 
-              ? allRatings.reduce((acc, curr) => acc + curr.rating, 0) / allRatings.length 
-              : 0;
-          
-          const ratedAt = allRatings.length > 0 
-              ? allRatings.reduce((latest, curr) => {
-                  const currTime = getLatestTime(curr);
-                  return new Date(currTime) > new Date(latest) ? currTime : latest;
-              }, getLatestTime(allRatings[0]))
-              : undefined;
-
-          const myRating = userRatings.length > 0 ? userRatings[0].rating : 0;
-          const myRatedAt = userRatings.length > 0 ? getLatestTime(userRatings[0]) : undefined;
-
-          // --- Comments ---
-          const pComments = commentsRes.data?.filter(c => c.item_id === p.id) || [];
-          const commentedAt = pComments.length > 0
-              ? pComments.reduce((latest, curr) => {
-                  const currTime = getLatestTime(curr);
-                  return new Date(currTime) > new Date(latest) ? currTime : latest;
-              }, getLatestTime(pComments[0]))
-              : undefined;
-
-          // --- Tags ---
-          const allTags = tagsRes.data?.filter(t => t.item_id === p.id) || [];
-          const myTagsRaw = allTags.filter(t => t.user_id === currentUserId);
-
-          // @ts-ignore
-          const globalTagNames = Array.from(new Set(allTags.map(t => t.tags?.name).filter(Boolean)));
-          // @ts-ignore
-          const myTagNames = Array.from(new Set(myTagsRaw.map(t => t.tags?.name).filter(Boolean)));
-
-          const taggedAt = allTags.length > 0
-              ? allTags.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, allTags[0].created_at)
-              : undefined;
-          
-          const myTaggedAt = myTagsRaw.length > 0
-              ? myTagsRaw.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, myTagsRaw[0].created_at)
-              : undefined;
-
-          return {
-              ...p,
-              rating_avg: ratingAvg,
-              rating_count: allRatings.length,
-              rated_at: ratedAt,
-              comment_count: pComments.length,
-              commented_at: commentedAt,
-              tag_count: allTags.length,
-              tags: globalTagNames,
-              tagged_at: taggedAt,
-              user_rating: myRating,
-              user_rated_at: myRatedAt,
-              user_tags: myTagNames,
-              user_tag_count: myTagsRaw.length,
-              user_tagged_at: myTaggedAt
-          };
-      });
-
+      // 依然使用 Service 加载数据，保持架构整洁
+      const { playlists: enhancedData, favoriteIds: ids } = await getEnhancedPlaylists(session.user.id);
+      
       setPlaylists(enhancedData);
+      setFavoriteIds(ids);
 
     } catch (error) {
       console.error('Error loading data:', error);
@@ -199,73 +99,19 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
   }, [source]);
 
   const handleRealtimeUpdate = async (payload: RealtimePostgresChangesPayload<any>) => {
-      const newRecord = payload.new as any;
-      const oldRecord = payload.old as any;
-      const playlistId = newRecord?.item_id || oldRecord?.item_id;
+      const record = payload.new || payload.old;
+      const playlistId = record?.item_id;
       
       if (!playlistId) return;
-      await fetchAndMergePlaylistStats(playlistId);
-  };
 
-  const fetchAndMergePlaylistStats = async (playlistId: string) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const currentUserId = session.user.id;
 
-      const [ratingsRes, commentsRes, tagsRes] = await Promise.all([
-          supabase.from('ratings').select('rating, created_at, updated_at, user_id').eq('item_type', 'playlist').eq('item_id', playlistId),
-          supabase.from('comments').select('created_at, updated_at').eq('item_type', 'playlist').eq('item_id', playlistId),
-          supabase.from('item_tags').select('created_at, user_id, tags(name)').eq('item_type', 'playlist').eq('item_id', playlistId),
-      ]);
-
+      const stats = await getPlaylistStats(playlistId, session.user.id);
+      
       setPlaylists(prev => prev.map(p => {
           if (p.id !== playlistId) return p;
-
-          const allRatings = ratingsRes.data || [];
-          const userRatings = allRatings.filter(r => r.user_id === currentUserId);
-          const ratingAvg = allRatings.length > 0 ? allRatings.reduce((acc, curr) => acc + curr.rating, 0) / allRatings.length : 0;
-          
-          const ratedAt = allRatings.length > 0 
-              ? allRatings.reduce((latest, curr) => {
-                  const currTime = getLatestTime(curr);
-                  return new Date(currTime) > new Date(latest) ? currTime : latest;
-              }, getLatestTime(allRatings[0]))
-              : undefined;
-          
-          const pComments = commentsRes.data || [];
-          const commentedAt = pComments.length > 0 
-              ? pComments.reduce((latest, curr) => {
-                  const currTime = getLatestTime(curr);
-                  return new Date(currTime) > new Date(latest) ? currTime : latest;
-              }, getLatestTime(pComments[0]))
-              : undefined;
-
-          const allTags = tagsRes.data || [];
-          const myTagsRaw = allTags.filter(t => t.user_id === currentUserId);
-          // @ts-ignore
-          const globalTagNames = Array.from(new Set(allTags.map(t => t.tags?.name).filter(Boolean)));
-          // @ts-ignore
-          const myTagNames = Array.from(new Set(myTagsRaw.map(t => t.tags?.name).filter(Boolean)));
-          
-          const taggedAt = allTags.length > 0 ? allTags.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, allTags[0].created_at) : undefined;
-          const myTaggedAt = myTagsRaw.length > 0 ? myTagsRaw.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, myTagsRaw[0].created_at) : undefined;
-
-          return {
-              ...p,
-              rating_avg: ratingAvg,
-              rating_count: allRatings.length,
-              rated_at: ratedAt,
-              comment_count: pComments.length,
-              commented_at: commentedAt,
-              tag_count: allTags.length,
-              tags: globalTagNames,
-              tagged_at: taggedAt,
-              user_rating: userRatings.length > 0 ? userRatings[0].rating : 0,
-              user_rated_at: userRatings.length > 0 ? getLatestTime(userRatings[0]) : undefined,
-              user_tags: myTagNames,
-              user_tag_count: myTagsRaw.length,
-              user_tagged_at: myTaggedAt
-          };
+          return { ...p, ...stats };
       }));
   };
 
@@ -337,10 +183,12 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
                     return sortDirection === 'asc' 
                         ? a.title.localeCompare(b.title)
                         : b.title.localeCompare(a.title);
+                
                 case 'created_at':
-                    valA = new Date(a.created_at).getTime();
-                    valB = new Date(b.created_at).getTime();
+                    valA = new Date(getLatestTime(a)).getTime();
+                    valB = new Date(getLatestTime(b)).getTime();
                     break;
+
                 case 'comment_count': valA = a.comment_count || 0; valB = b.comment_count || 0; break;
                 case 'commented_at': valA = new Date(a.commented_at || 0).getTime(); valB = new Date(b.commented_at || 0).getTime(); break;
                 case 'global_rating_avg': valA = a.rating_avg || 0; valB = b.rating_avg || 0; break;
@@ -384,18 +232,9 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
           <div ref={filterButtonRef} onClick={(e) => { e.stopPropagation(); setIsFilterOpen(!isFilterOpen); }} className={`w-10 h-10 rounded-full flex items-center justify-center transition cursor-pointer ${isFilterOpen || hasActiveFilters ? 'bg-[#FFD1D1] text-black' : 'bg-[#292929] text-gray-400 hover:text-white'}`}>
             <FilterButton className="w-5 h-5" color="currentColor" isActive={isFilterOpen} />
           </div>
-
-          <FilterDropdown 
-            isOpen={isFilterOpen} 
-            onClose={() => setIsFilterOpen(false)} 
-            anchorRef={filterButtonRef as React.RefObject<HTMLElement>} 
-            currentFilter={filterState} 
-            currentSort={activeSort} 
-            onFilterChange={setFilterState} 
-            onSortChange={setActiveSort} 
-            onClearAll={() => { setFilterState({ minRating: 0, tagMode: 'global', ratingMode: 'global', selectedTags: [], onlyFavorites: false }); setActiveSort('created_at'); setSortDirection('desc'); }} 
-          />
-
+          
+          <FilterDropdown isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} anchorRef={filterButtonRef as React.RefObject<HTMLElement>} currentFilter={filterState} currentSort={activeSort} onFilterChange={setFilterState} onSortChange={setActiveSort} onClearAll={() => { setFilterState({ minRating: 0, tagMode: 'global', ratingMode: 'global', selectedTags: [], onlyFavorites: false }); setActiveSort('created_at'); setSortDirection('desc'); }} />
+          
           <LayoutGroup id="playlist-sort">
             <div className="bg-[#292929] rounded-full p-1 flex items-center h-10 relative isolate ml-2">
               <button type="button" onClick={() => setSortDirection('asc')} className={`relative px-4 h-full rounded-full flex items-center justify-center z-10 transition-colors duration-200 ${sortDirection === 'asc' ? 'text-white' : 'text-gray-400 hover:text-white'}`} title="Ascending">

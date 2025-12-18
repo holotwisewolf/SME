@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PlaylistCard from './PlaylistCard';
 import type { Tables } from '../../../types/supabase';
-import type { EnhancedPlaylist } from './PlaylistDashboard'; // [Sync Fix]
+// [Fix] Import from services, NOT from PlaylistDashboard
+import type { EnhancedPlaylist } from '../services/playlist_services';
 import { useError } from '../../../context/ErrorContext';
 import { useSuccess } from '../../../context/SuccessContext';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, rectIntersection } from '@dnd-kit/core';

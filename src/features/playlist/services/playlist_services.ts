@@ -1,11 +1,151 @@
 import { supabase } from '../../../lib/supabaseClient';
 import type { Tables } from '../../../types/supabase';
 
+// --- Types Needed for Dashboard ---
+export interface EnhancedPlaylist extends Tables<'playlists'> {
+    // Global Stats
+    rating_avg?: number;
+    rating_count?: number;
+    comment_count?: number;
+    tag_count?: number;
+    tags?: string[];
+    
+    // Global Timestamps
+    commented_at?: string;
+    rated_at?: string;
+    tagged_at?: string;
+
+    // Personal Stats
+    user_rating?: number;
+    user_rated_at?: string;
+    user_tags?: string[];
+    user_tag_count?: number; 
+    user_tagged_at?: string;
+}
+
+// --- Helper ---
+export const getLatestTime = (item: { created_at: string; updated_at?: string | null }) => {
+    const created = new Date(item.created_at).getTime();
+    const updated = item.updated_at ? new Date(item.updated_at).getTime() : 0;
+    return updated > created ? item.updated_at! : item.created_at;
+};
+
+// ==========================================
+// NEW Aggregation Functions (Required for Dashboard)
+// ==========================================
+
+export async function getEnhancedPlaylists(userId: string): Promise<{ playlists: EnhancedPlaylist[], favoriteIds: Set<string> }> {
+    const { data: basePlaylists, error } = await supabase
+        .from('playlists')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    if (!basePlaylists || basePlaylists.length === 0) return { playlists: [], favoriteIds: new Set() };
+
+    const playlistIds = basePlaylists.map(p => p.id);
+
+    const [ratingsRes, commentsRes, tagsRes, favoritesRes] = await Promise.all([
+        supabase.from('ratings').select('item_id, rating, created_at, updated_at, user_id').eq('item_type', 'playlist').in('item_id', playlistIds),
+        supabase.from('comments').select('item_id, created_at, updated_at').eq('item_type', 'playlist').in('item_id', playlistIds),
+        supabase.from('item_tags').select('item_id, created_at, user_id, tags(name)').eq('item_type', 'playlist').in('item_id', playlistIds),
+        supabase.from('favorites').select('item_id').eq('user_id', userId).eq('item_type', 'playlist')
+    ]);
+
+    const favoriteIds = new Set((favoritesRes.data || []).map(f => f.item_id));
+
+    const playlists: EnhancedPlaylist[] = basePlaylists.map(p => {
+        const allRatings = ratingsRes.data?.filter(r => r.item_id === p.id) || [];
+        const userRatings = allRatings.filter(r => r.user_id === userId);
+        
+        const ratingAvg = allRatings.length > 0 ? allRatings.reduce((acc, curr) => acc + curr.rating, 0) / allRatings.length : 0;
+        const ratedAt = allRatings.length > 0 ? allRatings.reduce((latest, curr) => { const currTime = getLatestTime(curr); return new Date(currTime) > new Date(latest) ? currTime : latest; }, getLatestTime(allRatings[0])) : undefined;
+
+        const myRating = userRatings.length > 0 ? userRatings[0].rating : 0;
+        const myRatedAt = userRatings.length > 0 ? getLatestTime(userRatings[0]) : undefined;
+
+        const pComments = commentsRes.data?.filter(c => c.item_id === p.id) || [];
+        const commentedAt = pComments.length > 0 ? pComments.reduce((latest, curr) => { const currTime = getLatestTime(curr); return new Date(currTime) > new Date(latest) ? currTime : latest; }, getLatestTime(pComments[0])) : undefined;
+
+        const allTags = tagsRes.data?.filter(t => t.item_id === p.id) || [];
+        const myTagsRaw = allTags.filter(t => t.user_id === userId);
+
+        // @ts-ignore
+        const globalTagNames = Array.from(new Set(allTags.map(t => t.tags?.name).filter(Boolean)));
+        // @ts-ignore
+        const myTagNames = Array.from(new Set(myTagsRaw.map(t => t.tags?.name).filter(Boolean)));
+
+        const taggedAt = allTags.length > 0 ? allTags.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, allTags[0].created_at) : undefined;
+        const myTaggedAt = myTagsRaw.length > 0 ? myTagsRaw.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, myTagsRaw[0].created_at) : undefined;
+
+        return {
+            ...p,
+            rating_avg: ratingAvg,
+            rating_count: allRatings.length,
+            rated_at: ratedAt,
+            comment_count: pComments.length,
+            commented_at: commentedAt,
+            tag_count: allTags.length,
+            tags: globalTagNames,
+            tagged_at: taggedAt,
+            user_rating: myRating,
+            user_rated_at: myRatedAt,
+            user_tags: myTagNames,
+            user_tag_count: myTagsRaw.length,
+            user_tagged_at: myTaggedAt
+        };
+    });
+
+    return { playlists, favoriteIds };
+}
+
+export async function getPlaylistStats(playlistId: string, userId: string): Promise<Partial<EnhancedPlaylist>> {
+    const [ratingsRes, commentsRes, tagsRes] = await Promise.all([
+        supabase.from('ratings').select('rating, created_at, updated_at, user_id').eq('item_type', 'playlist').eq('item_id', playlistId),
+        supabase.from('comments').select('created_at, updated_at').eq('item_type', 'playlist').eq('item_id', playlistId),
+        supabase.from('item_tags').select('created_at, user_id, tags(name)').eq('item_type', 'playlist').eq('item_id', playlistId),
+    ]);
+
+    const allRatings = ratingsRes.data || [];
+    const userRatings = allRatings.filter(r => r.user_id === userId);
+    const ratingAvg = allRatings.length > 0 ? allRatings.reduce((acc, curr) => acc + curr.rating, 0) / allRatings.length : 0;
+    const ratedAt = allRatings.length > 0 ? allRatings.reduce((latest, curr) => { const currTime = getLatestTime(curr); return new Date(currTime) > new Date(latest) ? currTime : latest; }, getLatestTime(allRatings[0])) : undefined;
+    
+    const pComments = commentsRes.data || [];
+    const commentedAt = pComments.length > 0 ? pComments.reduce((latest, curr) => { const currTime = getLatestTime(curr); return new Date(currTime) > new Date(latest) ? currTime : latest; }, getLatestTime(pComments[0])) : undefined;
+
+    const allTags = tagsRes.data || [];
+    const myTagsRaw = allTags.filter(t => t.user_id === userId);
+    // @ts-ignore
+    const globalTagNames = Array.from(new Set(allTags.map(t => t.tags?.name).filter(Boolean)));
+    // @ts-ignore
+    const myTagNames = Array.from(new Set(myTagsRaw.map(t => t.tags?.name).filter(Boolean)));
+    const taggedAt = allTags.length > 0 ? allTags.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, allTags[0].created_at) : undefined;
+    const myTaggedAt = myTagsRaw.length > 0 ? myTagsRaw.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, myTagsRaw[0].created_at) : undefined;
+
+    return {
+        rating_avg: ratingAvg,
+        rating_count: allRatings.length,
+        rated_at: ratedAt,
+        comment_count: pComments.length,
+        commented_at: commentedAt,
+        tag_count: allTags.length,
+        tags: globalTagNames,
+        tagged_at: taggedAt,
+        user_rating: userRatings.length > 0 ? userRatings[0].rating : 0,
+        user_rated_at: userRatings.length > 0 ? getLatestTime(userRatings[0]) : undefined,
+        user_tags: myTagNames,
+        user_tag_count: myTagsRaw.length,
+        user_tagged_at: myTaggedAt
+    };
+}
 
 
-/**
- * Get all playlists for the current user
- */
+// ==========================================
+// Existing CRUD Operations (Original)
+// ==========================================
+
 export async function getUserPlaylists(): Promise<Tables<'playlists'>[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
@@ -21,9 +161,6 @@ export async function getUserPlaylists(): Promise<Tables<'playlists'>[]> {
     return data || [];
 }
 
-/**
- * Create a new playlist
- */
 export interface CreatePlaylistRequest {
     name: string;
     description?: string;
@@ -51,9 +188,6 @@ export async function createPlaylist(request: CreatePlaylistRequest): Promise<Ta
     return data;
 }
 
-/**
- * Add a track to a playlist
- */
 export async function addTrackToPlaylist(request: { playlistId: string; trackId: string }): Promise<void> {
     const { data: existing } = await supabase
         .from('playlist_items')
@@ -87,9 +221,6 @@ export async function addTrackToPlaylist(request: { playlistId: string; trackId:
     if (error) throw error;
 }
 
-/**
- * Add multiple tracks to a playlist
- */
 export async function addTracksToPlaylist(request: { playlistId: string; trackIds: string[] }): Promise<void> {
     const { data: maxPosData } = await supabase
         .from('playlist_items')
@@ -125,9 +256,6 @@ export async function addTracksToPlaylist(request: { playlistId: string; trackId
     if (error) throw error;
 }
 
-/**
- * Get tracks for a playlist
- */
 export async function getPlaylistTracks(playlistId: string): Promise<string[]> {
     const { data, error } = await supabase
         .from('playlist_items')
@@ -139,9 +267,6 @@ export async function getPlaylistTracks(playlistId: string): Promise<string[]> {
     return data.map(item => item.spotify_track_id);
 }
 
-/**
- * Delete a playlist
- */
 export async function deletePlaylist(playlistId: string): Promise<void> {
     const { error } = await supabase
         .from('playlists')
@@ -151,10 +276,6 @@ export async function deletePlaylist(playlistId: string): Promise<void> {
     if (error) throw error;
 }
 
-/**
- * Get full track details for a playlist
- * [Optimized] Uses Cache and Batched Requests
- */
 export async function fetchPlaylistTracksWithDetails(playlistId: string): Promise<any[]> {
     const { data: items, error } = await supabase
         .from('playlist_items')
@@ -196,10 +317,6 @@ export async function fetchPlaylistTracksWithDetails(playlistId: string): Promis
     }));
 }
 
-/**
- * Get preview tracks for a playlist card
- * [Optimized] Uses Cache
- */
 export async function getPlaylistPreviewTracks(playlistId: string, limit: number = 20): Promise<any[]> {
     const { data: items, error } = await supabase
         .from('playlist_items')
@@ -226,9 +343,6 @@ export async function getPlaylistPreviewTracks(playlistId: string, limit: number
     return [];
 }
 
-/**
- * Get tags for a playlist
- */
 export async function getPlaylistTags(playlistId: string): Promise<string[]> {
     const { data, error } = await supabase
         .from('item_tags')
@@ -240,9 +354,6 @@ export async function getPlaylistTags(playlistId: string): Promise<string[]> {
     return data.map((item: any) => item.tags?.name).filter(Boolean);
 }
 
-/**
- * Get average rating for a playlist
- */
 export async function getPlaylistRating(playlistId: string): Promise<{ average: number; count: number }> {
     const { data, error } = await supabase
         .from('ratings')
@@ -256,9 +367,6 @@ export async function getPlaylistRating(playlistId: string): Promise<{ average: 
     return { average: sum / data.length, count: data.length };
 }
 
-/**
- * Get comments for a playlist
- */
 export async function getPlaylistComments(playlistId: string): Promise<any[]> {
     const { data, error } = await supabase
         .from('comments')
@@ -271,9 +379,6 @@ export async function getPlaylistComments(playlistId: string): Promise<any[]> {
     return data;
 }
 
-/**
- * Add a comment to a playlist
- */
 export async function addPlaylistComment(playlistId: string, content: string): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
@@ -290,9 +395,6 @@ export async function addPlaylistComment(playlistId: string, content: string): P
     if (error) throw error;
 }
 
-/**
- * Get user's rating for a playlist
- */
 export async function getUserPlaylistRating(playlistId: string): Promise<number | null> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
@@ -309,9 +411,6 @@ export async function getUserPlaylistRating(playlistId: string): Promise<number 
     return data ? data.rating : null;
 }
 
-/**
- * Delete a playlist rating
- */
 export async function deletePlaylistRating(playlistId: string): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
@@ -326,9 +425,6 @@ export async function deletePlaylistRating(playlistId: string): Promise<void> {
     if (error) throw error;
 }
 
-/**
- * Reorder playlist tracks
- */
 export async function reorderPlaylistTracks(tracks: { id: string; position: number }[]): Promise<void> {
     const updates = tracks.map(track =>
         supabase
@@ -339,9 +435,6 @@ export async function reorderPlaylistTracks(tracks: { id: string; position: numb
     await Promise.all(updates);
 }
 
-/**
- * Upload playlist image
- */
 export async function uploadPlaylistImage(playlistId: string, file: File): Promise<string> {
     const fileName = `${playlistId}`;
     const filePath = `${fileName}`;
@@ -356,9 +449,6 @@ export async function uploadPlaylistImage(playlistId: string, file: File): Promi
     return publicUrl;
 }
 
-/**
- * Add a tag to a playlist
- */
 export async function addPlaylistTag(playlistId: string, tag: string): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
@@ -389,9 +479,6 @@ export async function addPlaylistTag(playlistId: string, tag: string): Promise<v
     if (error && error.code !== '23505') throw error;
 }
 
-/**
- * Remove a tag from a playlist
- */
 export async function removePlaylistTag(playlistId: string, tag: string): Promise<void> {
     const { data: tagData } = await supabase.from('tags').select('id').eq('name', tag).maybeSingle();
     if (!tagData) return;
@@ -406,25 +493,16 @@ export async function removePlaylistTag(playlistId: string, tag: string): Promis
     if (error) throw error;
 }
 
-/**
- * Update playlist title
- */
 export async function updatePlaylistTitle(playlistId: string, newTitle: string): Promise<void> {
     const { error } = await supabase.from('playlists').update({ title: newTitle }).eq('id', playlistId);
     if (error) throw error;
 }
 
-/**
- * Update playlist description
- */
 export async function updatePlaylistDescription(playlistId: string, newDescription: string): Promise<void> {
     const { error } = await supabase.from('playlists').update({ description: newDescription }).eq('id', playlistId);
     if (error) throw error;
 }
 
-/**
- * Update playlist rating
- */
 export async function updatePlaylistRating(playlistId: string, rating: number): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
@@ -441,25 +519,16 @@ export async function updatePlaylistRating(playlistId: string, rating: number): 
     if (error) throw error;
 }
 
-/**
- * Update playlist public status
- */
 export async function updatePlaylistPublicStatus(playlistId: string, isPublic: boolean): Promise<void> {
     const { error } = await supabase.from('playlists').update({ is_public: isPublic }).eq('id', playlistId);
     if (error) throw error;
 }
 
-/**
- * Update playlist color
- */
 export async function updatePlaylistColor(playlistId: string, color: string): Promise<void> {
     const { error } = await supabase.from('playlists').update({ color: color }).eq('id', playlistId);
     if (error) throw error;
 }
 
-/**
- * Remove track from playlist
- */
 export async function removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<void> {
     const { error } = await supabase
         .from('playlist_items')
@@ -470,9 +539,6 @@ export async function removeTrackFromPlaylist(playlistId: string, trackId: strin
     if (error) throw error;
 }
 
-/**
- * Get all available tags (preseeded/system tags)
- */
 export async function getAllTags(): Promise<string[]> {
     const { data, error } = await supabase.from('tags').select('name').order('name');
     if (error) throw error;

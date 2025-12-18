@@ -2,11 +2,12 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import PlaylistCard from './PlaylistCard';
-import type { Tables } from '../../../types/supabase';
-import type { EnhancedPlaylist } from './PlaylistDashboard'; 
+// [Fix] Import EnhancedPlaylist from services
+import type { EnhancedPlaylist } from '../services/playlist_services';
 
 interface SortablePlaylistCardProps {
-    playlist: Tables<'playlists'>;
+    // [Fix] Use EnhancedPlaylist type to match parent data
+    playlist: EnhancedPlaylist;
     onDelete?: () => void;
     lastUpdated?: number;
     isLiked?: boolean;

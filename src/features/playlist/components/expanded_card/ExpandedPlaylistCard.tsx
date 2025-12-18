@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from 'react-dom'; // [修复1] 引入 createPortal
 import type { Tables } from '../../../../types/supabase';
 import { supabase } from '../../../../lib/supabaseClient';
 import {
@@ -27,8 +27,8 @@ import { PlaylistCommunity } from './PlaylistCommunity';
 import { PlaylistSettings } from './PlaylistSettings';
 import { PlaylistReview } from './PlaylistReview';
 import ExpandButton from '../../../../components/ui/ExpandButton';
-import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal'; // [Resolved] Fix import path
-import type { EnhancedPlaylist } from '../PlaylistDashboard';
+import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal'; 
+import type { EnhancedPlaylist } from '../../services/playlist_services';
 
 interface ExpandedPlaylistCardProps {
     playlist: Tables<'playlists'>;
@@ -43,9 +43,9 @@ interface ExpandedPlaylistCardProps {
 
 type ActiveTab = 'tracks' | 'review' | 'community' | 'settings';
 
-export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
-    playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor,
-    onPlaylistUpdate
+export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({ 
+    playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor, 
+    onPlaylistUpdate 
 }) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
@@ -70,7 +70,9 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [newComment, setNewComment] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
     const [isEditingEnabled, setIsEditingEnabled] = useState(false);
-    const [selectedTrack, setSelectedTrack] = useState<any | null>(null); // [Resolved] Restore state
+    
+    const [selectedTrack, setSelectedTrack] = useState<any | null>(null); 
+    
     const [searchQuery, setSearchQuery] = useState('');
     const [isOwner, setIsOwner] = useState(false);
     const [isFavourite, setIsFavourite] = useState(false);
@@ -155,12 +157,15 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         ]);
         setRatingData(ratingRes);
         setUserRating(userRatingRes);
-
+        
         if (onPlaylistUpdate) {
+            const now = new Date().toISOString();
             onPlaylistUpdate(playlist.id, {
                 rating_avg: ratingRes.average,
                 rating_count: ratingRes.count,
-                rated_at: new Date().toISOString()
+                rated_at: now,
+                user_rating: userRatingRes || 0,
+                user_rated_at: now
             });
         }
     };
@@ -175,22 +180,17 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     };
 
     const handleReorderTracks = async (newOrder: any[]) => {
-        setTracks(newOrder); // Optimistic update
+        setTracks(newOrder); 
         try {
             const updates = newOrder.map((track, index) => ({
-                id: track.id, // playlist_item id
+                id: track.id,
                 position: index
             }));
             await reorderPlaylistTracks(updates);
-            if (onPlaylistUpdate) {
-                // Determine if this looks like a significant update (e.g. first few tracks changed) or just trigger generic update
-                // For now, minimal update to parent if needed, but reorder usually doesn't change metadata displayed on card 
-                // except maybe preview tracks which is separate.
-            }
         } catch (error) {
             console.error('Error reordering tracks:', error);
             showError('Failed to save new order');
-            loadData(); // Revert
+            loadData(); 
         }
     };
 
@@ -283,33 +283,38 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     };
 
     const handleTrackClick = (track: any) => {
-        setSelectedTrack(track); // [Resolved] Set state to open modal
+        setSelectedTrack(track);
     };
 
-    // Logic to update Dashboard Tags when User Tags change
     const handleTagsSync = (newUserTags: string[]) => {
         const mergedTags = Array.from(new Set([...communityTags, ...newUserTags]));
         setCommunityTags(mergedTags);
 
         if (onPlaylistUpdate) {
+            const now = new Date().toISOString();
             onPlaylistUpdate(playlist.id, {
                 tags: mergedTags,
                 tag_count: mergedTags.length,
-                tagged_at: new Date().toISOString()
+                tagged_at: now,
+                user_tags: newUserTags,
+                user_tag_count: newUserTags.length,
+                user_tagged_at: now
             });
         }
     };
 
     if (loading) {
-        return (
+        return createPortal(
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
                 <div className="flex items-center justify-center w-full max-w-5xl h-[500px] bg-[#1e1e1e] rounded-2xl shadow-2xl border border-white/5 mx-auto" onClick={(e) => e.stopPropagation()}>
                     <LoadingSpinner className="w-12 h-12 text-[white]" />
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
+    // [修复3] 主内容使用 createPortal
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
             <div
@@ -358,8 +363,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                             >
                                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
                             </button>
-                        ))
-                        }
+                        ))}
                     </div>
 
                     {activeTab === 'tracks' && (
@@ -412,7 +416,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     </div>
                 </div>
             </div>
-
+            
             {/* [Resolved] Render Correct Track Modal */}
             {selectedTrack && (
                 <TrackReviewModal
@@ -420,6 +424,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     onClose={() => setSelectedTrack(null)}
                 />
             )}
+
         </div>,
         document.body
     );

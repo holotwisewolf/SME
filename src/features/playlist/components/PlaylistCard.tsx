@@ -9,9 +9,9 @@ import { supabase } from '../../../lib/supabaseClient';
 import { AddTrackModal } from './AddTrackModal';
 import { ExpandedPlaylistCard } from './expanded_card/ExpandedPlaylistCard';
 import { useDroppable, useDndMonitor } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { DraggableTrackRow } from './DraggableTrackRow';
-import type { EnhancedPlaylist } from './PlaylistDashboard';
+import type { EnhancedPlaylist } from '../services/playlist_services';
 
 interface PlaylistCardProps {
     playlist: Tables<'playlists'>;
@@ -22,8 +22,8 @@ interface PlaylistCardProps {
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
 }
 
-const PlaylistCard: React.FC<PlaylistCardProps> = ({
-    playlist, onDelete, lastUpdated, initialIsLiked, onToggleFavorite, onPlaylistUpdate
+const PlaylistCard: React.FC<PlaylistCardProps> = ({ 
+    playlist, onDelete, lastUpdated, initialIsLiked, onToggleFavorite, onPlaylistUpdate 
 }) => {
     const [isFavourite, setIsFavourite] = useState(initialIsLiked || false);
     const [showAddTrackModal, setShowAddTrackModal] = useState(false);
@@ -42,6 +42,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
         data: { playlist }
     });
 
+    // Handle Track Reordering within the card
     useDndMonitor({
         onDragEnd(event) {
             const { active, over } = event;
@@ -58,7 +59,6 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                         const newIndex = items.findIndex((t) => `${playlist.id}::${t.id}` === overId);
                         return arrayMove(items, oldIndex, newIndex);
                     });
-
                     // Note: We are not persisting this reorder to the backend for preview tracks
                     // because preview tracks are just a subset, and reordering them might be complex 
                     // without full context. But visual reordering is now supported.
@@ -80,7 +80,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
         setColor(playlist.color);
     }, [playlist.title, playlist.color]);
 
-    // [Resolved] Keep Staggered Loading Logic
+    // Staggered Loading Logic
     useEffect(() => {
         const delay = Math.random() * 2000;
         const timeoutId = setTimeout(async () => {
@@ -97,7 +97,11 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
     const handleFavourite = async () => {
         const willBeFavourite = !isFavourite;
         setIsFavourite(willBeFavourite);
-        if (onToggleFavorite) onToggleFavorite(playlist.id, willBeFavourite);
+        
+        if (onToggleFavorite) {
+            onToggleFavorite(playlist.id, willBeFavourite);
+        }
+
         try {
             if (!willBeFavourite) {
                 await removeFromFavourites(playlist.id, "playlist");
@@ -108,7 +112,9 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
             console.error('Error toggling favourite:', error);
             setIsFavourite(!willBeFavourite);
             alert('Failed to update favorite status.');
-            if (onToggleFavorite) onToggleFavorite(playlist.id, !willBeFavourite);
+            if (onToggleFavorite) {
+                onToggleFavorite(playlist.id, !willBeFavourite);
+            }
         }
     };
 
@@ -116,7 +122,6 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
         <>
             <div
                 ref={setNodeRef}
-                // [Resolved] Combine styles: keep hover shadow from incoming change
                 className={`bg-[#131313]/80 p-4 rounded-xl flex flex-col shadow-md relative transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] ${isInlineExpanded ? 'min-h-[20rem] max-h-[28rem] h-auto' : 'h-80'} ${isOver ? 'ring-2 ring-white/50 bg-[#2a2a2a] shadow-[0_0_15px_rgba(255,255,255,0.3)]' : ''}`}
             >
                 {/* Header */}
@@ -161,10 +166,11 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                     {/* Track Preview Area */}
                     <div className="flex-1 min-h-0 overflow-hidden relative flex flex-col">
                         {isInlineExpanded ? (
+                            // Expanded: Scrollable List with Sorting
                             <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
                                 {previewTracks.length > 0 ? (
-                                    <SortableContext
-                                        items={previewTracks.map(t => `${playlist.id}::${t.id}`)}
+                                    <SortableContext 
+                                        items={previewTracks.map(t => `${playlist.id}::${t.id}`)} 
                                         strategy={verticalListSortingStrategy}
                                     >
                                         {previewTracks.map((track) => (
@@ -196,6 +202,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                                 )}
                             </div>
                         ) : (
+                            // Collapsed: First Track Only (No Sorting needed here usually, but kept simple)
                             <div className="pt-1">
                                 {previewTracks.length > 0 ? (
                                     <DraggableTrackRow track={previewTracks[0]} playlistId={playlist.id}>
