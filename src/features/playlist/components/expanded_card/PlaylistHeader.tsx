@@ -1,8 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import EditIcon from '../../../../components/ui/EditIcon';
 import ImageOptionsModal from '../../../../components/ui/ImageOptionsModal';
-import { useError } from '../../../../context/ErrorContext';
-import { updatePlaylistRating, uploadPlaylistImage, resetPlaylistImage, addPlaylistTag, removePlaylistTag, deletePlaylistRating, getPlaylistRating } from '../../services/playlist_services';
+import { usePlaylistHeader } from '../../hooks/usePlaylistHeader';
 
 interface PlaylistHeaderProps {
     playlistId: string;
@@ -31,7 +30,6 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     playlistImgUrl,
     imgError,
     setImgError,
-    ratingData,
     userRating,
     tags: initialTags,
     isEditingTitle,
@@ -45,129 +43,36 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     trackCount,
     isOwner = true
 }) => {
-    const { showError } = useError();
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [tags, setTags] = useState<string[]>(initialTags);
-    const [newTag, setNewTag] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
-    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-
-    // Sync local tags with prop tags
-    React.useEffect(() => {
-        setTags(initialTags);
-    }, [initialTags]);
-
-    const handleRate = async (rating: number) => {
-        try {
-            if (userRating === rating) {
-                await deletePlaylistRating(playlistId);
-            } else {
-                await updatePlaylistRating(playlistId, rating);
-            }
-            onRatingUpdate();
-        } catch (error) {
-            console.error('Error updating rating:', error);
-        }
-    };
-
-    const handleImageClick = () => {
-        if (isEditingEnabled) {
-            setIsImageModalOpen(true);
-        }
-    };
-
-    const handleUploadClick = () => {
-        if (fileInputRef.current) {
-            fileInputRef.current.click();
-        }
-    };
-
-    const handleResetImage = async () => {
-        setIsUploading(true);
-        try {
-            await resetPlaylistImage(playlistId);
-            setImgError(true); // Show default placeholder
-            onImageUpdate?.();
-        } catch (error) {
-            console.error('Error resetting image:', error);
-            showError('Failed to reset image');
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        // Validate file size (5MB max)
-        const MAX_SIZE_MB = 5;
-        const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
-        if (file.size > MAX_SIZE_BYTES) {
-            showError(`File too large. Maximum size is ${MAX_SIZE_MB}MB`);
-            return;
-        }
-
-        // Validate file type
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!validTypes.includes(file.type)) {
-            showError('Invalid file type. Please use JPG, PNG, GIF, or WebP');
-            return;
-        }
-        setIsUploading(true);
-        try {
-            await uploadPlaylistImage(playlistId, file);
-            setImgError(false);
-            onImageUpdate?.(); // Notify parent to refresh data
-        } catch (error: any) {
-            console.error('Error uploading image:', error);
-            // More descriptive error messages
-            if (error?.message?.includes('Payload too large') || error?.statusCode === 413) {
-                showError('File too large. Please use a smaller image');
-            } else if (error?.message?.includes('Invalid')) {
-                showError('Invalid image format');
-            } else {
-                showError('Failed to upload image. Please try again');
-            }
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleAddTag = async (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && newTag.trim()) {
-            const tagToAdd = newTag.trim();
-            if (tags.includes(tagToAdd)) {
-                setNewTag('');
-                return;
-            }
-            try {
-                setTags([...tags, tagToAdd]);
-                setNewTag('');
-                await addPlaylistTag(playlistId, tagToAdd);
-            } catch (error) {
-                console.error('Error adding tag:', error);
-                setTags(tags);
-            }
-        }
-    };
-
-    const handleRemoveTag = async (tagToRemove: string) => {
-        if (!isEditingEnabled) return;
-        try {
-            setTags(tags.filter(t => t !== tagToRemove));
-            await removePlaylistTag(playlistId, tagToRemove);
-        } catch (error) {
-            console.error('Error removing tag:', error);
-            setTags(tags);
-        }
-    };
-
-
+    // All logic extracted to hook
+    const {
+        tags,
+        newTag,
+        isUploading,
+        isImageModalOpen,
+        fileInputRef,
+        setNewTag,
+        setIsImageModalOpen,
+        handleRate,
+        handleImageClick,
+        handleUploadClick,
+        handleResetImage,
+        handleFileChange,
+        handleAddTag,
+        handleRemoveTag
+    } = usePlaylistHeader({
+        playlistId,
+        initialTags,
+        userRating,
+        onRatingUpdate,
+        onImageUpdate,
+        isEditingEnabled,
+        setImgError
+    });
 
     return (
         <>
-            <div className="w-full md:w-[35%] p-6 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
+            <div className="w-full md:w-[35%] p-6 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
+
                 {/* Title & Creator */}
                 <div>
                     {isEditingTitle ? (
@@ -181,21 +86,15 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                 autoFocus
                                 className="text-2xl font-bold text-white bg-transparent border-b border-white/20 focus:outline-none focus:border-[#696969] w-full"
                             />
-                            <button
-                                onClick={handleTitleUpdate}
-                                className="p-1 hover:bg-white/10 rounded-full text-[#FFD1D1] transition-colors"
-                                title="Confirm title"
-                            >
+                            <button onClick={handleTitleUpdate} className="p-1 hover:bg-white/10 rounded-full text-[#FFD1D1] transition-colors">
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </button>
                         </div>
                     ) : (
-                        <h2
-                            onClick={() => isEditingEnabled && setIsEditingTitle(true)}
+                        <h2 onClick={() => isEditingEnabled && setIsEditingTitle(true)}
                             className={`text-2xl font-bold text-white leading-tight mb-1 transition-all ${isEditingEnabled ? 'cursor-pointer hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : ''}`}
-                            title={isEditingEnabled ? "Click to edit" : ""}
                         >
                             {playlistTitle}
                         </h2>
@@ -204,26 +103,14 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                     <p className="text-xs text-gray-500 mt-1">{trackCount} {trackCount === 1 ? 'track' : 'tracks'}</p>
                 </div>
 
-                {/* Image (4:3 Aspect Ratio) */}
-                <div
-                    className={`w-full aspect-[4/3] rounded-xl overflow-hidden bg-[#2a2a2a] shadow-lg relative group ${isEditingEnabled ? 'cursor-pointer' : ''}`}
-                    onClick={handleImageClick}
-                >
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                    />
-
+                {/* Image Section */}
+                <div className={`w-full aspect-[4/3] rounded-xl overflow-hidden bg-[#2a2a2a] shadow-lg relative group ${isEditingEnabled ? 'cursor-pointer' : ''}`}
+                    onClick={handleImageClick}>
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                     {!imgError ? (
-                        <img
-                            src={`${playlistImgUrl}?t=${Date.now()}`} // Cache busting
-                            alt={playlistTitle}
+                        <img src={`${playlistImgUrl}?t=${Date.now()}`} alt={playlistTitle}
                             className={`w-full h-full object-cover transition-transform duration-500 ${isEditingEnabled ? 'group-hover:scale-105' : ''}`}
-                            onError={() => setImgError(true)}
-                        />
+                            onError={() => setImgError(true)} />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-[#333] to-[#1a1a1a] flex items-center justify-center text-gray-600">
                             <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -231,8 +118,6 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                             </svg>
                         </div>
                     )}
-
-                    {/* Edit Overlay */}
                     {isEditingEnabled && (
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <div className="bg-black/60 p-3 rounded-full hover:bg-black/80 transition-colors">
@@ -240,7 +125,6 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                             </div>
                         </div>
                     )}
-
                     {isUploading && (
                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                             <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -267,46 +151,33 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                 </svg>
                             </button>
                         ))}
-
                     </div>
                     <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{isOwner ? 'Rated by You' : `Rated by ${creatorName}`}</span>
                 </div>
 
-                {/* Tags Container (Flexible Wrap) */}
-                <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-3">
-                        <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Creator Tags</h3>
+                {/* Tags Container */}
+                <div className="flex-1 min-h-0">
+                    <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">Creator Tags</h3>
                         {isEditingEnabled && (
-                            <input
-                                type="text"
-                                value={newTag}
-                                onChange={(e) => setNewTag(e.target.value)}
-                                onKeyDown={handleAddTag}
-                                placeholder="+ Add"
-                                className="px-2 py-0.5 bg-transparent border-b border-white/10 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-white/30 w-20 transition-all focus:w-28"
-                            />
+                            <input type="text" value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={handleAddTag} placeholder="+ Add"
+                                className="px-2 py-0.5 bg-transparent border-b border-white/10 text-[10px] text-white placeholder-gray-500 focus:outline-none focus:border-white/30 w-16 transition-all focus:w-24" />
                         )}
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5 overflow-y-auto pr-1 max-h-[65px] scrollbar-thin scrollbar-thumb-white/10">
                         {tags.length > 0 ? (
                             tags.map((tag, index) => (
-                                <span
-                                    key={index}
-                                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors flex items-center gap-1 group"
-                                >
+                                <span key={index}
+                                    className="px-2 py-0.5 bg-white/5 hover:bg-white/10 text-gray-300 text-[11px] rounded-full border border-white/5 transition-colors flex items-center gap-1 group">
                                     #{tag}
                                     {isEditingEnabled && (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
-                                            className="ml-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            ×
-                                        </button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
+                                            className="ml-0.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">×</button>
                                     )}
                                 </span>
                             ))
                         ) : (
-                            <span className="text-gray-500 text-xs italic">No tags</span>
+                            <span className="text-gray-500 text-[10px] italic">No tags</span>
                         )}
                     </div>
                 </div>
