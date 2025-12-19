@@ -8,7 +8,7 @@ import { getRecentActivity } from '../../features/trending/services/trending_ser
 import { supabase } from '../../lib/supabaseClient';
 import { getSession } from '../../features/auth/services/auth_services';
 import { useError } from '../../context/ErrorContext';
-import { ExpandedPlaylistCard } from '../../features/playlist/components/expanded_card/ExpandedPlaylistCard';
+import { ExpandedPlaylistCard } from '../../features/playlist/components/expanded_card/ExpandedPlaylistCard'; 
 import type { Tables } from '../../types/supabase';
 
 // [NEW] Navigation Hook
@@ -20,10 +20,10 @@ import { ArtistDetailModal } from '../../features/spotify/components/ArtistDetai
 import { ExpandedAlbumCard } from '../../features/favourites/favourites_albums/components/expanded_card/ExpandedAlbumCard';
 
 // Import Services
-import {
-    getTrackDetails,
-    getArtistDetails,
-    searchArtists
+import { 
+    getTrackDetails, 
+    getArtistDetails, 
+    searchArtists 
 } from '../../features/spotify/services/spotify_services';
 
 import type { SpotifyTrack } from '../../features/spotify/type/spotify_types';
@@ -44,7 +44,7 @@ const CommunityActivity: React.FC = () => {
     const [selectedArtist, setSelectedArtist] = useState<ArtistFullDetail | null>(null);
     const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Tables<'playlists'> | null>(null);
-
+    
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
     // --- REALTIME SUBSCRIPTION ---
@@ -55,18 +55,18 @@ const CommunityActivity: React.FC = () => {
             .channel('community-feed-universal')
             .on(
                 'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'activity_log' },
+                { event: 'INSERT', schema: 'public', table: 'activities' },
                 (payload) => {
                     console.log('⚡ New Activity Detected:', payload);
-                    fetchActivities();
+                    fetchActivities(); 
                 }
             )
             .on(
                 'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'playlists' },
+                { event: 'UPDATE', schema: 'public', table: 'playlists' }, 
                 (payload) => {
                     console.log('⚡ Playlist Updated (Privacy Change):', payload);
-                    fetchActivities();
+                    fetchActivities(); 
                 }
             )
             .subscribe();
@@ -78,52 +78,54 @@ const CommunityActivity: React.FC = () => {
 
     const fetchActivities = async () => {
         if (activities.length === 0) setLoading(true);
-
+        
         try {
             const data = await getRecentActivity(50);
             const playlistIds: string[] = [];
+            
+            // 1. Identify all playlist-related logs
             data.forEach((item: any) => {
                 const type = (item.itemType || item.item_type || item.type || '').toLowerCase();
-                const isPlaylist = type === 'playlist' || (item.track && item.track.type === 'playlist');
-                if (isPlaylist && item.track && item.track.id) {
+                if (type === 'playlist' && item.track?.id) {
                     playlistIds.push(item.track.id);
                 }
             });
 
-            const privacyMap = new Map<string, boolean>();
+            // 2. Fetch both privacy status AND creator's user_id from playlists table
+            const playlistMetadata = new Map<string, { is_public: boolean, user_id: string }>();
             if (playlistIds.length > 0) {
-                const { data: statusData } = await supabase
+                const { data: dbData } = await supabase
                     .from('playlists')
-                    .select('id, is_public')
+                    .select('id, is_public, user_id') // We use user_id here as creator ID
                     .in('id', playlistIds);
-
-                if (statusData) {
-                    statusData.forEach(p => privacyMap.set(p.id, p.is_public ?? false));
+                
+                if (dbData) {
+                    dbData.forEach(p => playlistMetadata.set(p.id, { 
+                        is_public: p.is_public ?? false, 
+                        user_id: p.user_id 
+                    }));
                 }
             }
 
-            const validActivities = data.filter(activity => {
+            // 3. Filter private playlists and manually attach the creator's user_id
+            const mappedActivities = data.filter(activity => {
                 const type = (activity.itemType || activity.item_type || activity.type || '').toLowerCase();
-                const isPlaylistActivity =
-                    type === 'playlist' ||
-                    (activity.track && activity.track.type === 'playlist');
-
-                if (isPlaylistActivity) {
-                    const playlistData = activity.track;
-                    if (!playlistData || !playlistData.id || !playlistData.title) return false;
-
-                    const isPublic = privacyMap.get(playlistData.id);
-                    if (isPublic === undefined) return false;
-                    if (isPublic === false) return false;
-
-                    return true;
+                if (type === 'playlist') {
+                    const meta = playlistMetadata.get(activity.track?.id);
+                    // Hide activity if playlist is private or deleted
+                    if (!meta || !meta.is_public) return false;
+                    
+                    // Inject the creator's user_id into the local object for the Card to use
+                    if (activity.track) {
+                        activity.track.user_id = meta.user_id; 
+                    }
                 }
                 return true;
             });
 
-            setActivities(validActivities);
+            setActivities(mappedActivities);
         } catch (error) {
-            console.error('Error fetching activities:', error);
+            console.error('Error fetching/mapping community activities:', error);
         } finally {
             setLoading(false);
         }
@@ -227,7 +229,7 @@ const CommunityActivity: React.FC = () => {
             if (!isPublic && !isOwner) {
                 showError("Cant view this playlist cz it is private");
                 setIsLoadingDetails(false);
-                return;
+                return; 
             }
 
             setSelectedPlaylist(playlist);
@@ -284,15 +286,17 @@ const CommunityActivity: React.FC = () => {
                     <button
                         key={type.value}
                         onClick={() => setFilterType(type.value)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${filterType === type.value
+                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                            filterType === type.value
                                 ? 'bg-[#FFD1D1] text-black'
                                 : 'bg-[#292929] text-[#D1D1D1]/70 hover:text-[#D1D1D1] border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30'
-                            }`}
+                        }`}
                     >
                         {type.label}
                         {type.count > 0 && (
-                            <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs ${filterType === type.value ? 'bg-black/20' : 'bg-[#FFD1D1]/10'
-                                }`}>
+                            <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs ${
+                                filterType === type.value ? 'bg-black/20' : 'bg-[#FFD1D1]/10'
+                            }`}>
                                 {type.count}
                             </span>
                         )}
@@ -312,10 +316,10 @@ const CommunityActivity: React.FC = () => {
                 ) : (
                     <div className="space-y-3 pb-4">
                         {filteredActivities.map((activity, index) => (
-                            <ActivityCard
-                                key={activity.id}
-                                activity={activity}
-                                index={index}
+                            <ActivityCard 
+                                key={activity.id} 
+                                activity={activity} 
+                                index={index} 
                                 onTrackClick={handleTrackClick}
                                 onArtistClick={handleArtistClick}
                                 onAlbumClick={handleAlbumClick}
@@ -328,28 +332,28 @@ const CommunityActivity: React.FC = () => {
             </div>
 
             {selectedTrack && (
-                <TrackReviewModal
-                    track={selectedTrack}
-                    onClose={() => setSelectedTrack(null)}
+                <TrackReviewModal 
+                    track={selectedTrack} 
+                    onClose={() => setSelectedTrack(null)} 
                 />
             )}
 
             {selectedArtist && (
-                <ArtistDetailModal
-                    artist={selectedArtist}
+                <ArtistDetailModal 
+                    artist={selectedArtist} 
                     onClose={handleCloseArtistModal}
                 />
             )}
 
             {selectedAlbumId && (
-                <ExpandedAlbumCard
-                    albumId={selectedAlbumId}
-                    onClose={() => setSelectedAlbumId(null)}
+                <ExpandedAlbumCard 
+                    albumId={selectedAlbumId} 
+                    onClose={() => setSelectedAlbumId(null)} 
                 />
             )}
 
             {selectedPlaylist && (
-                <ExpandedPlaylistCard
+                <ExpandedPlaylistCard 
                     playlist={selectedPlaylist}
                     onClose={() => setSelectedPlaylist(null)}
                     onTitleChange={(newTitle) => setSelectedPlaylist(prev => prev ? { ...prev, title: newTitle } : null)}
@@ -362,9 +366,9 @@ const CommunityActivity: React.FC = () => {
             )}
 
             {isLoadingDetails && (
-                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-none">
+                 <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-none">
                     <LoadingSpinner />
-                </div>
+                 </div>
             )}
         </div>
     );

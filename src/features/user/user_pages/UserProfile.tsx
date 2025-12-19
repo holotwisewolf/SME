@@ -26,7 +26,7 @@ const UserProfile = () => {
     const navigate = useNavigate();
     const { user: currentUser } = useLogin();
 
-    // --- Data States ---
+    // Data States
     const [profile, setProfile] = useState<any>(null);
     const [ratingStats, setRatingStats] = useState({ average: 0, count: 0 });
     const [commentCount, setCommentCount] = useState(0);
@@ -36,7 +36,7 @@ const UserProfile = () => {
     const [recentComments, setRecentComments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // --- UI States ---
+    // UI States
     const [activeTab, setActiveTab] = useState<'music' | 'activity'>('music');
     const [favFilter, setFavFilter] = useState<string>('all');
     const [starFilter, setStarFilter] = useState<number>(0);
@@ -45,7 +45,7 @@ const UserProfile = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isFavDropdownOpen, setIsFavDropdownOpen] = useState(false);
 
-    // --- Modal States ---
+    // Modal States
     const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
     const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
@@ -53,7 +53,7 @@ const UserProfile = () => {
 
     const isOwnProfile = currentUser?.id === userId;
 
-    // --- Handlers ---
+    // Handlers
     const handleItemClick = useCallback((item: any) => {
         if (item.type === 'track') setSelectedTrack(item.rawData);
         else if (item.type === 'album') setSelectedAlbum(item.item_id);
@@ -64,7 +64,7 @@ const UserProfile = () => {
         if (id) navigate(`/profile/${id}`);
     };
 
-    // --- Data Enrichment Logic (Filters Unknown/Null) ---
+    // Data Enrichment Logic
     const enrichItems = async (items: any[]) => {
         if (!items || items.length === 0) return [];
         const trackIds = items.filter(i => i.item_type === 'track').map(i => i.item_id);
@@ -102,12 +102,11 @@ const UserProfile = () => {
             } else if (item.item_type === 'playlist') {
                 const d = playlistMap.get(item.item_id);
                 name = d?.title; artist = "Playlist"; color = d?.color; rawData = d;
-                imageUrl = d?.imageUrl || supabase.storage.from('playlists').getPublicUrl(item.item_id).data.publicUrl;
+                imageUrl = d?.imageUrl || (item.item_id ? supabase.storage.from('playlists').getPublicUrl(item.item_id).data.publicUrl : null);
             }
             return { ...item, name, title: name, artist, imageUrl, color, type: item.item_type, rawData };
         });
 
-        // (here) Filter out invalid or missing metadata
         return enriched.filter(item => item.name && item.name !== "Unknown Title");
     };
 
@@ -155,10 +154,12 @@ const UserProfile = () => {
                 })
                 .filter(c => c !== null);
 
-            const ratingData = ratingRes as any;
+            // Handle potential string return from average rating service
+            const avgVal = typeof ratingRes === 'string' ? parseFloat(ratingRes) : (ratingRes as any).average || 0;
+            
             setRatingStats({ 
-                average: parseFloat(ratingData.average || '0'), 
-                count: ratingData.count || enrichedRates.length 
+                average: avgVal, 
+                count: comms.count || enrichedRates.length 
             });
             setCommentCount(comms.count || 0);
             setPlaylists(enrichedPls);
@@ -176,7 +177,7 @@ const UserProfile = () => {
 
     const isLocked = profile?.is_private_profile && !isOwnProfile;
 
-    // --- Sub Components ---
+    // Sub Components
     const UniversalThumbnail = ({ item }: { item: any }) => {
         const [imgError, setImgError] = useState(false);
         return (
@@ -188,6 +189,15 @@ const UserProfile = () => {
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/10"><Music size={40} /></div>
                 )}
+
+                {/* Star rating badge for the Ratings section */}
+                {item.rating && (
+                    <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-black text-[#FFD1D1] flex items-center gap-1 shadow-lg z-10 border border-white/10">
+                        <Star size={10} fill="#FFD1D1" className="text-[#FFD1D1]" />
+                        {item.rating}
+                    </div>
+                )}
+
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"><Play fill="white" size={24} /></div>
             </div>
         );
@@ -198,7 +208,7 @@ const UserProfile = () => {
 
     return (
         <div className="h-full overflow-y-auto custom-scrollbar bg-[#696969]">
-            {/* --- Header Section --- */}
+            {/* Header Section */}
             <div className="pt-12 pb-6 px-6">
                 <div className="max-w-4xl mx-auto flex flex-col items-center">
                     <div className="w-40 h-40 rounded-full overflow-hidden border-[3px] border-white/10 shadow-2xl bg-[#2a2a2a] mb-5">
@@ -228,21 +238,32 @@ const UserProfile = () => {
             </div>
 
             {isLocked ? (
-                <div className="py-20 text-center border-t border-white/10">
-                    <Lock className="mx-auto mb-2 text-white/10" size={30} />
-                    <p className="text-white/40 uppercase text-xs">Private Account</p>
+                <div className="flex-1 flex flex-col items-center px-4 py-20 border-t border-white/10">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-xl">
+                        <div className="bg-black/20 backdrop-blur-md p-16 rounded-[2.5rem] border border-white/5 flex flex-col items-center shadow-2xl relative overflow-hidden group">
+                            <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#FFD1D1]/5 rounded-full blur-3xl group-hover:bg-[#FFD1D1]/10 transition-colors duration-700" />
+                            <div className="relative">
+                                <div className="w-24 h-24 rounded-3xl bg-black/40 flex items-center justify-center mb-8 rotate-3 group-hover:rotate-0 transition-transform duration-500 border border-white/10 shadow-xl">
+                                    <Lock className="w-12 h-12 text-[#FFD1D1]/80" strokeWidth={1.5} />
+                                </div>
+                            </div>
+                            <h2 className="text-3xl font-black text-white mb-3 tracking-tighter uppercase">Private Account</h2>
+                            <div className="w-12 h-1.5 bg-[#FFD1D1] mb-8 rounded-full shadow-[0_0_15px_rgba(255,209,209,0.3)]" />
+                            <p className="text-white/40 text-center font-bold text-sm leading-relaxed uppercase tracking-widest max-w-[280px]">
+                                This user has set their profile to private. <br />
+                                
+                            </p>
+                        </div>
+                    </motion.div>
                 </div>
             ) : (
                 <>
-                    {/* --- Tab Navigation --- */}
                     <div className="bg-[#696969] pt-2">
                         <div className="max-w-4xl mx-auto border-t border-white/10 px-6 flex justify-center gap-12 relative">
                             {['music', 'activity'].map(t => (
                                 <button key={t} onClick={() => setActiveTab(t as any)} className={`py-6 text-2xl font-bold uppercase transition-all relative ${activeTab === t ? 'text-white' : 'text-white/30 hover:text-white'}`}>
                                     {t === 'music' ? 'Music' : 'Activity'}
-                                    {activeTab === t && (
-                                        <motion.div layoutId="activeTabLine" className="absolute bottom-0 left-0 right-0 h-1 bg-[#FFD1D1] rounded-t-full" />
-                                    )}
+                                    {activeTab === t && <motion.div layoutId="activeTabLine" className="absolute bottom-0 left-0 right-0 h-1 bg-[#FFD1D1] rounded-t-full" />}
                                 </button>
                             ))}
                         </div>
@@ -251,7 +272,6 @@ const UserProfile = () => {
                     <div className="max-w-4xl mx-auto px-6 py-10 space-y-16">
                         {activeTab === 'music' ? (
                             <>
-                                {/* (here) Created Playlists with Container */}
                                 <section>
                                     <div className="flex justify-between items-end mb-4 px-1 text-white">
                                         <h2 className="text-xl font-bold uppercase tracking-tight">Created Playlists</h2>
@@ -267,13 +287,10 @@ const UserProfile = () => {
                                                     </div>
                                                 ))}
                                             </div>
-                                        ) : (
-                                            <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No playlists created</div>
-                                        )}
+                                        ) : <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No playlists created</div>}
                                     </div>
                                 </section>
 
-                                {/* (here) Favorites with Container */}
                                 <section>
                                     <div className="flex justify-between items-end mb-4 px-1">
                                         <div className="flex items-center gap-8 text-white">
@@ -305,15 +322,12 @@ const UserProfile = () => {
                                                     </div>
                                                 ))}
                                             </div>
-                                        ) : (
-                                            <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No favorites found</div>
-                                        )}
+                                        ) : <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No favorites found</div>}
                                     </div>
                                 </section>
                             </>
                         ) : (
                             <>
-                                {/* (here) Ratings with Container */}
                                 <section>
                                     <div className="flex justify-between items-end mb-4 px-1 text-white">
                                         <div className="flex items-center gap-8">
@@ -345,28 +359,21 @@ const UserProfile = () => {
                                                     </div>
                                                 ))}
                                             </div>
-                                        ) : (
-                                            <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No ratings yet</div>
-                                        )}
+                                        ) : <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No ratings yet</div>}
                                     </div>
                                 </section>
 
-                                {/* --- RECENT ACTIVITY SECTION --- */}
                                 <section>
                                     <div className="flex justify-between items-center mb-4 text-white">
-                                        <h2 className="text-xl font-bold uppercase tracking-tight">Recent Activity</h2>
+                                        <h2 className="text-xl font-bold uppercase tracking-tight">Recent Comments</h2>
                                         <button onClick={() => setShowCommentsModal(true)} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">Full History</button>
                                     </div>
                                     <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm shadow-inner min-h-[150px] flex items-center justify-center">
                                         {recentComments.length > 0 ? (
                                             <div className="space-y-4 w-full">
-                                                {recentComments.map((c, i) =>
-                                                    <ActivityCard key={c.id} activity={c} index={i} onUserClick={handleUserClick} />
-                                                )}
+                                                {recentComments.slice(0, 3).map((c, i) => <ActivityCard key={c.id} activity={c} index={i} onUserClick={handleUserClick} />)}
                                             </div>
-                                        ) : (
-                                            <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No activity</div>
-                                        )}
+                                        ) : <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No comments found</div>}
                                     </div>
                                 </section>
                             </>
@@ -375,16 +382,7 @@ const UserProfile = () => {
                 </>
             )}
 
-            <ItemModals
-                selectedPlaylist={selectedPlaylist}
-                selectedTrack={selectedTrack}
-                selectedAlbum={selectedAlbum}
-                onClose={() => {
-                    setSelectedPlaylist(null);
-                    setSelectedTrack(null);
-                    setSelectedAlbum(null);
-                }}
-            />
+            <ItemModals selectedPlaylist={selectedPlaylist} selectedTrack={selectedTrack} selectedAlbum={selectedAlbum} onClose={() => { setSelectedPlaylist(null); setSelectedTrack(null); setSelectedAlbum(null); }} />
 
             <AnimatePresence>
                 {showCommentsModal && <UserCommentsModal userId={userId!} onClose={() => setShowCommentsModal(false)} />}
