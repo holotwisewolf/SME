@@ -19,6 +19,9 @@ const UserCommentsModal: React.FC<UserCommentsModalProps> = ({ userId, onClose }
     const [loading, setLoading] = useState(false);
     const LIMIT = 20;
 
+    /**
+     * Enriches comment data with Spotify metadata or Playlist titles
+     */
     const enrichItems = async (items: any[]) => {
         if (!items || items.length === 0) return [];
         const trackIds = [...new Set(items.filter(i => i.item_type === 'track').map(i => i.item_id))];
@@ -42,7 +45,9 @@ const UserCommentsModal: React.FC<UserCommentsModalProps> = ({ userId, onClose }
                 const { data: pData } = await supabase.from('playlists').select('id, title').in('id', playlistIds);
                 pData?.forEach(p => playlistMap.set(p.id, p.title));
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e); 
+        }
 
         return items.map(item => ({
             name: item.item_type === 'playlist' ? playlistMap.get(item.item_id) : (item.item_type === 'track' ? trackMap.get(item.item_id)?.name : albumMap.get(item.item_id)?.name) || "Unknown Title",
@@ -50,6 +55,9 @@ const UserCommentsModal: React.FC<UserCommentsModalProps> = ({ userId, onClose }
         }));
     };
 
+    /**
+     * Loads comments from service and applies enrichment
+     */
     const loadComments = async (pageNum: number, reset: boolean = false) => {
         if (loading) return;
         setLoading(true);
@@ -80,7 +88,11 @@ const UserCommentsModal: React.FC<UserCommentsModalProps> = ({ userId, onClose }
             setComments(prev => reset ? formatted : [...prev, ...formatted]);
             setHasMore(data.length === LIMIT);
             setPage(pageNum);
-        } catch (error) { console.error(error); } finally { setLoading(false); }
+        } catch (error) { 
+            console.error(error); 
+        } finally { 
+            setLoading(false); 
+        }
     };
 
     useEffect(() => {
@@ -91,21 +103,60 @@ const UserCommentsModal: React.FC<UserCommentsModalProps> = ({ userId, onClose }
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="relative w-full max-w-2xl bg-[#1f1f1f] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }} 
+                onClick={onClose} 
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+            />
+            
+            <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+                animate={{ scale: 1, opacity: 1, y: 0 }} 
+                className="relative w-full max-w-2xl bg-[#1f1f1f] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]"
+            >
+                {/* Modal Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/5">
                     <h2 className="text-xl font-bold text-white uppercase tracking-tight">Full Activity</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400"><X className="w-5 h-5" /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400">
+                        <X className="w-5 h-5" />
+                    </button>
                 </div>
+
+                {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#121212]">
-                    <div className="space-y-4">
-                        {comments.map((activity, idx) => (
-                            <ActivityCard key={`${activity.id}-${idx}`} activity={activity} index={idx} />
-                        ))}
-                    </div>
-                    {hasMore && (
+                    {loading && comments.length === 0 ? (
+                        /* Initial loading state */
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <LoadingSpinner />
+                        </div>
+                    ) : comments.length > 0 ? (
+                        /* Activity list when data is available */
+                        <div className="space-y-4">
+                            {comments.map((activity, idx) => (
+                                <ActivityCard key={`${activity.id}-${idx}`} activity={activity} index={idx} />
+                            ))}
+                        </div>
+                    ) : (
+                        /* (here) Empty state if no records are found */
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                                <X className="text-white/10 w-8 h-8" />
+                            </div>
+                            <p className="text-white/20 text-xs font-bold uppercase tracking-widest">No activity history found</p>
+                            <p className="text-white/10 text-[10px] uppercase mt-2">This user hasn't made any public comments or ratings yet.</p>
+                        </div>
+                    )}
+
+                    {/* Pagination control */}
+                    {hasMore && comments.length > 0 && (
                         <div className="flex justify-center mt-8 pb-4">
-                            <button onClick={() => loadComments(page + 1)} disabled={loading} className="px-6 py-2 bg-[#2a2a2a] hover:bg-[#333] text-white rounded-full text-xs font-bold transition">
+                            <button 
+                                onClick={() => loadComments(page + 1)} 
+                                disabled={loading} 
+                                className="px-6 py-2 bg-[#2a2a2a] hover:bg-[#333] text-white rounded-full text-xs font-bold transition disabled:opacity-50"
+                            >
                                 {loading ? 'Loading...' : 'Load More History'}
                             </button>
                         </div>

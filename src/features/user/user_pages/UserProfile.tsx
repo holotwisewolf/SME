@@ -19,14 +19,14 @@ import {
     getUserRecentRatings,
     getUserPublicPlaylists
 } from '../services/user_profile_services';
-import { Play, Heart, Star, Lock, Music, ChevronDown } from 'lucide-react';
+import { Play, Star, Lock, Music, ChevronDown } from 'lucide-react';
 
 const UserProfile = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
     const { user: currentUser } = useLogin();
 
-    // Data States
+    // --- Data States ---
     const [profile, setProfile] = useState<any>(null);
     const [ratingStats, setRatingStats] = useState({ average: 0, count: 0 });
     const [commentCount, setCommentCount] = useState(0);
@@ -36,7 +36,7 @@ const UserProfile = () => {
     const [recentComments, setRecentComments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // UI States
+    // --- UI States ---
     const [activeTab, setActiveTab] = useState<'music' | 'activity'>('music');
     const [favFilter, setFavFilter] = useState<string>('all');
     const [starFilter, setStarFilter] = useState<number>(0);
@@ -45,7 +45,7 @@ const UserProfile = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isFavDropdownOpen, setIsFavDropdownOpen] = useState(false);
 
-    // Window status 
+    // --- Modal States ---
     const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
     const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
@@ -53,19 +53,18 @@ const UserProfile = () => {
 
     const isOwnProfile = currentUser?.id === userId;
 
-    // Click handling logic
+    // --- Handlers ---
     const handleItemClick = useCallback((item: any) => {
         if (item.type === 'track') setSelectedTrack(item.rawData);
         else if (item.type === 'album') setSelectedAlbum(item.item_id);
         else if (item.type === 'playlist') setSelectedPlaylist(item.rawData);
     }, []);
 
-    // [NEW] Handle User Click
     const handleUserClick = (id: string) => {
         if (id) navigate(`/profile/${id}`);
     };
 
-    // filter Unknown/Null
+    // --- Data Enrichment Logic (Filters Unknown/Null) ---
     const enrichItems = async (items: any[]) => {
         if (!items || items.length === 0) return [];
         const trackIds = items.filter(i => i.item_type === 'track').map(i => i.item_id);
@@ -108,7 +107,7 @@ const UserProfile = () => {
             return { ...item, name, title: name, artist, imageUrl, color, type: item.item_type, rawData };
         });
 
-        // Core fix: If name is empty or "Unknown Title", do not return this data
+        // (here) Filter out invalid or missing metadata
         return enriched.filter(item => item.name && item.name !== "Unknown Title");
     };
 
@@ -118,7 +117,11 @@ const UserProfile = () => {
         try {
             const profileData = await getPublicProfile(userId);
             setProfile(profileData);
-            if (profileData.is_private_profile && currentUser?.id !== userId) { setLoading(false); return; }
+            
+            if (profileData.is_private_profile && currentUser?.id !== userId) { 
+                setLoading(false); 
+                return; 
+            }
 
             const [ratingRes, pls, favs, rates, comms] = await Promise.all([
                 getUserAverageRating(userId),
@@ -128,21 +131,18 @@ const UserProfile = () => {
                 getUserComments(userId, 0, 10)
             ]);
 
-            // enhance filter item
             const [enrichedFavs, enrichedRates, enrichedPls] = await Promise.all([
                 enrichItems(favs || []),
                 enrichItems(rates || []),
                 enrichItems((pls || []).map(p => ({ ...p, item_id: p.id, item_type: 'playlist' })))
             ]);
 
-            // Enhance filter for Activity Feed
             const rawComments = comms.data || [];
             const enrichedCommentTargets = await enrichItems(rawComments.map((c: any) => ({
                 item_id: c.item_id,
                 item_type: c.item_type
             })));
 
-            // only keep valid comments
             const formattedComments = rawComments
                 .map((c: any) => {
                     const target = enrichedCommentTargets.find(t => t.item_id === c.item_id);
@@ -153,32 +153,30 @@ const UserProfile = () => {
                         track: { id: c.item_id, title: target.name, artist: target.artist }
                     };
                 })
-                .filter(c => c !== null); // Remove invalid comments
+                .filter(c => c !== null);
 
             const ratingData = ratingRes as any;
-            let average = 0, count = 0;
-            if (ratingData && typeof ratingData === 'object') {
-                average = parseFloat(ratingData.average || '0');
-                count = ratingData.count || 0;
-            } else {
-                average = parseFloat(ratingRes || '0');
-                count = enrichedRates.length;
-            }
-
-            setRatingStats({ average, count });
+            setRatingStats({ 
+                average: parseFloat(ratingData.average || '0'), 
+                count: ratingData.count || enrichedRates.length 
+            });
             setCommentCount(comms.count || 0);
             setPlaylists(enrichedPls);
             setEnrichedFavorites(enrichedFavs);
             setEnrichedRatings(enrichedRates);
             setRecentComments(formattedComments);
-        } catch (e) { console.error(e); } finally { setLoading(false); }
+        } catch (e) { 
+            console.error(e); 
+        } finally { 
+            setLoading(false); 
+        }
     }, [userId, currentUser]);
 
     useEffect(() => { if (userId) loadProfileData(); }, [loadProfileData, userId]);
 
-    // Check Locked status
     const isLocked = profile?.is_private_profile && !isOwnProfile;
 
+    // --- Sub Components ---
     const UniversalThumbnail = ({ item }: { item: any }) => {
         const [imgError, setImgError] = useState(false);
         return (
@@ -200,7 +198,7 @@ const UserProfile = () => {
 
     return (
         <div className="h-full overflow-y-auto custom-scrollbar bg-[#696969]">
-            {/* Header */}
+            {/* --- Header Section --- */}
             <div className="pt-12 pb-6 px-6">
                 <div className="max-w-4xl mx-auto flex flex-col items-center">
                     <div className="w-40 h-40 rounded-full overflow-hidden border-[3px] border-white/10 shadow-2xl bg-[#2a2a2a] mb-5">
@@ -229,16 +227,14 @@ const UserProfile = () => {
                 </div>
             </div>
 
-            {/* --- LOCKED / PRIVATE VIEW --- */}
             {isLocked ? (
                 <div className="py-20 text-center border-t border-white/10">
                     <Lock className="mx-auto mb-2 text-white/10" size={30} />
                     <p className="text-white/40 uppercase text-xs">Private Account</p>
-                    <p className="text-white/20 text-[10px] mt-1">This user's activity and playlists are hidden.</p>
                 </div>
             ) : (
                 <>
-                    {/* Tab Navigation - Fixed overlap and non-italic */}
+                    {/* --- Tab Navigation --- */}
                     <div className="bg-[#696969] pt-2">
                         <div className="max-w-4xl mx-auto border-t border-white/10 px-6 flex justify-center gap-12 relative">
                             {['music', 'activity'].map(t => (
@@ -255,13 +251,33 @@ const UserProfile = () => {
                     <div className="max-w-4xl mx-auto px-6 py-10 space-y-16">
                         {activeTab === 'music' ? (
                             <>
+                                {/* (here) Created Playlists with Container */}
                                 <section>
-                                    <div className="flex justify-between items-end mb-6 px-1 text-white"><h2 className="text-xl font-bold uppercase tracking-tight">Created Playlists</h2>{playlists.length > 5 && <button onClick={() => setViewAllModal({ title: 'Created Playlists', items: playlists })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}</div>
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-6">{playlists.slice(0, 5).map(p => (<div key={p.id} onClick={() => handleItemClick(p)} className="group cursor-pointer"><UniversalThumbnail item={p} /><h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{p.name}</h3></div>))}</div>
+                                    <div className="flex justify-between items-end mb-4 px-1 text-white">
+                                        <h2 className="text-xl font-bold uppercase tracking-tight">Created Playlists</h2>
+                                        {playlists.length > 5 && <button onClick={() => setViewAllModal({ title: 'Created Playlists', items: playlists })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}
+                                    </div>
+                                    <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm min-h-[200px] flex items-center justify-center">
+                                        {playlists.length > 0 ? (
+                                            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 w-full">
+                                                {playlists.slice(0, 5).map(p => (
+                                                    <div key={p.id} onClick={() => handleItemClick(p)} className="group cursor-pointer">
+                                                        <UniversalThumbnail item={p} />
+                                                        <h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{p.name}</h3>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No playlists created</div>
+                                        )}
+                                    </div>
                                 </section>
+
+                                {/* (here) Favorites with Container */}
                                 <section>
-                                    <div className="flex justify-between items-end mb-6 px-1">
-                                        <div className="flex items-center gap-8 text-white"><h2 className="text-xl font-bold uppercase tracking-tight">Favorites</h2>
+                                    <div className="flex justify-between items-end mb-4 px-1">
+                                        <div className="flex items-center gap-8 text-white">
+                                            <h2 className="text-xl font-bold uppercase tracking-tight">Favorites</h2>
                                             <div className="relative">
                                                 <button onClick={() => setIsFavDropdownOpen(!isFavDropdownOpen)} className="bg-black/40 border border-white/5 rounded-full px-5 py-2 text-[11px] font-bold text-white/80 hover:bg-black/60 transition-all flex items-center gap-4 uppercase shadow-lg min-w-[140px]">
                                                     <span className="flex-1 text-left">{favFilter === 'all' ? 'All Types' : favFilter === 'playlist' ? 'Playlists' : favFilter + 's'}</span>
@@ -278,14 +294,30 @@ const UserProfile = () => {
                                         </div>
                                         {enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter).length > 5 && <button onClick={() => setViewAllModal({ title: 'All Favorites', items: enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter) })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-6">{enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter).slice(0, 5).map(f => (<div key={f.id} onClick={() => handleItemClick(f)} className="group flex flex-col cursor-pointer"><UniversalThumbnail item={f} /><h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{f.name}</h3><p className="text-[10px] text-white/40 uppercase truncate mt-1">{f.artist || f.type}</p></div>))}</div>
+                                    <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm min-h-[220px] flex items-center justify-center">
+                                        {enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter).length > 0 ? (
+                                            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 w-full">
+                                                {enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter).slice(0, 5).map(f => (
+                                                    <div key={f.id} onClick={() => handleItemClick(f)} className="group flex flex-col cursor-pointer">
+                                                        <UniversalThumbnail item={f} />
+                                                        <h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{f.name}</h3>
+                                                        <p className="text-[10px] text-white/40 uppercase truncate mt-1">{f.artist || f.type}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No favorites found</div>
+                                        )}
+                                    </div>
                                 </section>
                             </>
                         ) : (
                             <>
+                                {/* (here) Ratings with Container */}
                                 <section>
-                                    <div className="flex justify-between items-end mb-6 px-1 text-white">
-                                        <div className="flex items-center gap-8"><h2 className="text-xl font-bold uppercase tracking-tight">Ratings</h2>
+                                    <div className="flex justify-between items-end mb-4 px-1 text-white">
+                                        <div className="flex items-center gap-8">
+                                            <h2 className="text-xl font-bold uppercase tracking-tight">Ratings</h2>
                                             <div className="relative">
                                                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="bg-black/40 border border-white/5 rounded-full px-5 py-2 text-[11px] font-bold text-white/80 hover:bg-black/60 transition-all flex items-center gap-4 uppercase shadow-lg min-w-[140px]">
                                                     <span className="flex-1 text-left">{starFilter === 0 ? 'All Ratings' : starFilter}</span>
@@ -303,20 +335,39 @@ const UserProfile = () => {
                                         </div>
                                         {enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter).length > 5 && <button onClick={() => setViewAllModal({ title: 'Rating History', items: enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter) })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-12">{enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter).slice(0, 5).map(r => (<div key={r.id} onClick={() => handleItemClick(r)} className="group cursor-pointer"><UniversalThumbnail item={r} /><h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{r.name}</h3></div>))}</div>
+                                    <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm min-h-[200px] flex items-center justify-center">
+                                        {enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter).length > 0 ? (
+                                            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 w-full">
+                                                {enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter).slice(0, 5).map(r => (
+                                                    <div key={r.id} onClick={() => handleItemClick(r)} className="group cursor-pointer">
+                                                        <UniversalThumbnail item={r} />
+                                                        <h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{r.name}</h3>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No ratings yet</div>
+                                        )}
+                                    </div>
                                 </section>
+
+                                {/* --- RECENT ACTIVITY SECTION --- */}
                                 <section>
-                                    <div className="flex justify-between items-center mb-6 text-white"><h2 className="text-xl font-bold uppercase tracking-tight">Recent Activity</h2><button onClick={() => setShowCommentsModal(true)} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">Full History</button></div>
-                                    <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm shadow-inner"><div className="space-y-4">
-                                        {recentComments.length > 0 ? recentComments.map((c, i) =>
-                                            <ActivityCard
-                                                key={c.id}
-                                                activity={c}
-                                                index={i}
-                                                onUserClick={handleUserClick} // [NEW] Pass click handler
-                                            />
-                                        ) : <div className="py-14 text-center text-white/10 text-xs uppercase font-bold tracking-widest">No activity</div>}
-                                    </div></div>
+                                    <div className="flex justify-between items-center mb-4 text-white">
+                                        <h2 className="text-xl font-bold uppercase tracking-tight">Recent Activity</h2>
+                                        <button onClick={() => setShowCommentsModal(true)} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">Full History</button>
+                                    </div>
+                                    <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm shadow-inner min-h-[150px] flex items-center justify-center">
+                                        {recentComments.length > 0 ? (
+                                            <div className="space-y-4 w-full">
+                                                {recentComments.map((c, i) =>
+                                                    <ActivityCard key={c.id} activity={c} index={i} onUserClick={handleUserClick} />
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No activity</div>
+                                        )}
+                                    </div>
                                 </section>
                             </>
                         )}
