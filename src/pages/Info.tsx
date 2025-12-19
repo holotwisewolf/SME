@@ -8,8 +8,8 @@ import {
   Users, 
   ShieldCheck, 
   Zap,
-  AlertTriangle, // Added for notice icons
-  Clock          // Added for notice icons
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
 
 export default function InfoPage() {
@@ -31,39 +31,7 @@ export default function InfoPage() {
           </p>
         </section>
 
-        {/* --- Important Notices (New Section) --- */}
-        {/* Uses the same color scheme (Black/Pink) as the rest of the site */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            
-            {/* Notice 1: Developer Mode Restriction */}
-            <div className="bg-black/20 border border-white/10 p-6 rounded-2xl flex items-start gap-4 backdrop-blur-sm hover:border-[#FFD1D1]/30 transition-colors">
-                <div className="p-3 bg-white/5 rounded-xl shrink-0 border border-white/5">
-                    <AlertTriangle className="w-6 h-6 text-[#FFD1D1]" />
-                </div>
-                <div>
-                    <h3 className="text-lg font-bold text-white mb-1">Spotify Login Restricted</h3>
-                    <p className="text-white/70 text-sm leading-relaxed">
-                        Currently in <span className="text-[#FFD1D1]">Developer Mode</span>. Only authorized developer accounts can log in via Spotify. Please use <strong>Email Sign Up</strong> to access the platform.
-                    </p>
-                </div>
-            </div>
-
-            {/* Notice 2: Data Retention Policy */}
-            <div className="bg-black/20 border border-white/10 p-6 rounded-2xl flex items-start gap-4 backdrop-blur-sm hover:border-[#FFD1D1]/30 transition-colors">
-                <div className="p-3 bg-white/5 rounded-xl shrink-0 border border-white/5">
-                    <Clock className="w-6 h-6 text-[#FFD1D1]" />
-                </div>
-                <div>
-                    <h3 className="text-lg font-bold text-white mb-1">Data Retention Policy</h3>
-                    <p className="text-white/70 text-sm leading-relaxed">
-                        To maintain server performance, please note that accounts are automatically deleted after <span className="text-[#FFD1D1] font-bold">60 days</span> of inactivity.
-                    </p>
-                </div>
-            </div>
-
-        </section>
-
-        {/* --- The "Why" (Project Goals) --- */}
+        {/* --- Features Section (Project Goals) --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <InfoCard 
             icon={<Star className="w-8 h-8 text-[#FFD1D1]" />}
@@ -82,7 +50,7 @@ export default function InfoPage() {
           />
         </div>
 
-        {/* --- Technical Architecture --- */}
+        {/* --- Technical Architecture Section --- */}
         <section className="bg-black/20 rounded-3xl p-8 md:p-12 border border-white/10 relative overflow-hidden backdrop-blur-sm">
           {/* Decorative Background Element (Pink Glow) */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFD1D1]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
@@ -121,8 +89,44 @@ export default function InfoPage() {
           <StatBox value="v1.0" label="Current Version" />
         </section>
 
+        {/* --- Information Section (Data & Access Notices) --- */}
+        <section className="pt-10 border-t border-white/10">
+          <div className="flex items-center gap-2 mb-6 text-white/50 text-xs font-bold uppercase tracking-[0.2em]">
+            <ShieldCheck size={14} /> Data & Access Information
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Login Restriction Info */}
+            <div className="bg-black/10 border border-white/5 p-5 rounded-xl flex items-start gap-4 transition-colors hover:bg-black/20">
+                <div className="p-2.5 bg-white/5 rounded-lg shrink-0 border border-white/5">
+                    <AlertTriangle className="w-5 h-5 text-[#FFD1D1]" />
+                </div>
+                <div>
+                    <h4 className="text-md font-bold text-white/90 mb-1">Spotify Login Restricted</h4>
+                    <p className="text-white/60 text-xs leading-relaxed">
+                        Currently in <span className="text-[#FFD1D1]">Developer Mode</span>. Only authorized developer accounts can log in via Spotify. Please use <strong>Email Sign Up</strong> to access the platform.
+                    </p>
+                </div>
+            </div>
+
+            {/* Retention Policy Info */}
+            <div className="bg-black/10 border border-white/5 p-5 rounded-xl flex items-start gap-4 transition-colors hover:bg-black/20">
+                <div className="p-2.5 bg-white/5 rounded-lg shrink-0 border border-white/5">
+                    <Clock className="w-5 h-5 text-[#FFD1D1]" />
+                </div>
+                <div>
+                    <h4 className="text-md font-bold text-white/90 mb-1">Data Retention Policy</h4>
+                    <p className="text-white/60 text-xs leading-relaxed">
+                        To maintain server performance, inactive accounts are automatically deleted after <span className="text-[#FFD1D1] font-bold">60 days</span>. All personal ratings and tags will be wiped.
+                    </p>
+                </div>
+            </div>
+
+          </div>
+        </section>
+
         {/* --- Footer --- */}
-        <footer className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center text-white/60 text-sm">
+        <footer className="border-t border-white/20 pt-8 pb-12 flex flex-col md:flex-row justify-between items-center text-white/60 text-sm">
           <p>&copy; {new Date().getFullYear()} Music Explorer Team. Built for the Web.</p>
           <div className="flex items-center gap-2 mt-4 md:mt-0">
             <span>Powered by</span>
