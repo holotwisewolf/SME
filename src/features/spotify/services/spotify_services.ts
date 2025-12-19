@@ -33,17 +33,27 @@ async function cacheItems(items: any[], type: 'track' | 'album' | 'artist'): Pro
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + CACHE_TTL_HOURS);
 
-  const rows = items.filter(Boolean).map(item => ({
-    resource_id: item.id,
-    resource_type: type,
-    data: item,
+  // Deduplicate items by ID to prevent "cannot affect row a second time" error
+  const uniqueItems = items.filter(Boolean).reduce((acc, item) => {
+    if (item.id && !acc.has(item.id)) {
+      acc.set(item.id, item);
+    }
+    return acc;
+  }, new Map<string, any>());
+
+  const rows = Array.from(uniqueItems.values()).map((item: any) => ({
+    resource_id: item.id as string,
+    resource_type: type as string,
+    data: item as any,
     expires_at: expiresAt.toISOString()
   }));
+
+  if (rows.length === 0) return;
 
   // Use upsert to update existing or insert new
   const { error } = await supabase
     .from('spotify_cache')
-    .upsert(rows, { onConflict: 'resource_id' });
+    .upsert(rows as any, { onConflict: 'resource_id' });
 
   if (error) {
     console.warn('Cache write error:', error.message);

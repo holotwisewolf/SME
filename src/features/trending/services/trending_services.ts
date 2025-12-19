@@ -550,11 +550,17 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
                 }
             }
 
+            // Extract content from metadata for comments
+            const content = item.metadata && typeof item.metadata === 'object'
+                ? (item.metadata as any).content
+                : null;
+
             return {
                 id: item.id,
-                type: item.type,
+                type: item.activity_type, // Changed from item.type
                 created_at: item.created_at,
-                content: item.content,
+                content: content, // Extract from metadata
+                tag_name: item.tag_name,
                 itemType: type,
                 user: { id: item.user_id, display_name: displayName, avatar_url: avatarUrl },
                 track: { id: item.item_id, title: mediaTitle, artist: mediaArtist }
