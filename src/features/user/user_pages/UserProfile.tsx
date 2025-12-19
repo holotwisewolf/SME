@@ -59,6 +59,11 @@ const UserProfile = () => {
         else if (item.type === 'playlist') setSelectedPlaylist(item.rawData);
     }, []);
 
+    // [NEW] Handle User Click
+    const handleUserClick = (id: string) => {
+        if (id) navigate(`/profile/${id}`);
+    };
+
     // filter Unknown/Null
     const enrichItems = async (items: any[]) => {
         if (!items || items.length === 0) return [];
@@ -170,6 +175,7 @@ const UserProfile = () => {
 
     useEffect(() => { if (userId) loadProfileData(); }, [loadProfileData, userId]);
 
+    // Check Locked status
     const isLocked = profile?.is_private_profile && !isOwnProfile;
 
     const UniversalThumbnail = ({ item }: { item: any }) => {
@@ -222,8 +228,13 @@ const UserProfile = () => {
                 </div>
             </div>
 
+            {/* --- LOCKED / PRIVATE VIEW --- */}
             {isLocked ? (
-                <div className="py-20 text-center border-t border-white/10"><Lock className="mx-auto mb-2 text-white/10" size={30}/><p className="text-white/40 uppercase text-xs">Private Account</p></div>
+                <div className="py-20 text-center border-t border-white/10">
+                    <Lock className="mx-auto mb-2 text-white/10" size={30}/>
+                    <p className="text-white/40 uppercase text-xs">Private Account</p>
+                    <p className="text-white/20 text-[10px] mt-1">This user's activity and playlists are hidden.</p>
+                </div>
             ) : (
                 <>
                     {/* Tab Navigation - Fixed overlap and non-italic */}
@@ -285,7 +296,16 @@ const UserProfile = () => {
                                 </section>
                                 <section>
                                     <div className="flex justify-between items-center mb-6 text-white"><h2 className="text-xl font-bold uppercase tracking-tight">Recent Activity</h2><button onClick={() => setShowCommentsModal(true)} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">Full History</button></div>
-                                    <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm shadow-inner"><div className="space-y-4">{recentComments.length > 0 ? recentComments.map((c, i) => <ActivityCard key={c.id} activity={c} index={i} />) : <div className="py-14 text-center text-white/10 text-xs uppercase font-bold tracking-widest">No activity</div>}</div></div>
+                                    <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm shadow-inner"><div className="space-y-4">
+                                        {recentComments.length > 0 ? recentComments.map((c, i) => 
+                                            <ActivityCard 
+                                                key={c.id} 
+                                                activity={c} 
+                                                index={i} 
+                                                onUserClick={handleUserClick} // [NEW] Pass click handler
+                                            />
+                                        ) : <div className="py-14 text-center text-white/10 text-xs uppercase font-bold tracking-widest">No activity</div>}
+                                    </div></div>
                                 </section>
                             </>
                         )}

@@ -8,13 +8,13 @@ interface ActivityItem {
     created_at: string;
     value?: number;
     content?: string;
-
+    
     // Support both casings for compatibility
-    itemType?: string;
-    item_type?: string;
-
+    itemType?: string; 
+    item_type?: string; 
+    
     item_id?: string; // Fallback ID if not in track object
-
+    
     user?: {
         id: string;
         display_name: string;
@@ -25,7 +25,7 @@ interface ActivityItem {
         title: string;
         artist: string;
         // Check for both ID formats
-        artistId?: string;
+        artistId?: string; 
         artist_id?: string;
         albumId?: string;
     };
@@ -38,23 +38,25 @@ interface ActivityCardProps {
     onTrackClick?: (id: string) => void;
     onArtistClick?: (idOrName: string) => void;
     onAlbumClick?: (id: string) => void;
-    // [NEW] Added Prop
     onPlaylistClick?: (id: string) => void;
+    // [NEW] Added Prop for User Profile Navigation
+    onUserClick?: (userId: string) => void;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({
-    activity,
-    index,
-    onTrackClick,
-    onArtistClick,
+const ActivityCard: React.FC<ActivityCardProps> = ({ 
+    activity, 
+    index, 
+    onTrackClick, 
+    onArtistClick, 
     onAlbumClick,
-    onPlaylistClick
+    onPlaylistClick,
+    onUserClick 
 }) => {
     if (!activity) return null;
 
     // --- Safe Data Resolution ---
     const type = activity.itemType || activity.item_type || '';
-
+    
     // Determine the ID: Use track.id if available, otherwise fallback to item_id
     const itemId = activity.track?.id || activity.item_id;
 
@@ -88,33 +90,49 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
 
     // --- Data Extraction ---
     const badge = getBadgeInfo();
-    const displayName = activity.user?.display_name || 'Private User';
+    const displayName = activity.user?.display_name || 'Anonymous';
     const title = activity.track?.title || 'Unknown Title';
     const artistName = activity.track?.artist || 'Unknown Artist';
-
+    
     const artistId = activity.track?.artistId || activity.track?.artist_id;
 
     // --- Click Handlers ---
 
-    const handleArtistClick = (e: React.MouseEvent) => {
+    // 1. LEFT NAME CLICK (Go to User Profile)
+    const handleLeftNameClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (artistId) {
-            onArtistClick?.(artistId);
+        if (activity.user?.id && onUserClick) {
+            onUserClick(activity.user.id);
         }
-        else if (artistName) {
-            onArtistClick?.(artistName);
+    };
+
+    // 2. RIGHT NAME CLICK (Go to Creator Profile OR Artist Modal)
+    const handleRightNameClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        
+        if (type === 'playlist') {
+            // If Playlist, the 'artistId' is actually the Creator's User ID
+            if (artistId && onUserClick) {
+                onUserClick(artistId);
+            }
+        } else {
+            // If Music, it is a Spotify Artist
+            if (artistId) {
+                onArtistClick?.(artistId);
+            } 
+            else if (artistName) {
+                onArtistClick?.(artistName);
+            }
         }
     };
 
     const handleTitleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-
-        // [UPDATED] Robust Check for Playlist Type
+        
+        // Robust Check for Playlist Type
         if (type === 'playlist' && itemId) {
             if (onPlaylistClick) {
                 onPlaylistClick(itemId);
-            } else {
-                console.warn("onPlaylistClick prop is missing or undefined");
             }
             return;
         }
@@ -135,7 +153,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
             className="bg-[#292929] rounded-lg p-4 border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30 transition-all cursor-pointer group"
         >
             <div className="flex gap-4">
-                {/* --- LEFT ICON SECTION  --- */}
+                {/* --- LEFT ICON SECTION (NOT CLICKABLE, SHOWS ICONS ONLY) --- */}
                 <div className="flex-shrink-0">
                     <div className="w-10 h-10 rounded-full bg-[#FFD1D1]/10 flex items-center justify-center border border-[#D1D1D1]/5">
                         {activity.type === 'rating' && <Star className="w-5 h-5 fill-[#FFD1D1] text-[#FFD1D1]" />}
@@ -149,36 +167,35 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
                 {/* --- CONTENT SECTION --- */}
                 <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-x-1 mb-1 text-sm text-[#D1D1D1] leading-relaxed">
-
-                        <span className="font-semibold text-[#FFD1D1] hover:underline cursor-pointer">
+                        
+                        {/* LEFT USERNAME (CLICKABLE -> Profile) */}
+                        <span 
+                            onClick={handleLeftNameClick}
+                            className="font-semibold text-[#FFD1D1] hover:underline cursor-pointer"
+                        >
                             {displayName}
                         </span>
-                        <span>{getActionText()}</span>
 
-                        <button
+                        <span>{getActionText()}</span>
+                        
+                        {/* TITLE (CLICKABLE -> Content) */}
+                        <button 
                             onClick={handleTitleClick}
                             className="font-bold text-white hover:text-[#FFD1D1] hover:underline transition-colors text-left"
                         >
                             {title}
                         </button>
-
+                        
                         <span className="text-[#D1D1D1]/50">by</span>
 
-                        {/* --- CONDITIONAL ARTIST RENDERING --- */}
-                        {type === 'playlist' ? (
-                            <span className="font-medium text-[#D1D1D1]">
-                                {artistName}
-                            </span>
-                        ) : (
-                            <button
-                                onClick={handleArtistClick}
-                                disabled={!artistId && !artistName}
-                                className="font-medium text-[#D1D1D1] hover:text-white hover:underline transition-colors cursor-pointer"
-                            >
-                                {artistName}
-                            </button>
-                        )}
-                        {/* ------------------------------------ */}
+                        {/* RIGHT USERNAME / ARTIST (CLICKABLE -> Profile/Artist) */}
+                        <button 
+                            onClick={handleRightNameClick}
+                            disabled={!artistId && !artistName} 
+                            className="font-medium text-[#D1D1D1] hover:text-white hover:underline transition-colors cursor-pointer"
+                        >
+                            {artistName}
+                        </button>
 
                         <div className="flex items-center gap-1 text-xs text-[#D1D1D1]/40 flex-shrink-0 whitespace-nowrap ml-auto">
                             <Clock className="w-3 h-3" />
@@ -204,7 +221,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
                             ))}
                         </div>
                     )}
-
+                    
                     {/* Bottom Badge (Music/Playlist/Album) */}
                     <div className="mt-3 flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#FFD1D1]/5 border border-[#FFD1D1]/10 w-fit">
                         {badge.icon}
