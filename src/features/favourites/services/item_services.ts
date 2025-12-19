@@ -163,8 +163,10 @@ export async function addItemTag(itemId: string, itemType: ItemType, tag: string
         });
 
     if (error) {
-        // Ignore duplicate key error
-        if (error.code === '23505') return;
+        // Ignore duplicate key error (PostgreSQL 23505) or HTTP 409 Conflict
+        if (error.code === '23505' || error.message?.includes('duplicate') || error.message?.includes('conflict')) {
+            return; // Silently ignore duplicate tags
+        }
         throw error;
     }
 }

@@ -37,8 +37,8 @@ export function useItemSelection(): UseItemSelectionReturn {
                 if (playlist) {
                     setSelectedPlaylist(playlist);
                 } else {
-                    // Playlist was deleted - CASCADE DELETE will have cleaned up all references automatically
-                    console.warn('Playlist not found in database:', item.id);
+                    // Playlist was deleted or is private (RLS blocks access)
+                    console.warn('Playlist not accessible (private or deleted):', item.id);
                 }
             } catch (error) {
                 console.error('Error fetching playlist:', error);

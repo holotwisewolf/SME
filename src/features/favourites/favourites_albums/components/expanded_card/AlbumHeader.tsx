@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updateItemRating, deleteItemRating } from '../../../services/item_services';
 import { addItemTag, removeItemTag } from '../../../services/item_services';
+import { MarqueeText } from '../../../../../components/ui/MarqueeText';
 
 interface AlbumHeaderProps {
     albumId: string;
@@ -108,9 +109,10 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
         <div className="w-full md:w-[35%] p-5 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
             {/* Title & Artist */}
             <div className="shrink-0">
-                <h2 className="text-2xl font-bold text-white leading-tight mb-1">
-                    {album.name}
-                </h2>
+                <MarqueeText
+                    text={album.name}
+                    className="text-2xl font-bold text-white leading-tight mb-1"
+                />
                 <p className="text-sm text-gray-400">
                     by <span
                         className="text-white hover:underline cursor-pointer transition-colors hover:text-[#FFD1D1]"
@@ -178,8 +180,8 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
                 <div className="flex items-center gap-2 mb-3">
                     <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>
                 </div>
-                {/* Fixed max-height and overflow-y-auto to prevent tags from taking up too much space */}
-                <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto content-start pr-1">
+                {/* Fixed max-height with subtle scrollbar styling like playlist */}
+                <div className="flex flex-wrap gap-2 max-h-[80px] overflow-y-auto content-start pr-1 scrollbar-thin scrollbar-thumb-white/10">
                     {tags.length > 0 ? (
                         tags.map((tag, index) => (
                             <span

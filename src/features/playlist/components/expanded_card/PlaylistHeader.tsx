@@ -1,6 +1,7 @@
 import React from 'react';
 import EditIcon from '../../../../components/ui/EditIcon';
 import ImageOptionsModal from '../../../../components/ui/ImageOptionsModal';
+import { MarqueeText } from '../../../../components/ui/MarqueeText';
 import { usePlaylistHeader } from '../../hooks/usePlaylistHeader';
 
 interface PlaylistHeaderProps {
@@ -93,11 +94,11 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                             </button>
                         </div>
                     ) : (
-                        <h2 onClick={() => isEditingEnabled && setIsEditingTitle(true)}
+                        <MarqueeText
+                            text={playlistTitle}
                             className={`text-2xl font-bold text-white leading-tight mb-1 transition-all ${isEditingEnabled ? 'cursor-pointer hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : ''}`}
-                        >
-                            {playlistTitle}
-                        </h2>
+                            onClick={isEditingEnabled ? () => setIsEditingTitle(true) : undefined}
+                        />
                     )}
                     <p className="text-sm text-gray-400">Created by <span className="text-white">{creatorName}</span></p>
                     <p className="text-xs text-gray-500 mt-1">{trackCount} {trackCount === 1 ? 'track' : 'tracks'}</p>
@@ -152,13 +153,15 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                             </button>
                         ))}
                     </div>
-                    <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{isOwner ? 'Rated by You' : `Rated by ${creatorName}`}</span>
+                    <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+                        {userRating && userRating > 0 ? `Rated by ${creatorName}` : `Not yet rated by ${creatorName}`}
+                    </span>
                 </div>
 
                 {/* Tags Container */}
                 <div className="flex-1 min-h-0">
                     <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">Creator Tags</h3>
+                        <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Creator Tags</h3>
                         {isEditingEnabled && (
                             <input type="text" value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={handleAddTag} placeholder="+ Add"
                                 className="px-2 py-0.5 bg-transparent border-b border-white/10 text-[10px] text-white placeholder-gray-500 focus:outline-none focus:border-white/30 w-16 transition-all focus:w-24" />
@@ -168,7 +171,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                         {tags.length > 0 ? (
                             tags.map((tag, index) => (
                                 <span key={index}
-                                    className="px-2 py-0.5 bg-white/5 hover:bg-white/10 text-gray-300 text-[11px] rounded-full border border-white/5 transition-colors flex items-center gap-1 group">
+                                    className="px-2 py-0.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors flex items-center gap-1 group">
                                     #{tag}
                                     {isEditingEnabled && (
                                         <button onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}

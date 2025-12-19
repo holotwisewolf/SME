@@ -438,7 +438,7 @@ export async function getCommunityStats(): Promise<CommunityStats> {
 /**
  * Get trending tags (most used tags in time period)
  */
-export async function getTrendingTags(timeRange: TimeRange, limit = 20): Promise<any[]> {
+export async function getTrendingTags(timeRange: TimeRange, limit = 10): Promise<any[]> {
     const timeThreshold = getTimeThreshold(timeRange);
 
     let query = supabase
@@ -517,13 +517,26 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
         let spotifyAlbums: any[] = [];
         let internalPlaylists: any[] = [];
 
-        // Fetch Metadata in Parallel
-        const [trackData, albumData, internalPLData] = await Promise.all([
+        // Get rating activities to fetch their actual rating values
+        const ratingActivities = activities.filter(a => a.activity_type === 'rating');
+        const ratingUserIds = ratingActivities.map(a => a.user_id).filter((id): id is string => id !== null);
+
+        // Fetch Metadata in Parallel (including ratings for rating activities)
+        const [trackData, albumData, internalPLData, ratingsData] = await Promise.all([
             trackIds.length > 0 ? getMultipleTracks(trackIds) : Promise.resolve(null),
             albumIds.length > 0 ? getMultipleAlbums(albumIds) : Promise.resolve(null),
-            internalPlaylistIds.length > 0 ? supabase.from('playlists').select('id, title, user_id, profiles:user_id(display_name, is_private_profile)').in('id', internalPlaylistIds) : Promise.resolve({ data: [] })
+            internalPlaylistIds.length > 0 ? supabase.from('playlists').select('id, title, user_id, profiles:user_id(display_name, is_private_profile)').in('id', internalPlaylistIds) : Promise.resolve({ data: [] }),
+            ratingUserIds.length > 0 ? supabase.from('ratings').select('user_id, item_id, item_type, rating').in('user_id', ratingUserIds) : Promise.resolve({ data: [] })
         ]);
 
+        // Build a map for quick rating lookup: "userId_itemId_itemType" -> rating
+        const ratingsMap = new Map<string, number>();
+        if (ratingsData?.data) {
+            ratingsData.data.forEach((r: any) => {
+                const key = `${r.user_id}_${r.item_id}_${r.item_type}`;
+                ratingsMap.set(key, r.rating);
+            });
+        }
 
         if (trackData?.tracks) spotifyTracks = trackData.tracks;
         if (albumData?.albums) spotifyAlbums = albumData.albums;
@@ -571,10 +584,24 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
                 ? (item.metadata as any).content
                 : null;
 
-            // Extract rating value from metadata for ratings
-            const ratingValue = item.metadata && typeof item.metadata === 'object'
-                ? (item.metadata as any).rating
-                : undefined;
+            // Extract rating value - first from ratingsMap (database), then metadata fallback
+            let ratingValue: number | undefined;
+
+            // For rating activities, look up the actual rating from the ratings table
+            if (item.activity_type === 'rating' && item.user_id && item.item_id) {
+                const ratingKey = `${item.user_id}_${item.item_id}_${item.item_type}`;
+                ratingValue = ratingsMap.get(ratingKey);
+            }
+
+            // Fallback to metadata if not found in ratingsMap
+            if (ratingValue === undefined && item.metadata && typeof item.metadata === 'object') {
+                const meta = item.metadata as any;
+                ratingValue = meta.rating ?? meta.value ?? meta.score;
+            }
+            // Also check if value is directly on the item
+            if (ratingValue === undefined && (item as any).value !== undefined) {
+                ratingValue = (item as any).value;
+            }
 
             return {
                 id: item.id,

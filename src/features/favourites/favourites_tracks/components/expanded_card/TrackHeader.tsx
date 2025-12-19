@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SpotifyTrack } from '../../../../spotify/type/spotify_types';
+import { MarqueeText } from '../../../../../components/ui/MarqueeText';
 
 interface TrackHeaderProps {
     track: SpotifyTrack;
@@ -39,12 +40,14 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
             {/* Metadata */}
             {/* Added shrink-0 to prevent compression */}
             <div className="shrink-0">
-                <h2 className="text-2xl font-bold text-white leading-tight mb-1">
-                    {track.name}
-                </h2>
-                <p className="text-xs text-gray-500 mt-1">
-                    {track.album.name}
-                </p>
+                <MarqueeText
+                    text={track.name}
+                    className="text-2xl font-bold text-white leading-tight mb-1"
+                />
+                <MarqueeText
+                    text={track.album.name}
+                    className="text-xs text-gray-500 mt-1"
+                />
                 <p className="text-sm text-gray-400">
                     By <span
                         className="text-white hover:underline cursor-pointer transition-colors hover:text-[#FFD1D1]"
@@ -109,8 +112,8 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
                 <div className="flex items-center gap-2 mb-3">
                     <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>
                 </div>
-                {/* Fixed max-height and overflow-y-auto to prevent tags from taking up too much space */}
-                <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto content-start pr-1">
+                {/* Fixed max-height with subtle scrollbar styling like playlist */}
+                <div className="flex flex-wrap gap-2 max-h-[80px] overflow-y-auto content-start pr-1 scrollbar-thin scrollbar-thumb-white/10">
                     {tags.length > 0 ? (
                         tags.map((tag, index) => (
                             <span
