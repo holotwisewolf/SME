@@ -7,7 +7,9 @@ import {
   GitMerge, 
   Users, 
   ShieldCheck, 
-  Zap 
+  Zap,
+  AlertTriangle, // Added for notice icons
+  Clock          // Added for notice icons
 } from 'lucide-react';
 
 export default function InfoPage() {
@@ -27,6 +29,38 @@ export default function InfoPage() {
             A robust discovery platform designed to bridge the gap between music streaming and community interaction. 
             Featuring advanced <span className="text-[#FFD1D1] font-bold">tagging</span>, <span className="text-[#FFD1D1] font-bold">global ratings</span>, and a custom <span className="text-[#FFD1D1] font-bold">graph-based recommendation engine</span>.
           </p>
+        </section>
+
+        {/* --- Important Notices (New Section) --- */}
+        {/* Uses the same color scheme (Black/Pink) as the rest of the site */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            
+            {/* Notice 1: Developer Mode Restriction */}
+            <div className="bg-black/20 border border-white/10 p-6 rounded-2xl flex items-start gap-4 backdrop-blur-sm hover:border-[#FFD1D1]/30 transition-colors">
+                <div className="p-3 bg-white/5 rounded-xl shrink-0 border border-white/5">
+                    <AlertTriangle className="w-6 h-6 text-[#FFD1D1]" />
+                </div>
+                <div>
+                    <h3 className="text-lg font-bold text-white mb-1">Spotify Login Restricted</h3>
+                    <p className="text-white/70 text-sm leading-relaxed">
+                        Currently in <span className="text-[#FFD1D1]">Developer Mode</span>. Only authorized developer accounts can log in via Spotify. Please use <strong>Email Sign Up</strong> to access the platform.
+                    </p>
+                </div>
+            </div>
+
+            {/* Notice 2: Data Retention Policy */}
+            <div className="bg-black/20 border border-white/10 p-6 rounded-2xl flex items-start gap-4 backdrop-blur-sm hover:border-[#FFD1D1]/30 transition-colors">
+                <div className="p-3 bg-white/5 rounded-xl shrink-0 border border-white/5">
+                    <Clock className="w-6 h-6 text-[#FFD1D1]" />
+                </div>
+                <div>
+                    <h3 className="text-lg font-bold text-white mb-1">Data Retention Policy</h3>
+                    <p className="text-white/70 text-sm leading-relaxed">
+                        To maintain server performance, please note that accounts are automatically deleted after <span className="text-[#FFD1D1] font-bold">60 days</span> of inactivity.
+                    </p>
+                </div>
+            </div>
+
         </section>
 
         {/* --- The "Why" (Project Goals) --- */}
@@ -81,11 +115,9 @@ export default function InfoPage() {
         </section>
 
         {/* --- Development Stats --- */}
-        {/* UI UPDATE: Changed to grid-cols-3 to center the 3 items nicely */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
           <StatBox value="6" label="Weeks Development" />
           <StatBox value="5" label="Team Members" />
-          {/* Removed Development Teams, Renamed Current Phase */}
           <StatBox value="v1.0" label="Current Version" />
         </section>
 

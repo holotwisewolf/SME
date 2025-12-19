@@ -107,7 +107,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     return (
         <div className="w-full md:w-[35%] p-5 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-white/5 bg-[#181818] overflow-y-auto">
             {/* Title & Artist */}
-            <div>
+            <div className="shrink-0">
                 <h2 className="text-2xl font-bold text-white leading-tight mb-1">
                     {album.name}
                 </h2>
@@ -131,7 +131,8 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
             </div>
 
             {/* Album Image (4:3 Aspect Ratio) */}
-            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-[#2a2a2a] shadow-lg relative">
+            {/* Added shrink-0 to prevent image from being squeezed when other content grows */}
+            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-[#2a2a2a] shadow-lg relative shrink-0">
                 {album.images?.[0]?.url ? (
                     <img
                         src={album.images[0].url}
@@ -148,7 +149,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
             </div>
 
             {/* Rating */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 shrink-0">
                 <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -173,11 +174,12 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
             </div>
 
             {/* Tags Container */}
-            <div className="flex-1">
+            <div className="flex-1 w-full">
                 <div className="flex items-center gap-2 mb-3">
                     <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                {/* Fixed max-height and overflow-y-auto to prevent tags from taking up too much space */}
+                <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto content-start pr-1">
                     {tags.length > 0 ? (
                         tags.map((tag, index) => (
                             <span

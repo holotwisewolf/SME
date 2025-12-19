@@ -104,7 +104,8 @@ export const AlbumCommunity: React.FC<AlbumCommunityProps> = ({
             {/* Global Tags Section */}
             <div className="mb-2">
                 <p className="text-gray-400 text-xs mb-2">Tags:</p>
-                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-hidden flex items-center">
+                {/* Fixed height h-[45px] and items-start to cut the second row of tags in half */}
+                <div className="bg-white/5 rounded-lg px-2 border border-white/5 h-[45px] overflow-y-auto custom-scrollbar flex items-start py-1.5">
                     {tags && tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {tags.map((tag, index) => (

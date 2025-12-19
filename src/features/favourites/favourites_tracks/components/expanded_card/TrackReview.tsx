@@ -190,7 +190,7 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                                 </div>
 
                                 {/* Preseeded Tags */}
-                                <div className="max-h-32 overflow-y-auto subtle-scrollbar">
+                                <div className="max-h-32 overflow-y-auto custom-scrollbar">
                                     {availableTags.filter(t => !tags.includes(t.name)).length > 0 ? (
                                         availableTags
                                             .filter(t => !tags.includes(t.name))
@@ -214,7 +214,8 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
                         )}
                     </div>
                 </div>
-                <div className="bg-white/5 rounded-lg p-2 pt-2.5 border border-white/5 h-[46px] overflow-y-auto subtle-scrollbar flex items-center">
+                {/* Standardized h-[45px] height and items-start to cut second row in half */}
+                <div className="bg-white/5 rounded-lg px-2 border border-white/5 h-[45px] overflow-y-auto custom-scrollbar flex items-start py-1.5">
                     {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                             {tags.map((tag, index) => (
