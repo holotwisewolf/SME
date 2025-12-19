@@ -202,3 +202,16 @@
 
   - **src/features/trending/components/ActivityCard.tsx**
     - Made Changes to help support the community activity such as hovering to the artist, albums, tracks and playlists. ((Display underline) 
+
+
+## 2025-12-20(SF)
+
+### Progress
+  - Community activity can click on playlist creator
+    - **in src/features/trending/.../ ActivityCard.tsx**
+    - **also src/pages/discovery/CommunityActivity.tsx**
+  
+  - Improve Private account UI
+    - **../features/user/pages/UserProfile.tsx**
+
+
