@@ -43,6 +43,7 @@ const UserProfile = () => {
     const [showCommentsModal, setShowCommentsModal] = useState(false);
     const [showRatingInfo, setShowRatingInfo] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isFavDropdownOpen, setIsFavDropdownOpen] = useState(false);
 
     // Window status 
     const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
@@ -129,9 +130,9 @@ const UserProfile = () => {
 
             // enhance filter item
             const [enrichedFavs, enrichedRates, enrichedPls] = await Promise.all([
-                enrichItems(favs || []), 
+                enrichItems(favs || []),
                 enrichItems(rates || []),
-                enrichItems((pls || []).map(p => ({...p, item_id: p.id, item_type: 'playlist'})))
+                enrichItems((pls || []).map(p => ({ ...p, item_id: p.id, item_type: 'playlist' })))
             ]);
 
             // Enhance filter for Activity Feed
@@ -161,7 +162,7 @@ const UserProfile = () => {
                 count = ratingData.count || 0;
             } else {
                 average = parseFloat(ratingRes || '0');
-                count = enrichedRates.length; 
+                count = enrichedRates.length;
             }
 
             setRatingStats({ average, count });
@@ -189,7 +190,7 @@ const UserProfile = () => {
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/10"><Music size={40} /></div>
                 )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"><Play fill="white" size={24}/></div>
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"><Play fill="white" size={24} /></div>
             </div>
         );
     };
@@ -213,7 +214,7 @@ const UserProfile = () => {
                             <div className="flex items-center justify-center gap-10 py-3">
                                 <div className="text-center"><p className="text-xl font-bold text-white">{playlists.length}</p><p className="text-[10px] text-white/40 uppercase tracking-widest">Playlists</p></div>
                                 <div className="text-center cursor-pointer relative" onClick={() => setShowRatingInfo(!showRatingInfo)}>
-                                    <div className="flex items-center justify-center gap-1.5"><p className="text-xl font-bold text-white">{Number(ratingStats.average || 0).toFixed(1)}</p><Star size={14} className="fill-[#FFD1D1] text-[#FFD1D1]"/></div>
+                                    <div className="flex items-center justify-center gap-1.5"><p className="text-xl font-bold text-white">{Number(ratingStats.average || 0).toFixed(1)}</p><Star size={14} className="fill-[#FFD1D1] text-[#FFD1D1]" /></div>
                                     <p className="text-[10px] text-white/40 uppercase tracking-widest">Avg Rating</p>
                                     <AnimatePresence>{showRatingInfo && (
                                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 bg-[#181818] border border-white/10 p-3 rounded-lg shadow-2xl min-w-[140px]">
@@ -231,7 +232,7 @@ const UserProfile = () => {
             {/* --- LOCKED / PRIVATE VIEW --- */}
             {isLocked ? (
                 <div className="py-20 text-center border-t border-white/10">
-                    <Lock className="mx-auto mb-2 text-white/10" size={30}/>
+                    <Lock className="mx-auto mb-2 text-white/10" size={30} />
                     <p className="text-white/40 uppercase text-xs">Private Account</p>
                     <p className="text-white/20 text-[10px] mt-1">This user's activity and playlists are hidden.</p>
                 </div>
@@ -255,17 +256,27 @@ const UserProfile = () => {
                         {activeTab === 'music' ? (
                             <>
                                 <section>
-                                    <div className="flex justify-between items-end mb-6 px-1 text-white"><h2 className="text-xl font-bold uppercase tracking-tight">Created Playlists</h2>{playlists.length > 5 && <button onClick={() => setViewAllModal({title: 'Created Playlists', items: playlists})} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}</div>
+                                    <div className="flex justify-between items-end mb-6 px-1 text-white"><h2 className="text-xl font-bold uppercase tracking-tight">Created Playlists</h2>{playlists.length > 5 && <button onClick={() => setViewAllModal({ title: 'Created Playlists', items: playlists })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}</div>
                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-6">{playlists.slice(0, 5).map(p => (<div key={p.id} onClick={() => handleItemClick(p)} className="group cursor-pointer"><UniversalThumbnail item={p} /><h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{p.name}</h3></div>))}</div>
                                 </section>
                                 <section>
                                     <div className="flex justify-between items-end mb-6 px-1">
                                         <div className="flex items-center gap-8 text-white"><h2 className="text-xl font-bold uppercase tracking-tight">Favorites</h2>
-                                            <div className="flex gap-2 bg-black/40 p-1 rounded-full border border-white/5 shadow-inner">
-                                                {['all', 'track', 'album', 'playlist'].map(f => (<button key={f} onClick={() => setFavFilter(f)} className={`px-4 py-1 rounded-full text-[11px] font-bold transition-all uppercase ${favFilter === f ? 'bg-[#FFD1D1] text-black shadow-md' : 'text-white/60 hover:text-white'}`}>{f === 'playlist' ? 'Playlists' : f + 's'}</button>))}
+                                            <div className="relative">
+                                                <button onClick={() => setIsFavDropdownOpen(!isFavDropdownOpen)} className="bg-black/40 border border-white/5 rounded-full px-5 py-2 text-[11px] font-bold text-white/80 hover:bg-black/60 transition-all flex items-center gap-4 uppercase shadow-lg min-w-[140px]">
+                                                    <span className="flex-1 text-left">{favFilter === 'all' ? 'All Types' : favFilter === 'playlist' ? 'Playlists' : favFilter + 's'}</span>
+                                                    <ChevronDown size={14} className={`ml-auto transition-transform ${isFavDropdownOpen ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                <AnimatePresence>{isFavDropdownOpen && (
+                                                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} className="absolute top-full mt-2 left-0 z-[100] bg-[#1f1f1f] border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[140px]">
+                                                        {['all', 'track', 'album', 'playlist'].map((val) => (
+                                                            <button key={val} onClick={() => { setFavFilter(val); setIsFavDropdownOpen(false); }} className={`w-full text-left px-5 py-3 text-[11px] font-bold uppercase hover:bg-[#FFD1D1] hover:text-black transition-colors ${favFilter === val ? 'bg-[#FFD1D1]/10 text-[#FFD1D1]' : 'text-white/60'}`}>{val === 'all' ? 'All Types' : val === 'playlist' ? 'Playlists' : val + 's'}</button>
+                                                        ))}
+                                                    </motion.div>
+                                                )}</AnimatePresence>
                                             </div>
                                         </div>
-                                        {enrichedFavorites.filter(f=>favFilter==='all'||f.type===favFilter).length > 5 && <button onClick={() => setViewAllModal({title: 'All Favorites', items: enrichedFavorites.filter(f=>favFilter==='all'||f.type===favFilter)})} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}
+                                        {enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter).length > 5 && <button onClick={() => setViewAllModal({ title: 'All Favorites', items: enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter) })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-6">{enrichedFavorites.filter(f => favFilter === 'all' || f.type === favFilter).slice(0, 5).map(f => (<div key={f.id} onClick={() => handleItemClick(f)} className="group flex flex-col cursor-pointer"><UniversalThumbnail item={f} /><h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{f.name}</h3><p className="text-[10px] text-white/40 uppercase truncate mt-1">{f.artist || f.type}</p></div>))}</div>
                                 </section>
@@ -290,18 +301,18 @@ const UserProfile = () => {
                                                 )}</AnimatePresence>
                                             </div>
                                         </div>
-                                        {enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter).length > 5 && <button onClick={() => setViewAllModal({title: 'Rating History', items: enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter)})} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}
+                                        {enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter).length > 5 && <button onClick={() => setViewAllModal({ title: 'Rating History', items: enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter) })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-12">{enrichedRatings.filter(r => starFilter === 0 || r.rating === starFilter).slice(0, 5).map(r => (<div key={r.id} onClick={() => handleItemClick(r)} className="group cursor-pointer"><UniversalThumbnail item={r} /><h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{r.name}</h3></div>))}</div>
                                 </section>
                                 <section>
                                     <div className="flex justify-between items-center mb-6 text-white"><h2 className="text-xl font-bold uppercase tracking-tight">Recent Activity</h2><button onClick={() => setShowCommentsModal(true)} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">Full History</button></div>
                                     <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm shadow-inner"><div className="space-y-4">
-                                        {recentComments.length > 0 ? recentComments.map((c, i) => 
-                                            <ActivityCard 
-                                                key={c.id} 
-                                                activity={c} 
-                                                index={i} 
+                                        {recentComments.length > 0 ? recentComments.map((c, i) =>
+                                            <ActivityCard
+                                                key={c.id}
+                                                activity={c}
+                                                index={i}
                                                 onUserClick={handleUserClick} // [NEW] Pass click handler
                                             />
                                         ) : <div className="py-14 text-center text-white/10 text-xs uppercase font-bold tracking-widest">No activity</div>}
@@ -313,21 +324,20 @@ const UserProfile = () => {
                 </>
             )}
 
-            <ItemModals 
-                selectedPlaylist={selectedPlaylist} 
-                selectedTrack={selectedTrack} 
-                selectedAlbum={selectedAlbum} 
-                onClose={() => { 
-                    setSelectedPlaylist(null); 
-                    setSelectedTrack(null); 
-                    setSelectedAlbum(null); 
-                    loadProfileData(); 
-                }} 
+            <ItemModals
+                selectedPlaylist={selectedPlaylist}
+                selectedTrack={selectedTrack}
+                selectedAlbum={selectedAlbum}
+                onClose={() => {
+                    setSelectedPlaylist(null);
+                    setSelectedTrack(null);
+                    setSelectedAlbum(null);
+                }}
             />
 
             <AnimatePresence>
                 {showCommentsModal && <UserCommentsModal userId={userId!} onClose={() => setShowCommentsModal(false)} />}
-                {viewAllModal && <UserItemsModal title={viewAllModal.title} items={viewAllModal.items} onClose={() => setViewAllModal(null)} onItemClick={(i:any)=> { handleItemClick(i); setViewAllModal(null); }} />}
+                {viewAllModal && <UserItemsModal title={viewAllModal.title} items={viewAllModal.items} onClose={() => setViewAllModal(null)} onItemClick={(i: any) => { handleItemClick(i); setViewAllModal(null); }} />}
             </AnimatePresence>
         </div>
     );

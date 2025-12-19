@@ -156,10 +156,10 @@ export async function spotifyFetch<T = any>(
     throw new Error(`Spotify rate limited. Please wait ${waitTime} seconds.`);
   }
 
-  // FIX: Updated to correct Spotify API endpoint
+  // Build Spotify API URL - handle both /endpoint and endpoint formats
   const url = endpoint.startsWith("http")
     ? endpoint
-    : `https://accounts.spotify.com/authorize?client_id=$7{endpoint}`;
+    : `https://api.spotify.com/v1/${endpoint.startsWith('/') ? endpoint.slice(1) : endpoint}`;
 
   // Request deduplication - if same URL is already in flight, wait for that result
   const cacheKey = `${fetchOptions.method || 'GET'}:${url}`;
