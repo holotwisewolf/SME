@@ -1,4 +1,4 @@
-# 📦 Project Setup Guide
+# Project Setup Guide
 
 This document explains all installations and environment setup needed to run the project.  
 Files are already included in the repository — this guide only covers system requirements and environment configuration.

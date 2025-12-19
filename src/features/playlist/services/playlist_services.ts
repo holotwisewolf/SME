@@ -76,10 +76,12 @@ export async function getEnhancedPlaylists(userId: string): Promise<{ playlists:
 
     const playlistIds = basePlaylists.map(p => p.id).filter(Boolean) as string[];
 
-    // Fetch user-specific data (user ratings, user tags) - view doesn't include these
-    const [userRatingsRes, userTagsRes] = await Promise.all([
+    // Fetch user-specific data (user ratings, user tags) AND global tags - view doesn't include these
+    const [userRatingsRes, userTagsRes, globalTagsRes] = await Promise.all([
         supabase.from('ratings').select('item_id, rating, created_at, updated_at').eq('item_type', 'playlist').eq('user_id', userId).in('item_id', playlistIds),
         supabase.from('item_tags').select('item_id, created_at, tags(name)').eq('item_type', 'playlist').eq('user_id', userId).in('item_id', playlistIds),
+        // Fetch ALL tags for these playlists (global tags for filtering)
+        supabase.from('item_tags').select('item_id, tags(name)').eq('item_type', 'playlist').in('item_id', playlistIds),
     ]);
 
     const playlists: EnhancedPlaylist[] = basePlaylists.map(p => {
@@ -87,6 +89,11 @@ export async function getEnhancedPlaylists(userId: string): Promise<{ playlists:
         const userTags = userTagsRes.data?.filter(t => t.item_id === p.id) || [];
         // @ts-ignore
         const userTagNames = Array.from(new Set(userTags.map(t => t.tags?.name).filter(Boolean)));
+
+        // Get all global tags for this playlist (from any user)
+        const globalTags = globalTagsRes.data?.filter(t => t.item_id === p.id) || [];
+        // @ts-ignore
+        const globalTagNames = Array.from(new Set(globalTags.map(t => t.tags?.name).filter(Boolean)));
 
         return {
             // Base playlist data (from view) - provide defaults for nullable fields
@@ -106,6 +113,8 @@ export async function getEnhancedPlaylists(userId: string): Promise<{ playlists:
             rating_count: p.rating_count ?? 0,
             comment_count: p.comment_count ?? 0,
             tag_count: p.tag_count ?? 0,
+            // Global tags (all users' tags for this playlist)
+            tags: globalTagNames as string[],
             // User-specific data
             user_rating: userRating?.rating ?? 0,
             user_rated_at: userRating ? getLatestTime(userRating) : undefined,
@@ -420,6 +429,23 @@ export async function getUserPlaylistRating(playlistId: string): Promise<number 
         .eq('item_id', playlistId)
         .eq('item_type', 'playlist')
         .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (error) throw error;
+    return data ? data.rating : null;
+}
+
+/**
+ * Get a specific user's rating for a playlist
+ * Used to display creator's rating in the left column for guests
+ */
+export async function getPlaylistRatingByUserId(playlistId: string, userId: string): Promise<number | null> {
+    const { data, error } = await supabase
+        .from('ratings')
+        .select('rating')
+        .eq('item_id', playlistId)
+        .eq('item_type', 'playlist')
+        .eq('user_id', userId)
         .maybeSingle();
 
     if (error) throw error;

@@ -57,6 +57,7 @@ export async function getUserCustomTags(): Promise<Tag[]> {
 
 /**
  * Create a tag (custom or premade)
+ * If a tag with the same name and type already exists, returns the existing tag
  */
 export async function createTag(
   tagName: string,
@@ -64,6 +65,20 @@ export async function createTag(
 ): Promise<Tag> {
   const userId = await getCurrentUserId();
 
+  // First, check if tag already exists
+  const { data: existingTag } = await supabase
+    .from('tags')
+    .select()
+    .eq('name', tagName)
+    .eq('type', type)
+    .maybeSingle();
+
+  // If tag exists, return it instead of creating duplicate
+  if (existingTag) {
+    return existingTag;
+  }
+
+  // Create new tag
   const { data, error } = await supabase
     .from('tags')
     .insert({

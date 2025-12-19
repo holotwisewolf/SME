@@ -159,7 +159,7 @@ export const TrackReview: React.FC<TrackReviewProps> = ({
 
             {/* Bottom Row: Tags */}
             <div className="mb-2">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1">
                     <p className="text-gray-400 text-xs">Personal Tags:</p>
                     <div className="relative tag-menu-container">
                         <button

@@ -114,15 +114,11 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
                 showError('Tag already exists');
                 return;
             }
+
             try {
-                const tagData = await getPreMadeTags();
-                const existingTag = tagData.find(t => t.name.toLowerCase() === tagToAdd.toLowerCase());
-                if (existingTag) {
-                    await assignTagToItem(albumId, 'album', existingTag.id);
-                } else {
-                    showError('Please select from available tags');
-                    return;
-                }
+                // Use addItemTag which creates custom tag if needed and links it
+                const { addItemTag } = await import('../../../services/item_services');
+                await addItemTag(albumId, 'album', tagToAdd);
                 setTags([...tags, tagToAdd]);
                 setNewTag('');
                 setIsTagMenuOpen(false);
@@ -204,7 +200,7 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
 
             {/* Bottom Row: Tags */}
             <div className="mb-2">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1">
                     <p className="text-gray-400 text-xs">Personal Tags:</p>
                     <div className="relative tag-menu-container">
                         <button

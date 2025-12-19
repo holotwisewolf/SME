@@ -146,15 +146,40 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                 return;
             }
 
-            if (!tags.includes(newTag.trim())) {
-                setTags([...tags, newTag.trim()]);
+            const tagToAdd = newTag.trim();
+            if (tags.includes(tagToAdd)) {
+                showError('Tag already exists');
+                setNewTag('');
+                return;
             }
-            setNewTag('');
+
+            try {
+                // Import and use addItemTag which creates custom tag if needed and links it
+                const { addItemTag } = await import('../../../services/item_services');
+                await addItemTag(track.id, 'track', tagToAdd);
+                setTags([...tags, tagToAdd]);
+                setNewTag('');
+                showSuccess(`Tag #${tagToAdd} added`);
+            } catch (error) {
+                console.error('Error adding tag:', error);
+                showError('Failed to add tag');
+            }
         }
     };
 
-    const removeTag = (tagToRemove: string) => {
+    const removeTag = async (tagToRemove: string) => {
+        const prevTags = [...tags];
         setTags(tags.filter(tag => tag !== tagToRemove));
+
+        try {
+            const { removeItemTag } = await import('../../../services/item_services');
+            await removeItemTag(track.id, 'track', tagToRemove);
+            showSuccess(`Tag #${tagToRemove} removed`);
+        } catch (error) {
+            console.error('Error removing tag:', error);
+            setTags(prevTags); // Revert on error
+            showError('Failed to remove tag');
+        }
     };
 
     const handleAddComment = async () => {

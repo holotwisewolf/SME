@@ -11,6 +11,7 @@ import {
     removeTrackFromPlaylist,
     updatePlaylistPublicStatus,
     getUserPlaylistRating,
+    getPlaylistRatingByUserId,
     deletePlaylist,
     updatePlaylistColor,
     reorderPlaylistTracks,
@@ -68,6 +69,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [communityTags, setCommunityTags] = useState<string[]>([]);
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [userRating, setUserRating] = useState<number | null>(null);
+    const [creatorRating, setCreatorRating] = useState<number | null>(null);
     const [comments, setComments] = useState<any[]>([]);
 
     // UI States
@@ -140,13 +142,14 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
             const session = await getSession();
             const currentUserId = session?.user?.id;
 
-            const [tracksData, allTagsData, creatorTagsData, userTagsData, ratingRes, userRatingRes, commentsData, profileData, currentUserProfile] = await Promise.all([
+            const [tracksData, allTagsData, creatorTagsData, userTagsData, ratingRes, userRatingRes, creatorRatingRes, commentsData, profileData, currentUserProfile] = await Promise.all([
                 fetchPlaylistTracksWithDetails(playlist.id),
                 getItemTags(playlist.id, 'playlist'),
                 getCreatorItemTags(playlist.id, 'playlist', playlist.user_id),
                 currentUserId ? getCreatorItemTags(playlist.id, 'playlist', currentUserId) : Promise.resolve([]),
                 getPlaylistRating(playlist.id),
                 getUserPlaylistRating(playlist.id),
+                getPlaylistRatingByUserId(playlist.id, playlist.user_id), // Fetch creator's rating
                 getPlaylistComments(playlist.id),
                 getProfile(playlist.user_id),
                 currentUserId ? getProfile(currentUserId) : Promise.resolve(null)
@@ -158,6 +161,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
             setCommunityTags(allTagsData.map(tag => tag.name));
             setRatingData(ratingRes);
             setUserRating(userRatingRes);
+            setCreatorRating(creatorRatingRes); // Set creator's rating
             setComments(commentsData);
             setCreatorName(profileData?.display_name || profileData?.username || 'Creator');
             setCurrentUserName(currentUserProfile?.display_name || currentUserProfile?.username || 'You');
@@ -456,7 +460,8 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     imgError={imgError}
                     setImgError={setImgError}
                     ratingData={ratingData}
-                    userRating={userRating}
+                    // Show creator's rating in left column for guests, user's rating for owner
+                    userRating={isOwner ? userRating : creatorRating}
                     tags={creatorTags}
                     isEditingTitle={isEditingTitle}
                     setIsEditingTitle={setIsEditingTitle}
@@ -488,7 +493,18 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
 
                     {activeTab === 'tracks' && (
                         <div className="mb-4 relative">
-                            <input type="text" placeholder="Search in playlist..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-[#151515]/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[white]/40 transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="Search in playlist..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-[#151515]/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[white]/40 transition-colors"
+                                // Prevent drag behavior to allow text selection
+                                draggable={false}
+                                onDragStart={(e) => e.preventDefault()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                            />
                             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         </div>
                     )}
@@ -502,11 +518,13 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                             <PlaylistReview
                                 playlist={playlist}
                                 userRating={userRating}
+                                // Review tab always shows current user's PERSONAL tags (editable)
                                 tags={userTags}
                                 setTags={setUserTags}
-                                isEditingEnabled={isEditingEnabled}
+                                isEditingEnabled={true} // Guest can always edit their own tags
+                                // Show current user's name for "Based on X" 
                                 userName={currentUserName}
-                                onDescriptionChange={(newDescription) => { playlist.description = newDescription; }}
+                                onDescriptionChange={isOwner ? (newDescription) => { playlist.description = newDescription; } : undefined}
                                 onTagsUpdate={handleTagsSync}
                                 onRatingUpdate={handleRatingUpdate}
                             />

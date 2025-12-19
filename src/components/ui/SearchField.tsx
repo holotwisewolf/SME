@@ -19,6 +19,12 @@ const SearchField: React.FC<SearchFieldProps> = ({
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
                 className="bg-[#292929] text-white text-sm rounded-full px-4 py-2 pr-8 border border-white/60 focus:border-white/90 focus:shadow-[0_0_8px_rgba(255,255,255,0.3)] focus:outline-none w-48 transition-all"
+
+                // Prevent drag behavior to allow text selection
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
             />
             {/* Clear button - only visible when there's text */}
             {value && (

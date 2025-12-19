@@ -161,8 +161,8 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                 <div className="bg-white/5 rounded-lg border border-white/5 flex-1 flex flex-col overflow-hidden"><textarea value={reviewText} onChange={(e) => setReviewText(e.target.value)} onBlur={() => { if (reviewText !== playlist?.description) { handleDescriptionUpdate(); } }} readOnly={!isEditingEnabled} placeholder={isEditingEnabled ? "Write your thoughts on this playlist..." : (playlist.description ? "" : "Creator has not provided a description.")} className={`w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed ${!isEditingEnabled ? 'cursor-default' : ''}`} /></div>
             </div>
             <div className="mb-2">
-                <div className="flex items-center justify-between mb-2">
-                    <p className="text-gray-400 text-xs">{isEditingEnabled ? 'Your Tags:' : 'Creator Tags:'}</p>
+                <div className="flex items-center justify-between mb-1">
+                    <p className="text-gray-400 text-xs">{isEditingEnabled ? 'Personal Tags:' : 'Creator Tags:'}</p>
                     <div className="relative tag-menu-container">
                         <button onClick={() => setIsTagMenuOpen(!isTagMenuOpen)} className="p-1 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"><MoreOptionsIcon size={14} orientation="horizontal" /></button>
                         {isTagMenuOpen && (

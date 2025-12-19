@@ -209,10 +209,26 @@ async function getTrendingItems(
 
 /**
  * Filter items by tags
+ * Note: tagNames are the tag name strings (e.g., "Cooking", "Classical"), not UUIDs
  */
-async function filterByTags(items: any[], tagIds: string[]): Promise<any[]> {
+async function filterByTags(items: any[], tagNames: string[]): Promise<any[]> {
+    if (!tagNames || tagNames.length === 0) return items;
+
+    // First, lookup the actual tag UUIDs from tag names
+    const { data: tagData, error: tagError } = await supabase
+        .from('tags')
+        .select('id')
+        .in('name', tagNames);
+
+    if (tagError || !tagData || tagData.length === 0) {
+        console.error('Error looking up tag IDs:', tagError);
+        return items; // Return original items if tag lookup fails
+    }
+
+    const tagIds = tagData.map(t => t.id);
     const itemIds = items.map(item => item.item_id);
 
+    // Now filter item_tags using the actual UUIDs
     const { data, error } = await supabase
         .from('item_tags')
         .select('item_id')
@@ -483,8 +499,8 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
         const uniqueUserIds = [...new Set(activities.map(item => item.user_id).filter(Boolean))] as string[];
         let profiles: any[] = [];
         if (uniqueUserIds.length > 0) {
-            // Use public_profiles view which automatically anonymizes private users
-            const { data } = await supabase.from('public_profiles').select('id, username, display_name, avatar_url').in('id', uniqueUserIds);
+            // Use profiles directly - privacy is enforced on profile page, not by hiding names
+            const { data } = await supabase.from('profiles').select('id, username, display_name, avatar_url').in('id', uniqueUserIds);
             profiles = data || [];
         }
 
@@ -555,11 +571,17 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
                 ? (item.metadata as any).content
                 : null;
 
+            // Extract rating value from metadata for ratings
+            const ratingValue = item.metadata && typeof item.metadata === 'object'
+                ? (item.metadata as any).rating
+                : undefined;
+
             return {
                 id: item.id,
                 type: item.activity_type, // Changed from item.type
                 created_at: item.created_at,
                 content: content, // Extract from metadata
+                value: ratingValue, // Rating value for star display
                 tag_name: item.tag_name,
                 itemType: type,
                 user: { id: item.user_id, display_name: displayName, avatar_url: avatarUrl },

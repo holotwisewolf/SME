@@ -8,11 +8,14 @@ interface ActivityItem {
     created_at: string;
     value?: number;
     content?: string;
-    
-    itemType?: string; 
-    item_type?: string; 
-    item_id?: string; 
-    
+    tag_name?: string; // For tag activity type
+
+    // Support both casings for compatibility
+    itemType?: string;
+    item_type?: string;
+
+    item_id?: string; // Fallback ID if not in track object
+
     user?: {
         id: string;
         display_name: string;
@@ -22,7 +25,7 @@ interface ActivityItem {
         id: string;
         title: string;
         artist: string;
-        artistId?: string; 
+        artistId?: string;
         artist_id?: string;
         user_id?: string; // This is the creator ID for playlists
         albumId?: string;
@@ -39,14 +42,14 @@ interface ActivityCardProps {
     onUserClick?: (userId: string) => void;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ 
-    activity, 
-    index, 
-    onTrackClick, 
-    onArtistClick, 
+const ActivityCard: React.FC<ActivityCardProps> = ({
+    activity,
+    index,
+    onTrackClick,
+    onArtistClick,
     onAlbumClick,
     onPlaylistClick,
-    onUserClick 
+    onUserClick
 }) => {
     if (!activity) return null;
 
@@ -78,7 +81,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
             case 'rating': return 'rated';
             case 'comment': return 'commented on';
             case 'favorite': return 'favourited';
-            case 'tag': return 'tagged';
+            case 'tag': return 'added a tag to';
             default: return 'interacted with';
         }
     };
@@ -87,10 +90,10 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
     const displayName = activity.user?.display_name || 'Anonymous';
     const title = activity.track?.title || 'Unknown Title';
     const artistName = activity.track?.artist || 'Unknown Artist';
-    
+
     // Use user_id for playlists and artistId for tracks
-    const resolvedRightId = type === 'playlist' 
-        ? activity.track?.user_id 
+    const resolvedRightId = type === 'playlist'
+        ? activity.track?.user_id
         : (activity.track?.artistId || activity.track?.artist_id);
 
     // Left side click: User who performed the action
@@ -104,7 +107,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
     // Right side click: Playlist Creator OR Spotify Artist
     const handleRightNameClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        
+
         if (type === 'playlist') {
             if (resolvedRightId && onUserClick) {
                 onUserClick(resolvedRightId);
@@ -153,7 +156,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
 
                 <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-x-1 mb-1 text-sm text-[#D1D1D1] leading-relaxed">
-                        <span 
+                        <span
                             onClick={handleLeftNameClick}
                             className="font-semibold text-[#FFD1D1] hover:underline cursor-pointer"
                         >
@@ -161,19 +164,19 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
                         </span>
 
                         <span>{getActionText()}</span>
-                        
-                        <button 
+
+                        <button
                             onClick={handleTitleClick}
                             className="font-bold text-white hover:text-[#FFD1D1] hover:underline transition-colors text-left"
                         >
                             {title}
                         </button>
-                        
+
                         <span className="text-[#D1D1D1]/50">by</span>
 
-                        <button 
+                        <button
                             onClick={handleRightNameClick}
-                            disabled={!resolvedRightId && !artistName} 
+                            disabled={!resolvedRightId && !artistName}
                             className="font-semibold text-[#D1D1D1] hover: transition-colors cursor-pointer disabled:text-[#D1D1D1]/50 disabled:no-underline"
                         >
                             {artistName}
@@ -201,7 +204,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
                             ))}
                         </div>
                     )}
-                    
+
                     <div className="mt-3 flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#FFD1D1]/5 border border-[#FFD1D1]/10 w-fit">
                         {badge.icon}
                         <span className="text-[10px] font-semibold text-[#FFD1D1] tracking-wider uppercase">
