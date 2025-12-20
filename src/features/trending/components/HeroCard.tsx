@@ -89,12 +89,10 @@ const HeroCard: React.FC<HeroCardProps> = ({ item, rank, onClick }) => {
                     </div>
 
                     {/* Tags */}
-                    {item.tagCount > 0 && (
-                        <div className="flex items-center gap-1">
-                            <Tag className="w-3.5 h-3.5 text-[#FFD1D1]" />
-                            <span>{item.tagCount}</span>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                        <Tag className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                        <span>{item.tagCount || 0}</span>
+                    </div>
                 </div>
             </div>
         </motion.div>

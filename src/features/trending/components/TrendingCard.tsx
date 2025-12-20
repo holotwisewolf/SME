@@ -56,20 +56,16 @@ const TrendingCard: React.FC<TrendingCardProps> = ({ item, rank }) => {
                         )}
 
                         {/* Tags */}
-                        {item.tagCount > 0 && (
-                            <div className="flex items-center gap-1">
-                                <Tag className="w-3.5 h-3.5 text-[#FFD1D1]" />
-                                <span>{item.tagCount}</span>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-1">
+                            <Tag className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                            <span>{item.tagCount || 0}</span>
+                        </div>
 
                         {/* Favorites */}
-                        {item.favoriteCount > 0 && (
-                            <div className="flex items-center gap-1">
-                                <Heart className="w-3.5 h-3.5 text-[#FFD1D1]" />
-                                <span>{item.favoriteCount}</span>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-1">
+                            <Heart className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                            <span>{item.favoriteCount || 0}</span>
+                        </div>
                     </div>
                 </div>
 

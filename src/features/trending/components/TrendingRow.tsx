@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import type { TrendingItem } from '../types/trending';
-import { Star, MessageCircle, Heart, Tag } from 'lucide-react';
+import { Star, MessageCircle, Heart, Tag, Music } from 'lucide-react';
 
 interface TrendingRowProps {
     item: TrendingItem;
@@ -40,7 +40,9 @@ const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
                     ) : item.color ? (
                         <div className="w-full h-full" style={{ backgroundColor: item.color }} />
                     ) : (
-                        <div className="w-full h-full bg-[#696969]/30" />
+                        <div className="w-full h-full bg-[#696969]/30 flex items-center justify-center">
+                            <Music className="w-6 h-6 text-[#D1D1D1]/20" />
+                        </div>
                     )}
                 </div>
 
@@ -75,6 +77,12 @@ const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
                     <div className="flex items-center gap-1">
                         <Heart className="w-3.5 h-3.5 text-[#FFD1D1]" />
                         <span>{item.favoriteCount || 0}</span>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex items-center gap-1">
+                        <Tag className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                        <span>{item.tagCount || 0}</span>
                     </div>
                 </div>
             </div>
