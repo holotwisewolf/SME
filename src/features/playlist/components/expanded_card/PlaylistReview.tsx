@@ -1,12 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { MoreOptionsIcon } from '../../../../components/ui/MoreOptionsIcon';
-import { updatePlaylistDescription, updatePlaylistRating, deletePlaylistRating } from '../../services/playlist_services';
-import { getPreMadeTags, assignTagToItem, createCustomTag, searchTags, removeTagFromItem } from '../../../tags/services/tag_services';
-import type { Tag } from '../../../tags/type/tag_types';
-import { useError } from '../../../../context/ErrorContext';
-import { useSuccess } from '../../../../context/SuccessContext';
 import type { Tables } from '../../../../types/supabase';
-import { supabase } from '../../../../lib/supabaseClient';
+import { usePlaylistReview } from '../../hooks/usePlaylistReview';
 
 interface PlaylistReviewProps {
     playlist: Tables<'playlists'>;
@@ -23,126 +18,25 @@ interface PlaylistReviewProps {
 export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
     playlist, userRating, tags, setTags, onDescriptionChange, isEditingEnabled = true, userName = 'You', onTagsUpdate, onRatingUpdate
 }) => {
-    const { showError } = useError();
-    const { showSuccess } = useSuccess();
-    const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-    const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
-    const [customTagInput, setCustomTagInput] = useState('');
-    const [reviewText, setReviewText] = useState(playlist.description || '');
-
-    useEffect(() => { setReviewText(playlist.description || ''); }, [playlist.description]);
-    useEffect(() => { loadAvailableTags(); }, []);
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as HTMLElement;
-            if (isTagMenuOpen && !target.closest('.tag-menu-container')) setIsTagMenuOpen(false);
-        };
-        if (isTagMenuOpen) document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isTagMenuOpen]);
-
-    const loadAvailableTags = async () => {
-        try {
-            const tagsData = await getPreMadeTags();
-            setAvailableTags(tagsData);
-        } catch (error) { console.error('Error loading tags:', error); }
-    };
-
-    const handleDescriptionUpdate = async () => {
-        if (reviewText === playlist.description) return;
-        const oldDescription = playlist.description;
-        try {
-            await updatePlaylistDescription(playlist.id, reviewText);
-            if (onDescriptionChange) onDescriptionChange(reviewText);
-            showSuccess('Description updated');
-        } catch (error) {
-            console.error('Error updating description:', error);
-            showError('Failed to update description');
-            setReviewText(oldDescription || '');
-        }
-    };
-
-    const handleAddPresetTag = async (tag: Tag) => {
-        if (!playlist) return;
-        if (tags.includes(tag.name)) return;
-        const prevTags = [...tags];
-        const newTags = [...tags, tag.name];
-        setTags(newTags);
-        if (onTagsUpdate) onTagsUpdate(newTags);
-        setIsTagMenuOpen(false);
-        try {
-            await assignTagToItem(playlist.id, 'playlist', tag.id);
-            showSuccess(`Tag #${tag.name} added`);
-        } catch (error) {
-            console.error('Error adding tag:', error);
-            showError('Failed to add tag');
-            setTags(prevTags);
-            if (onTagsUpdate) onTagsUpdate(prevTags);
-        }
-    };
-
-    const handleAddCustomTag = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && customTagInput.trim()) {
-            const tagName = customTagInput.trim();
-            if (tags.includes(tagName)) { showError('Tag already added'); return; }
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { showError('Log in to add tags'); return; }
-            const prevTags = [...tags];
-            const optimisticTags = [...tags, tagName];
-            setTags(optimisticTags);
-            if (onTagsUpdate) onTagsUpdate(optimisticTags);
-            setCustomTagInput('');
-            try {
-                const existingTags = await searchTags(tagName);
-                let tagToAssign;
-                if (existingTags.length > 0 && existingTags[0].name.toLowerCase() === tagName.toLowerCase()) tagToAssign = existingTags[0];
-                else tagToAssign = await createCustomTag(tagName);
-                await assignTagToItem(playlist.id, 'playlist', tagToAssign.id);
-                showSuccess(`Tag #${tagToAssign.name} added`);
-            } catch (error) {
-                console.error('Error adding custom tag:', error);
-                showError('Failed to add custom tag');
-                setTags(prevTags);
-                if (onTagsUpdate) onTagsUpdate(prevTags);
-            }
-        }
-    };
-
-    const handleStarClick = async (rating: number) => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { showError('Log in to rate'); return; }
-            if (userRating === rating) {
-                await deletePlaylistRating(playlist.id);
-                showSuccess('Rating removed');
-            } else {
-                await updatePlaylistRating(playlist.id, rating);
-                showSuccess(`Rated ${rating}/5`);
-            }
-            if (onRatingUpdate) onRatingUpdate();
-        } catch (error) {
-            console.error('Error updating rating:', error);
-            showError('Failed to update rating');
-        }
-    };
-
-    const handleRemoveTag = async (tagToRemove: string) => {
-        const prevTags = [...tags];
-        const newTags = tags.filter(tag => tag !== tagToRemove);
-        setTags(newTags);
-        if (onTagsUpdate) onTagsUpdate(newTags);
-        try {
-            const existingTags = await searchTags(tagToRemove);
-            const tagToDelete = existingTags.find(t => t.name === tagToRemove);
-            if (tagToDelete) await removeTagFromItem(playlist.id, 'playlist', tagToDelete.id);
-            showSuccess(`Tag #${tagToRemove} removed`);
-        } catch (error) {
-            console.error('Error removing tag:', error);
-            showError('Failed to remove tag');
-            setTags(prevTags);
-            if (onTagsUpdate) onTagsUpdate(prevTags);
-        }
-    };
+    const {
+        availableTags,
+        isTagMenuOpen, setIsTagMenuOpen,
+        customTagInput, setCustomTagInput,
+        reviewText, setReviewText,
+        handleDescriptionUpdate,
+        handleAddPresetTag,
+        handleAddCustomTag,
+        handleStarClick,
+        handleRemoveTag
+    } = usePlaylistReview({
+        playlist,
+        userRating,
+        tags,
+        setTags,
+        onDescriptionChange,
+        onTagsUpdate,
+        onRatingUpdate
+    });
 
     return (
         <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 gap-2 overflow-hidden">

@@ -1,149 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import PasswordInput from "../../../components/ui/PasswordInput";
-
 import Checkbox from "../../../components/ui/CheckboxIcon";
 import TextInput from "../../../components/ui/TextInput";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
-import { AuthService } from "../../auth/services/auth_services";
-import { useLogin } from "../../auth/components/LoginProvider";
-import { useSuccess } from "../../../context/SuccessContext";
+import { useUserSettings } from "../hooks/useUserSettings";
 
 const UserSettings = () => {
-    const navigate = useNavigate();
-    const { showSuccess } = useSuccess();
-    const { profile, setProfile } = useLogin();
-    const [userId, setUserId] = useState<string | null>(null);
-    const [isPublicRating, setIsPublicRating] = useState(false);
-    const [isDeveloper, setIsDeveloper] = useState(false);
-    const [inviteCode, setInviteCode] = useState("");
-
-    const [showPasswordChange, setShowPasswordChange] = useState(false);
-    const [oldPassword, setOldPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-
-    const [loading, setLoading] = useState(false);
-    const [initializing, setInitializing] = useState(true);
-
-    const [initialState, setInitialState] = useState({
-        isPublicRating: false,
-        isDeveloper: false,
-    });
-
-    // Fetch initial settings
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const session = await AuthService.getSession();
-                if (!session) {
-                    navigate("/");
-                    return;
-                }
-                setUserId(session.user.id);
-
-                const profile = await AuthService.getProfile(session.user.id);
-                if (profile) {
-                    const initialData = {
-                        isPublicRating: !(profile.is_private_profile ?? false),
-                        isDeveloper: profile.app_role === 'dev',
-                    };
-                    setIsPublicRating(initialData.isPublicRating);
-                    setIsDeveloper(initialData.isDeveloper);
-                    setInitialState(initialData);
-                }
-            } catch (error) {
-                console.error("Error loading settings:", error);
-            } finally {
-                setInitializing(false);
-            }
-        };
-        loadData();
-    }, [navigate]);
-
-    // Check for changes
-    // Note: If user was NOT a dev and checks the box, that's a change.
-    // If user WAS a dev and unchecks, that's a change.
-    // Invite code entry is part of the process but the "state" change is the boolean.
-    const hasChanges =
-        isPublicRating !== initialState.isPublicRating ||
-        isDeveloper !== initialState.isDeveloper;
-
-    const handlePasswordUpdate = async () => {
-        if (!newPassword) {
-            alert("Please enter a new password.");
-            return;
-        }
-        try {
-            await AuthService.updatePassword(newPassword);
-            showSuccess("Password updated successfully!");
-            setShowPasswordChange(false);
-            setOldPassword("");
-            setNewPassword("");
-        } catch (error: any) {
-            console.error("Password update failed:", error);
-            alert(error.message || "Failed to update password.");
-        }
-    };
-
-    const handleSave = async () => {
-        if (!userId || !hasChanges) return;
-        setLoading(true);
-
-        // Backup current profile for rollback
-        const backupProfile = { ...profile };
-
-        try {
-            // Validate developer code if checking the box AND user wasn't already a dev
-            let devStatus = isDeveloper;
-            if (isDeveloper && !initialState.isDeveloper && inviteCode) {
-                const isValid = await AuthService.validateInviteCode(inviteCode);
-                if (!isValid) {
-                    alert("Invalid invite code.");
-                    setLoading(false);
-                    return;
-                }
-                devStatus = true;
-            } else if (isDeveloper && !initialState.isDeveloper && !inviteCode) {
-                alert("Please enter an invite code.");
-                setLoading(false);
-                return;
-            }
-
-            // 1. Optimistic Update
-            const optimisticProfile = {
-                ...profile,
-                is_private_profile: !isPublicRating,
-                app_role: devStatus ? 'dev' : 'user',
-                updated_at: new Date().toISOString(),
-            };
-            setProfile(optimisticProfile);
-
-            // 2. API Call
-            await AuthService.updateProfile(userId, {
-                is_private_profile: !isPublicRating,
-                app_role: devStatus ? 'dev' : 'user',
-                updated_at: new Date().toISOString(),
-            });
-
-            // Update initial state
-            setInitialState({
-                isPublicRating,
-                isDeveloper: devStatus,
-            });
-
-            showSuccess("Settings saved successfully!");
-            navigate(-1);
-        } catch (error: any) {
-            console.error("Settings save failed:", error);
-            alert(error.message || "Failed to save settings.");
-
-            // Rollback on error
-            setProfile(backupProfile);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const {
+        isPublicRating, setIsPublicRating,
+        isDeveloper, setIsDeveloper,
+        inviteCode, setInviteCode,
+        showPasswordChange, setShowPasswordChange,
+        oldPassword, setOldPassword,
+        newPassword, setNewPassword,
+        loading,
+        initializing,
+        initialState,
+        hasChanges,
+        handlePasswordUpdate,
+        handleSave,
+        navigate,
+    } = useUserSettings();
 
     return (
         <motion.div

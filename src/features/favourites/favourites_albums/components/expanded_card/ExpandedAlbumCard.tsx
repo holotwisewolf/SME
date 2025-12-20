@@ -1,11 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import LoadingSpinner from '../../../../../components/ui/LoadingSpinner';
-import { useError } from '../../../../../context/ErrorContext';
-import { useSuccess } from '../../../../../context/SuccessContext';
-import { getAlbum, getAlbumTracks } from '../../../../spotify/services/spotify_services';
-import { getItemTags, getCurrentUserItemTags } from '../../../../tags/services/tag_services';
-import { getItemRating, getUserItemRating, getItemComments, addItemComment } from '../../../services/item_services';
-import { removeFromFavourites, addToFavourites, checkIsFavourite } from '../../../services/favourites_services';
+import { useExpandedAlbum } from '../../hooks/useExpandedAlbum';
 import { AlbumHeader } from './AlbumHeader';
 import { AlbumTracks } from './AlbumTracks';
 import { AlbumCommunity } from './AlbumCommunity';
@@ -13,7 +8,6 @@ import { AlbumSettings } from './AlbumSettings';
 import { AlbumReview } from './AlbumReview';
 import ExpandButton from '../../../../../components/ui/ExpandButton';
 import { TrackReviewModal } from '../../../favourites_tracks/components/expanded_card/TrackReviewModal';
-import { supabase } from '../../../../../lib/supabaseClient';
 import { PlaylistSelectCard } from '../../../../spotify/components/PlaylistSelectCard';
 
 interface ExpandedAlbumCardProps {
@@ -22,191 +16,37 @@ interface ExpandedAlbumCardProps {
     onRemove?: () => void;
 }
 
-type ActiveTab = 'tracks' | 'review' | 'community' | 'settings';
+export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = (props) => {
+    const {
+        // State
+        activeTab, setActiveTab,
+        loading,
+        album,
+        filteredTracks,
+        personalTags, setPersonalTags,
+        communityTags,
+        ratingData,
+        userRating,
+        userName,
+        comments,
+        selectedTrack, setSelectedTrack,
+        searchQuery, setSearchQuery,
+        newComment, setNewComment,
+        commentLoading,
+        playlistModalTrack, setPlaylistModalTrack,
+        isFavourite,
 
-export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, onClose, onRemove }) => {
-    const { showError } = useError();
-    const { showSuccess } = useSuccess();
-    const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
-    const [loading, setLoading] = useState(true);
-
-    // Data States
-    const [album, setAlbum] = useState<any>(null);
-    const [tracks, setTracks] = useState<any[]>([]);
-    const [personalTags, setPersonalTags] = useState<string[]>([]);  // Current user's tags only
-    const [communityTags, setCommunityTags] = useState<string[]>([]); // All users' tags
-    const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
-    const [userRating, setUserRating] = useState<number | null>(null);
-    const [userName, setUserName] = useState('You');
-    const [comments, setComments] = useState<any[]>([]);
-    const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-
-    // Interaction States
-    const [newComment, setNewComment] = useState('');
-    const [commentLoading, setCommentLoading] = useState(false);
-    const [playlistModalTrack, setPlaylistModalTrack] = useState<{ name: string; trackIds: string[] } | null>(null);
-    const [isFavourite, setIsFavourite] = useState(false);
-
-    const filteredTracks = tracks.filter(track =>
-        (track.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        track.artists?.some((a: any) => (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-
-    useEffect(() => {
-        loadData();
-        checkIsFavourite(albumId, 'album').then(setIsFavourite);
-    }, [albumId]);
-
-    // ... loadData ...
-
-    const handleToggleFavourite = async () => {
-        const willBeFavourite = !isFavourite;
-        setIsFavourite(willBeFavourite);
-        try {
-            if (willBeFavourite) {
-                await addToFavourites(albumId, 'album');
-                showSuccess('Album added to favourites');
-            } else {
-                await removeFromFavourites(albumId, 'album');
-                showSuccess('Album removed from favourites');
-                if (onRemove) onRemove();
-            }
-        } catch (error) {
-            console.error('Error toggling favourite:', error);
-            setIsFavourite(!willBeFavourite); // Revert
-            showError('Failed to update favourite status');
-        }
-    };
-
-    const handleRemoveFromFavourites = async () => {
-        if (window.confirm('Remove this album from your favourites?')) {
-            try {
-                await removeFromFavourites(albumId, 'album');
-                setIsFavourite(false);
-                showSuccess('Album removed from favourites');
-                if (onRemove) {
-                    onRemove();
-                }
-                if (onClose) {
-                    onClose();
-                }
-            } catch (error) {
-                console.error('Error removing from favourites:', error);
-                showError('Failed to remove album');
-            }
-        }
-    };
-
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            const [albumData, tracksData, commentsData] = await Promise.all([
-                getAlbum(albumId),
-                getAlbumTracks(albumId),
-                getItemComments(albumId, 'album')
-            ]);
-
-            setAlbum(albumData);
-            setTracks(tracksData.items || tracksData || []);
-            setComments(commentsData);
-
-            // Fetch tags and ratings after albumData is available
-            const [personalTagsData, allTagsData, ratingRes, userRatingRes] = await Promise.all([
-                user ? getCurrentUserItemTags(albumId, 'album') : Promise.resolve([]),  // Personal tags only
-                getItemTags(albumId, 'album'),  // All community tags
-                getItemRating(albumId, 'album'),
-                user ? getUserItemRating(albumId, 'album') : Promise.resolve(null) // Only fetch user rating if user is logged in
-            ]);
-
-            setPersonalTags(personalTagsData.map(tag => tag.name));
-            setCommunityTags(allTagsData.map(tag => tag.name));
-            setRatingData(ratingRes);
-            setUserRating(userRatingRes);
-
-            // Fetch user profile for display name if user is logged in
-            if (user) {
-                const { data: profileData } = await supabase
-                    .from('profiles')
-                    .select('display_name, username')
-                    .eq('id', user.id)
-                    .single();
-
-                setUserName(profileData?.display_name || profileData?.username || 'You');
-            } else {
-                setUserName('You'); // Default if not logged in
-            }
-
-        } catch (error: any) {
-            console.error('Error loading album details:', error);
-
-            // Check if it's a 404 error (album not found)
-            if (error?.message?.includes('404') || error?.message?.includes('not found')) {
-                showError('This album is no longer available on Spotify');
-                // Close the modal after a short delay
-                setTimeout(() => {
-                    if (onClose) onClose();
-                }, 2000);
-            } else {
-                showError('Failed to load album details');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRatingUpdate = async () => {
-        const [ratingRes, userRatingRes] = await Promise.all([
-            getItemRating(albumId, 'album'),
-            getUserItemRating(albumId, 'album')
-        ]);
-        setRatingData(ratingRes);
-        setUserRating(userRatingRes);
-    };
-
-    const handleAddComment = async () => {
-        if (!newComment.trim()) return;
-        setCommentLoading(true);
-        try {
-            await addItemComment(albumId, 'album', newComment);
-            showSuccess('Comment posted');
-            setNewComment('');
-            const commentsData = await getItemComments(albumId, 'album');
-            setComments(commentsData);
-        } catch (error: any) {
-            console.error('Error adding comment:', error);
-            // Show user-friendly message for auth/permission errors
-            if (error?.message?.includes('row-level security') || error?.code === 'PGRST301') {
-                showError('Please sign in to post comments');
-            } else {
-                showError('Failed to post comment');
-            }
-        } finally {
-            setCommentLoading(false);
-        }
-    };
-
-
-
-    const handleImportToPlaylist = () => {
-        if (tracks.length > 0) {
-            const trackIds = tracks.map((t: any) => t.id).filter(Boolean);
-            setPlaylistModalTrack({
-                name: album?.name || 'Album',
-                trackIds: trackIds
-            });
-        }
-    };
-
-
-    const handleTrackClick = (track: any) => {
-        setSelectedTrack(track);
-    };
+        // Handlers
+        handleRatingUpdate,
+        handleAddComment,
+        handleToggleFavourite,
+        handleRemoveFromFavourites,
+        handleImportToPlaylist,
+    } = useExpandedAlbum(props);
 
     if (loading || !album) {
         return (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={props.onClose}>
                 <div className="flex items-center justify-center w-full max-w-5xl h-[500px] bg-[#1e1e1e] rounded-2xl shadow-2xl border border-white/5 mx-auto" onClick={(e) => e.stopPropagation()}>
                     <LoadingSpinner className="w-12 h-12 text-[white]" />
                 </div>
@@ -215,7 +55,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={props.onClose}>
             <div
                 className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative h-[515px]"
                 onClick={(e) => e.stopPropagation()}
@@ -223,7 +63,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                 {/* Close Button */}
                 <div className="absolute top-4 right-4 z-10">
                     <ExpandButton
-                        onClick={onClose}
+                        onClick={props.onClose}
                         className="rotate-180 hover:bg-white/10 rounded-full p-1"
                         strokeColor="white"
                         title="Collapse"
@@ -232,14 +72,14 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
 
                 {/* Left Column - Header */}
                 <AlbumHeader
-                    albumId={albumId}
+                    albumId={props.albumId}
                     album={album}
                     ratingData={ratingData}
                     userRating={userRating}
                     tags={personalTags}
                     onRatingUpdate={handleRatingUpdate}
                     userName={userName}
-                    onClose={onClose}
+                    onClose={props.onClose}
                 />
 
                 {/* Right Column */}
@@ -257,36 +97,28 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                             >
                                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
                             </button>
-                        ))
-                        }
+                        ))}
                     </div>
 
-                    {/* Search Bar */}
-                    {
-                        activeTab === 'tracks' && (
-                            <div className="mb-4 relative">
-                                <input
-                                    type="text"
-                                    placeholder="Search in album..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    draggable={false}
-                                    onDragStart={(e) => e.preventDefault()}
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    className="w-full bg-[#151515]/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[white]/40 transition-colors"
-                                />
-                                <svg
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div>
-                        )
-                    }
+                    {/* Search Bar for Tracks */}
+                    {activeTab === 'tracks' && (
+                        <div className="mb-4 relative">
+                            <input
+                                type="text"
+                                placeholder="Search in album..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                draggable={false}
+                                onDragStart={(e) => e.preventDefault()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                className="w-full bg-[#151515]/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[white]/40 transition-colors"
+                            />
+                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    )}
 
                     {/* Content Panel */}
                     <div className="flex-1 bg-[#151515]/80 rounded-xl border border-white/5 p-4 shadow-inner overflow-hidden flex flex-col backdrop-blur-sm">
@@ -294,13 +126,13 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                             <AlbumTracks
                                 tracks={filteredTracks}
                                 albumImage={album.images?.[0]?.url}
-                                onTrackClick={handleTrackClick}
+                                onTrackClick={(track) => setSelectedTrack(track)}
                             />
                         )}
 
                         {activeTab === 'review' && (
                             <AlbumReview
-                                albumId={albumId}
+                                albumId={props.albumId}
                                 album={album}
                                 userRating={userRating}
                                 tags={personalTags}
@@ -332,21 +164,19 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                             />
                         )}
                     </div>
-                </div >
-            </div >
+                </div>
+            </div>
 
-            {/* Track Review Modal (Expanded Card) */}
-            {
-                selectedTrack && (
-                    <TrackReviewModal
-                        track={{
-                            ...selectedTrack,
-                            album: selectedTrack.album || album // Ensure album context is passed for connection/images
-                        }}
-                        onClose={() => setSelectedTrack(null)}
-                    />
-                )
-            }
+            {/* Track Review Modal */}
+            {selectedTrack && (
+                <TrackReviewModal
+                    track={{
+                        ...selectedTrack,
+                        album: selectedTrack.album || album
+                    }}
+                    onClose={() => setSelectedTrack(null)}
+                />
+            )}
 
             {/* Playlist Selection Modal */}
             {playlistModalTrack && (
@@ -356,6 +186,6 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                     onClose={() => setPlaylistModalTrack(null)}
                 />
             )}
-        </div >
+        </div>
     );
 };

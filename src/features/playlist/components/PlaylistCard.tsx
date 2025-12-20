@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import type { Tables } from '../../../types/supabase';
 import FavButton from '../../../components/ui/FavButton';
 import ExpandButton from '../../../components/ui/ExpandButton';
 import CollapseVerticalButton from '../../../components/ui/CollapseVerticalButton';
-import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../favourites/services/favourites_services';
-import { getPlaylistPreviewTracks } from '../services/playlist_services';
 import { AddTrackModal } from './AddTrackModal';
 import { ExpandedPlaylistCard } from './expanded_card/ExpandedPlaylistCard';
-import { useDroppable, useDndMonitor } from '@dnd-kit/core';
-import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { DraggableTrackRow } from './DraggableTrackRow';
 import type { EnhancedPlaylist } from '../services/playlist_services';
+import { usePlaylistCard } from '../hooks/usePlaylistCard';
 
-// Note: Ensure your types.ts/Tables definition includes 'playlistimg_url'
 interface PlaylistCardProps {
     playlist: Tables<'playlists'>;
     onDelete?: () => void;
@@ -22,87 +19,28 @@ interface PlaylistCardProps {
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
 }
 
-const PlaylistCard: React.FC<PlaylistCardProps> = ({ 
-    playlist, onDelete, lastUpdated, initialIsLiked, onToggleFavorite, onPlaylistUpdate 
+const PlaylistCard: React.FC<PlaylistCardProps> = ({
+    playlist, onDelete, lastUpdated, initialIsLiked, onToggleFavorite, onPlaylistUpdate
 }) => {
-    const [isFavourite, setIsFavourite] = useState(initialIsLiked || false);
-    const [showAddTrackModal, setShowAddTrackModal] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [isInlineExpanded, setIsInlineExpanded] = useState(false);
-    const [imgError, setImgError] = useState(false);
-    const [title, setTitle] = useState(playlist.title);
-    const [color, setColor] = useState(playlist.color);
-    const [previewTracks, setPreviewTracks] = useState<any[]>([]);
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-    //REMOVED: const playlistImgUrl = ... (We use the DB column instead)
-
-    const { setNodeRef, isOver } = useDroppable({
-        id: playlist.id,
-        data: { playlist }
+    const {
+        isFavourite,
+        showAddTrackModal, setShowAddTrackModal,
+        isExpanded, setIsExpanded,
+        isInlineExpanded, setIsInlineExpanded,
+        imgError, setImgError,
+        title, setTitle,
+        color, setColor,
+        previewTracks,
+        setNodeRef,
+        isOver,
+        handleFavourite,
+        handleTrackAdded
+    } = usePlaylistCard({
+        playlist,
+        initialIsLiked,
+        onToggleFavorite,
+        lastUpdated
     });
-
-    // ... (Your DnD logic remains unchanged) ...
-    useDndMonitor({
-        onDragEnd(event) {
-            const { active, over } = event;
-            if (!over) return;
-            const activeId = active.id as string;
-            const overId = over.id as string;
-            if (activeId.startsWith(`${playlist.id}::`) && overId.startsWith(`${playlist.id}::`)) {
-                if (activeId !== overId) {
-                    setPreviewTracks((items) => {
-                        const oldIndex = items.findIndex((t) => `${playlist.id}::${t.id}` === activeId);
-                        const newIndex = items.findIndex((t) => `${playlist.id}::${t.id}` === overId);
-                        return arrayMove(items, oldIndex, newIndex);
-                    });
-                }
-            }
-        },
-    });
-
-    // ... (Your useEffects remain unchanged) ...
-    useEffect(() => {
-        if (initialIsLiked !== undefined) {
-            setIsFavourite(initialIsLiked);
-        } else {
-            checkIsFavourite(playlist.id, 'playlist').then(setIsFavourite);
-        }
-    }, [playlist.id, initialIsLiked]);
-
-    useEffect(() => {
-        setTitle(playlist.title);
-        setColor(playlist.color);
-    }, [playlist.title, playlist.color]);
-
-    useEffect(() => {
-        const delay = Math.random() * 2000;
-        const timeoutId = setTimeout(async () => {
-            try {
-                const tracks = await getPlaylistPreviewTracks(playlist.id, 20);
-                setPreviewTracks(tracks);
-            } catch (error) {
-                console.error('Error loading preview tracks:', error);
-            }
-        }, delay);
-        return () => clearTimeout(timeoutId);
-    }, [playlist.id, lastUpdated, refreshTrigger]);
-
-    const handleFavourite = async () => {
-        // ... (Your favorite logic remains unchanged) ...
-        const willBeFavourite = !isFavourite;
-        setIsFavourite(willBeFavourite);
-        if (onToggleFavorite) onToggleFavorite(playlist.id, willBeFavourite);
-        try {
-            if (!willBeFavourite) await removeFromFavourites(playlist.id, "playlist");
-            else await addToFavourites(playlist.id, "playlist");
-        } catch (error) {
-            console.error('Error toggling favourite:', error);
-            setIsFavourite(!willBeFavourite);
-            alert('Failed to update favorite status.');
-            if (onToggleFavorite) onToggleFavorite(playlist.id, !willBeFavourite);
-        }
-    };
 
     return (
         <>
@@ -151,14 +89,14 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                         )}
                     </div>
 
-                    {/* Track Preview Area (Unchanged) */}
+                    {/* Track Preview Area */}
                     <div className="flex-1 min-h-0 overflow-hidden relative flex flex-col">
                         {isInlineExpanded ? (
-                             // ... Expanded List (Your code remains the same) ...
+                            // ... Expanded List
                             <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
                                 {previewTracks.length > 0 ? (
-                                    <SortableContext 
-                                        items={previewTracks.map(t => `${playlist.id}::${t.id}`)} 
+                                    <SortableContext
+                                        items={previewTracks.map(t => `${playlist.id}::${t.id}`)}
                                         strategy={verticalListSortingStrategy}
                                     >
                                         {previewTracks.map((track) => (
@@ -190,7 +128,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                                 )}
                             </div>
                         ) : (
-                            // ... Collapsed View (Your code remains the same) ...
+                            // ... Collapsed View
                             <div className="pt-1">
                                 {previewTracks.length > 0 ? (
                                     <DraggableTrackRow track={previewTracks[0]} playlistId={playlist.id}>
@@ -222,7 +160,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                     </div>
                 </div>
 
-                {/* Footer (Unchanged) */}
+                {/* Footer */}
                 <div className="mt-4 pt-2 border-t border-white/5 flex flex-col items-center gap-2 shrink-0">
                     {isInlineExpanded ? (
                         <>
@@ -261,7 +199,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                     playlistId={playlist.id}
                     playlistName={title}
                     onClose={() => setShowAddTrackModal(false)}
-                    onTrackAdded={() => setRefreshTrigger(prev => prev + 1)}
+                    onTrackAdded={handleTrackAdded}
                 />
             )}
 

@@ -1,201 +1,31 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom";
 import TextInput from "../../../components/ui/TextInput";
 import DefUserAvatar from "../../../components/ui/DefUserAvatar";
 import EditIcon from "../../../components/ui/EditIcon";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import ImageOptionsModal from "../../../components/ui/ImageOptionsModal";
-import { AuthService } from "../../auth/services/auth_services";
-import { useLogin } from "../../auth/components/LoginProvider";
-import { useError } from "../../../context/ErrorContext";
-import { useSuccess } from "../../../context/SuccessContext";
+import { useUserAccount } from "../hooks/useUserAccount";
 
 const UserAccount = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { showError } = useError();
-    const { showSuccess } = useSuccess();
-    const { profile, setProfile } = useLogin();
-    const [userId, setUserId] = useState<string | null>(null);
-    const [username, setUsername] = useState("");
-    const [displayName, setDisplayName] = useState("");
-    const [bio, setBio] = useState("");
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [initializing, setInitializing] = useState(true);
-    const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [bioPlaceholder, setBioPlaceholder] = useState("Tell us about yourself...");
-    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Random Bio Placeholder on Mount
-    useEffect(() => {
-        const placeholders = [
-            "Tell us about yourself...",
-            "What's an interesting fact about you?",
-            "Quite lonely here..."
-        ];
-        const randomIndex = Math.floor(Math.random() * placeholders.length);
-        setBioPlaceholder(placeholders[randomIndex]);
-    }, []);
-
-    const [initialState, setInitialState] = useState({
-        displayName: "",
-        bio: "",
-        avatarUrl: null as string | null,
-    });
-
-    // Fetch initial data
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const session = await AuthService.getSession();
-                if (!session) {
-                    navigate("/");
-                    return;
-                }
-
-                setUserId(session.user.id);
-                setUsername(session.user.user_metadata.username || "");
-
-                const profile = await AuthService.getProfile(session.user.id);
-                if (profile) {
-                    const initialData = {
-                        displayName: profile.display_name || "",
-                        bio: profile.bio || "",
-                        avatarUrl: profile.avatar_url,
-                    };
-                    setDisplayName(initialData.displayName);
-                    setBio(initialData.bio);
-                    setAvatarUrl(initialData.avatarUrl);
-                    setInitialState(initialData);
-                }
-            } catch (error) {
-                console.error("Error loading profile:", error);
-            } finally {
-                setInitializing(false);
-            }
-        };
-        loadData();
-    }, [navigate]);
-
-    // Check for Spotify auth errors
-    useEffect(() => {
-        // Check query params
-        const params = new URLSearchParams(location.search);
-        const error = params.get('error');
-
-        // Check hash params (Supabase often returns errors in hash)
-        const hashParams = new URLSearchParams(location.hash.substring(1));
-        const hashError = hashParams.get('error');
-
-        if (error === 'access_denied' || hashError === 'access_denied') {
-            showError("Spotify authorization was denied.");
-            // Clear the error from URL by replacing current entry
-            navigate('/account', { replace: true });
-        }
-    }, [location, navigate, showError]);
-
-    // Check for changes
-    const hasChanges =
-        displayName !== initialState.displayName ||
-        bio !== initialState.bio ||
-        avatarUrl !== initialState.avatarUrl;
-
-    // Removed early return for initializing to prevent animation blink
-
-    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0 || !userId) return;
-
-        const file = e.target.files[0];
-        try {
-            // Delete old avatar if exists
-            if (avatarUrl) {
-                await AuthService.deleteAvatar(avatarUrl);
-            }
-
-            const url = await AuthService.uploadAvatar(file, userId);
-            setAvatarUrl(url);
-        } catch (error) {
-            console.error("Avatar upload failed:", error);
-            showError("Failed to upload avatar.");
-        }
-    };
-
-    const handleAvatarRemove = async () => {
-        if (!avatarUrl) return;
-        try {
-            await AuthService.deleteAvatar(avatarUrl);
-            setAvatarUrl(null);
-        } catch (error) {
-            console.error("Failed to delete avatar:", error);
-            showError("Failed to delete avatar.");
-        }
-    };
-
-    const handleUpdateUsername = async () => {
-        if (!username.trim()) {
-            alert("Username cannot be empty");
-            return;
-        }
-        try {
-            await AuthService.updateUsername(username);
-            setIsEditingUsername(false);
-        } catch (error: any) {
-            console.error("Failed to update username:", error);
-            alert(error.message || "Failed to update username");
-        }
-    };
-
-
-
-    const handleSave = async () => {
-        if (!userId || !hasChanges) return;
-        setLoading(true);
-
-        // Backup current profile
-        const backupProfile = { ...profile };
-
-        try {
-            // 1. Optimistic Update
-            const optimisticProfile = {
-                ...profile,
-                display_name: displayName,
-                bio: bio,
-                avatar_url: avatarUrl,
-                updated_at: new Date().toISOString(),
-            };
-            setProfile(optimisticProfile);
-
-            // 2. API Call
-            await AuthService.updateProfile(userId, {
-                display_name: displayName,
-                bio: bio,
-                avatar_url: avatarUrl,
-                updated_at: new Date().toISOString(),
-            });
-
-            // Update initial state to new saved state
-            setInitialState({
-                displayName,
-                bio,
-                avatarUrl,
-            });
-
-            // Show success feedback (toast or alert)
-            showSuccess("Profile updated successfully!");
-            navigate(-1);
-        } catch (error: any) {
-            console.error("Update failed:", error);
-            alert(error.message || "Failed to update profile.");
-
-            // Rollback on error
-            setProfile(backupProfile);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const {
+        username, setUsername,
+        displayName, setDisplayName,
+        bio, setBio,
+        avatarUrl,
+        loading,
+        initializing,
+        isEditingUsername, setIsEditingUsername,
+        bioPlaceholder,
+        isAvatarModalOpen, setIsAvatarModalOpen,
+        hasChanges,
+        fileInputRef,
+        handleAvatarUpload,
+        handleAvatarRemove,
+        handleUpdateUsername,
+        handleSave,
+        navigate,
+    } = useUserAccount();
 
     return (
         <motion.div

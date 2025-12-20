@@ -1,204 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom";
 import TextInput from "../../../components/ui/TextInput";
 import DefUserAvatar from "../../../components/ui/DefUserAvatar";
 import EditIcon from "../../../components/ui/EditIcon";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
-import { AuthService } from "../../auth/services/auth_services";
-import { useLogin } from "../../auth/components/LoginProvider";
-import { useSuccess } from "../../../context/SuccessContext";
-import { useError } from "../../../context/ErrorContext";
+import { useSetUpUserProfile } from "../hooks/useSetUpUserProfile";
 
 const SetUpUserProfile = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { showSuccess } = useSuccess();
-    const { showError } = useError();
-    const { profile, setProfile } = useLogin();
-    const [userId, setUserId] = useState<string | null>(null);
-    const [username, setUsername] = useState("");
-    const [displayName, setDisplayName] = useState("");
-    const [bio, setBio] = useState("");
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [initializing, setInitializing] = useState(true);
-    const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [bioPlaceholder, setBioPlaceholder] = useState("Tell us about yourself...");
-
-    // Check for OAuth errors in URL (e.g., Spotify rejecting non-developer users)
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const error = params.get('error');
-        const errorDescription = params.get('error_description');
-
-        if (error) {
-            const message = errorDescription
-                ? decodeURIComponent(errorDescription.replace(/\+/g, ' '))
-                : 'Spotify login failed. You may need to be added as an authorized developer.';
-            showError(message);
-            navigate('/', { replace: true }); // Redirect to home without error params in history
-        }
-    }, [location.search, showError, navigate]);
-
-    // Random Bio Placeholder on Mount
-    useEffect(() => {
-        const placeholders = [
-            "Tell us about yourself...",
-            "What's an interesting fact about you?",
-            "Quite lonely here..."
-        ];
-        const randomIndex = Math.floor(Math.random() * placeholders.length);
-        setBioPlaceholder(placeholders[randomIndex]);
-    }, []);
-
-    // Fetch initial data
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const session = await AuthService.getSession();
-                if (!session) {
-                    navigate("/"); // Redirect if not logged in
-                    return;
-                }
-
-                setUserId(session.user.id);
-                // Username is stored in user metadata
-                setUsername(session.user.user_metadata.username || "");
-
-                // Fetch existing profile data if any
-                const profile = await AuthService.getProfile(session.user.id);
-
-                // If profile exists and setup is completed, redirect to main app
-                // We check for 'setup_completed' flag (boolean)
-                if (profile && profile.setup_completed) {
-                    navigate("/library/playlists");
-                    return;
-                }
-
-                if (profile) {
-                    // Use profile data, but fallback to metadata if missing
-                    const metadata = session.user.user_metadata;
-
-                    setDisplayName(profile.display_name || metadata.full_name || metadata.name || metadata.display_name || "");
-                    setBio(profile.bio || "");
-                    setAvatarUrl(profile.avatar_url || metadata.avatar_url || metadata.picture || null);
-
-                    // Also ensure username is set if not in profile (though it should be in session metadata)
-                    if (!username && metadata) {
-                        const spotifyUsername = metadata.preferred_username || metadata.user_name || metadata.name || "";
-                        setUsername(spotifyUsername.replace(/\s+/g, '').toLowerCase());
-                    }
-                } else {
-                    // Pre-fill from Spotify metadata if no profile exists
-                    const metadata = session.user.user_metadata;
-                    if (metadata) {
-                        if (!username) {
-                            // Try to get a username from Spotify data
-                            const spotifyUsername = metadata.preferred_username || metadata.user_name || metadata.name || "";
-                            // Sanitize: remove spaces/special chars if needed, or just use as is
-                            setUsername(spotifyUsername.replace(/\s+/g, '').toLowerCase());
-                        }
-                        if (!displayName) {
-                            // Spotify often uses 'full_name' or 'name'
-                            setDisplayName(metadata.full_name || metadata.name || metadata.display_name || "");
-                        }
-                        if (!avatarUrl) {
-                            setAvatarUrl(metadata.avatar_url || metadata.picture || null);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("Error loading profile:", error);
-            } finally {
-                setInitializing(false);
-            }
-        };
-        loadData();
-    }, [navigate]);
-
-    // Removed early return for initializing to prevent animation blink
-    // Instead, we will conditionally render the content or a spinner inside the motion.div
-
-    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0 || !userId) return;
-
-        const file = e.target.files[0];
-        try {
-            // Delete old avatar if exists
-            if (avatarUrl) {
-                await AuthService.deleteAvatar(avatarUrl);
-            }
-
-            const url = await AuthService.uploadAvatar(file, userId);
-            setAvatarUrl(url);
-        } catch (error) {
-            console.error("Avatar upload failed:", error);
-            alert("Failed to upload avatar.");
-        }
-    };
-
-    const handleUpdateUsername = async () => {
-        if (!username.trim()) {
-            alert("Username cannot be empty");
-            return;
-        }
-        try {
-            await AuthService.updateUsername(username);
-            setIsEditingUsername(false);
-        } catch (error: any) {
-            console.error("Failed to update username:", error);
-            alert(error.message || "Failed to update username");
-        }
-    };
-
-    const handleSave = async () => {
-        if (!userId) return;
-        setLoading(true);
-
-        // Backup current profile
-        const backupProfile = { ...profile };
-
-        try {
-            // 1. Optimistic Update
-            const optimisticProfile = {
-                ...profile,
-                display_name: displayName,
-                bio: bio,
-                avatar_url: avatarUrl,
-                updated_at: new Date().toISOString(),
-            };
-            setProfile(optimisticProfile);
-
-            // 2. API Call (Update Profile)
-            await AuthService.updateProfile(userId, {
-                display_name: displayName,
-                bio: bio,
-                avatar_url: avatarUrl,
-                setup_completed: true, // Mark setup as done
-                updated_at: new Date().toISOString(),
-            });
-
-            // 3. Update Username & Display Name in Auth Metadata (so trigger syncs correctly)
-            if (username.trim()) {
-                await AuthService.updateUsername(username, displayName);
-            }
-
-
-
-            // 4. Navigate to main app
-            showSuccess("Profile setup completed!");
-            navigate("/library/playlists");
-        } catch (error: any) {
-            console.error("Setup failed:", error);
-            alert(error.message || "Failed to save profile.");
-
-            // Rollback on error
-            setProfile(backupProfile);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const {
+        username, setUsername,
+        displayName, setDisplayName,
+        bio, setBio,
+        avatarUrl,
+        loading,
+        initializing,
+        isEditingUsername, setIsEditingUsername,
+        bioPlaceholder,
+        handleAvatarUpload,
+        handleUpdateUsername,
+        handleSave,
+        navigate
+    } = useSetUpUserProfile();
 
     return (
         <motion.div
@@ -309,11 +131,8 @@ const SetUpUserProfile = () => {
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
                             />
-
-
                         </div>
 
-                        {/* Submit button */}
                         {/* Submit button */}
                         <button
                             onClick={handleSave}
@@ -326,7 +145,6 @@ const SetUpUserProfile = () => {
                         >
                             {loading ? "Saving..." : "Complete Setup"}
                         </button>
-
                     </>
                 )}
             </motion.div>

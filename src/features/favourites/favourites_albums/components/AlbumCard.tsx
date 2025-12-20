@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import FavButton from '../../../../components/ui/FavButton';
 import ExpandButton from '../../../../components/ui/ExpandButton';
 import CollapseVerticalButton from '../../../../components/ui/CollapseVerticalButton';
-import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../services/favourites_services';
-import { getAlbum, getAlbumTracks } from '../../../spotify/services/spotify_services';
 import { ExpandedAlbumCard } from './expanded_card/ExpandedAlbumCard';
+import { useAlbumCard } from '../hooks/useAlbumCard';
 
 interface AlbumCardProps {
     albumId: string;
@@ -13,52 +12,15 @@ interface AlbumCardProps {
 }
 
 const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove, searchQuery = '' }) => {
-    const [isFavourite, setIsFavourite] = useState(true); // Already in favorites
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [isInlineExpanded, setIsInlineExpanded] = useState(false);
-    const [album, setAlbum] = useState<any>(null);
-    const [previewTracks, setPreviewTracks] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        checkIsFavourite(albumId, 'album').then(setIsFavourite);
-    }, [albumId]);
-
-    useEffect(() => {
-        const loadAlbumData = async () => {
-            try {
-                const [albumData, tracksData] = await Promise.all([
-                    getAlbum(albumId),
-                    getAlbumTracks(albumId)
-                ]);
-                setAlbum(albumData);
-                setPreviewTracks(tracksData.items || tracksData || []);
-            } catch (error) {
-                console.error('Error loading album:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadAlbumData();
-    }, [albumId]);
-
-    const handleFavourite = async () => {
-        const willBeFavourite = !isFavourite;
-        setIsFavourite(willBeFavourite);
-
-        try {
-            if (!willBeFavourite) {
-                await removeFromFavourites(albumId, "album");
-                onRemove?.();
-            } else {
-                await addToFavourites(albumId, "album");
-            }
-        } catch (error) {
-            console.error('Error toggling favourite:', error);
-            setIsFavourite(!willBeFavourite);
-            alert('Failed to update favorite status.');
-        }
-    };
+    const {
+        isFavourite,
+        isExpanded, setIsExpanded,
+        isInlineExpanded, setIsInlineExpanded,
+        album,
+        previewTracks,
+        loading,
+        handleFavourite
+    } = useAlbumCard({ albumId, onRemove });
 
     if (loading || !album) {
         return (
