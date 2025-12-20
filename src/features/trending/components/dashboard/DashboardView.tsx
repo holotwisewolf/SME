@@ -23,6 +23,7 @@ interface DashboardViewProps {
     topThree: TrendingItem[];
     remaining: TrendingItem[];
     onItemClick: (item: TrendingItem) => void;
+    refreshKey?: number;
 }
 
 const DashboardView: React.FC<DashboardViewProps> = ({
@@ -35,6 +36,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     topThree,
     remaining,
     onItemClick,
+    refreshKey = 0,
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const allTrendingRef = useRef<HTMLHeadingElement>(null);
@@ -107,7 +109,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* Right Sidebar - Discovery */}
-            <DiscoverySidebar filters={filters} onFiltersChange={onFiltersChange} />
+            <DiscoverySidebar filters={filters} onFiltersChange={onFiltersChange} refreshKey={refreshKey} />
         </div>
     );
 };

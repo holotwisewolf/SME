@@ -17,7 +17,8 @@ interface UseTrendingDataReturn {
 export function useTrendingData(
     activeTab: TabType,
     filters: TrendingFilters,
-    limit: number = 20
+    limit: number = 20,
+    refreshKey: number = 0
 ): UseTrendingDataReturn {
     const [items, setItems] = useState<TrendingItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -48,10 +49,10 @@ export function useTrendingData(
         }
     };
 
-    // Fetch data when tab or filters change
+    // Fetch data when tab, filters, or refreshKey change
     useEffect(() => {
         fetchTrendingItems();
-    }, [activeTab, filters]);
+    }, [activeTab, filters, refreshKey]);
 
     // Split items into top 3 and rest
     const topThree = items.slice(0, 3);

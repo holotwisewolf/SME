@@ -10,9 +10,10 @@ import type { TrendingFilters } from '../types/trending';
 interface DiscoverySidebarProps {
     filters?: TrendingFilters;
     onFiltersChange?: (filters: TrendingFilters) => void;
+    refreshKey?: number;
 }
 
-const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersChange }) => {
+const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersChange, refreshKey = 0 }) => {
     const [trendingTags, setTrendingTags] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalItems: 0, totalMembers: 0, currentActiveUsers: 0, thisWeek: 0 });
@@ -48,7 +49,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                 clearTimeout(fetchDebounceRef.current);
             }
         };
-    }, [debouncedFetch]);
+    }, [debouncedFetch, refreshKey]); // Also refetch when refreshKey changes
 
     const fetchSidebarData = async () => {
         setLoading(true);

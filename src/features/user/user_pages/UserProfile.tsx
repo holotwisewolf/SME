@@ -54,6 +54,7 @@ const UserProfile = () => {
     // Refs for dropdown click-outside detection
     const favDropdownRef = useRef<HTMLDivElement>(null);
     const ratingDropdownRef = useRef<HTMLDivElement>(null);
+    const ratingInfoRef = useRef<HTMLDivElement>(null);
     const currentUserRef = useRef(currentUser); // Ref to avoid re-creating loadProfileData
 
     // Keep ref up to date
@@ -194,6 +195,9 @@ const UserProfile = () => {
             if (ratingDropdownRef.current && !ratingDropdownRef.current.contains(event.target as Node)) {
                 setIsDropdownOpen(false);
             }
+            if (ratingInfoRef.current && !ratingInfoRef.current.contains(event.target as Node)) {
+                setShowRatingInfo(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -245,7 +249,7 @@ const UserProfile = () => {
                         {!isLocked && (
                             <div className="flex items-center justify-center gap-10 py-3">
                                 <div className="text-center"><p className="text-xl font-bold text-white">{playlists.length}</p><p className="text-[10px] text-white/40 uppercase tracking-widest">Playlists</p></div>
-                                <div className="text-center cursor-pointer relative" onClick={() => setShowRatingInfo(!showRatingInfo)}>
+                                <div className="text-center cursor-pointer relative" ref={ratingInfoRef} onClick={() => setShowRatingInfo(!showRatingInfo)}>
                                     <div className="flex items-center justify-center gap-1.5"><p className="text-xl font-bold text-white">{Number(ratingStats.average || 0).toFixed(1)}</p><Star size={14} className="fill-[#FFD1D1] text-[#FFD1D1]" /></div>
                                     <p className="text-[10px] text-white/40 uppercase tracking-widest">Avg Rating</p>
                                     <AnimatePresence>{showRatingInfo && (
