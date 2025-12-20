@@ -231,7 +231,7 @@ const UserProfile = () => {
     if (!profile) return <div className="p-8 text-white bg-[#696969]">User not found.</div>;
 
     return (
-        <div className="h-full overflow-y-auto custom-scrollbar bg-[#696969]">
+        <div className="h-full overflow-y-auto custom-scrollbar bg-[#696969] font-sans">
             {/* Header Section */}
             <div className="pt-12 pb-6 px-6">
                 <div className="max-w-4xl mx-auto flex flex-col items-center">
