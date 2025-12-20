@@ -195,7 +195,12 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
             setComments(updatedComments);
         } catch (error: any) {
             console.error('Error adding comment:', error);
-            showError(error.message || 'Failed to add comment. Please try again.');
+            // Show user-friendly message for auth/permission errors
+            if (error?.message?.includes('row-level security') || error?.code === 'PGRST301') {
+                showError('Please sign in to post comments');
+            } else {
+                showError(error.message || 'Failed to add comment. Please try again.');
+            }
         } finally {
             setCommentLoading(false);
         }

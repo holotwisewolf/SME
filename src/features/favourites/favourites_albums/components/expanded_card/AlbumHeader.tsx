@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { updateItemRating, deleteItemRating } from '../../../services/item_services';
 import { addItemTag, removeItemTag } from '../../../services/item_services';
 import { MarqueeText } from '../../../../../components/ui/MarqueeText';
+import { useError } from '../../../../../context/ErrorContext';
 
 interface AlbumHeaderProps {
     albumId: string;
@@ -26,6 +27,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
     onClose
 }) => {
     const navigate = useNavigate();
+    const { showError } = useError();
     const [tags, setTags] = useState<string[]>(initialTags);
     const [newTag, setNewTag] = useState('');
 
@@ -44,8 +46,14 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
                 await updateItemRating(albumId, 'album', rating);
             }
             onRatingUpdate();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error updating rating:', error);
+            // Show user-friendly message for auth/permission errors
+            if (error?.message?.includes('row-level security') || error?.code === 'PGRST301') {
+                showError('Please sign in to rate this album');
+            } else {
+                showError('Failed to update rating');
+            }
         }
     };
 

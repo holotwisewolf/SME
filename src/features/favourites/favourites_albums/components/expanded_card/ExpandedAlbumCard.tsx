@@ -171,9 +171,14 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
             setNewComment('');
             const commentsData = await getItemComments(albumId, 'album');
             setComments(commentsData);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error adding comment:', error);
-            showError('Failed to post comment');
+            // Show user-friendly message for auth/permission errors
+            if (error?.message?.includes('row-level security') || error?.code === 'PGRST301') {
+                showError('Please sign in to post comments');
+            } else {
+                showError('Failed to post comment');
+            }
         } finally {
             setCommentLoading(false);
         }

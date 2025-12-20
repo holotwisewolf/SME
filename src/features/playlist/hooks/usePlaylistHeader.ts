@@ -108,8 +108,14 @@ export function usePlaylistHeader({
                 await updatePlaylistRating(playlistId, rating);
             }
             onRatingUpdate();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error updating rating:', error);
+            // Show user-friendly message for auth/permission errors
+            if (error?.message?.includes('row-level security') || error?.code === 'PGRST301') {
+                showError('Please sign in to rate this playlist');
+            } else {
+                showError('Failed to update rating');
+            }
         }
     };
 

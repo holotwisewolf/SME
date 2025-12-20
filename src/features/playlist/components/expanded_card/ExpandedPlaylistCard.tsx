@@ -253,8 +253,14 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     commented_at: new Date().toISOString()
                 });
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error adding comment:', error);
+            // Show user-friendly message for auth/permission errors
+            if (error?.message?.includes('row-level security') || error?.code === 'PGRST301') {
+                showError('Please sign in to post comments');
+            } else {
+                showError('Failed to post comment');
+            }
         } finally {
             setCommentLoading(false);
         }
