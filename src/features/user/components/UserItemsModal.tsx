@@ -17,22 +17,22 @@ interface UserItemsModalProps {
 }
 
 const UserItemsModal: React.FC<UserItemsModalProps> = ({ title, items, onClose, onItemClick }) => {
-    
+
     /**
      * Sub-component to handle logic for item covers
      * Priority: Image URL > Custom Color > Default Icon
      */
     const ThumbnailWrapper = ({ item }: { item: any }) => {
         const [imgError, setImgError] = useState(false);
-        
+
         return (
             <div className="aspect-square bg-[#2a2a2a] rounded-xl overflow-hidden relative mb-3 shadow-lg border border-white/5 transition-all group-hover:border-[#FFD1D1]/30">
                 {/* Render image if URL exists and has not failed loading */}
                 {item.imageUrl && !imgError ? (
-                    <img 
-                        src={item.imageUrl} 
-                        className="w-full h-full object-cover" 
-                        onError={() => setImgError(true)} 
+                    <img
+                        src={item.imageUrl}
+                        className="w-full h-full object-cover"
+                        onError={() => setImgError(true)}
                     />
                 ) : item.color ? (
                     /* Fallback to custom playlist color if no image */
@@ -40,14 +40,14 @@ const UserItemsModal: React.FC<UserItemsModalProps> = ({ title, items, onClose, 
                 ) : (
                     /* Final fallback to default music icon */
                     <div className="w-full h-full flex items-center justify-center text-white/5">
-                        <Music size={32}/>
+                        <Music size={32} />
                     </div>
                 )}
 
                 {/* Hover overlay with play button icon */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                     <div className="w-10 h-10 bg-[#FFD1D1] rounded-full flex items-center justify-center text-black shadow-lg scale-90 group-hover:scale-100 transition-transform">
-                        <Play fill="currentColor" size={20}/>
+                        <Play fill="currentColor" size={20} />
                     </div>
                 </div>
 
@@ -63,20 +63,20 @@ const UserItemsModal: React.FC<UserItemsModalProps> = ({ title, items, onClose, 
     };
 
     return (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[50] flex items-center justify-center p-4">
             {/* Backdrop with fade-in animation */}
-            <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                exit={{ opacity: 0 }} 
-                onClick={onClose} 
-                className="absolute inset-0 bg-black/85 backdrop-blur-sm" 
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-black/85 backdrop-blur-sm"
             />
 
             {/* Modal container with scale-up and fade-in animation */}
-            <motion.div 
-                initial={{ scale: 0.95, opacity: 0 }} 
-                animate={{ scale: 1, opacity: 1 }} 
+            <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 className="relative w-full max-w-5xl bg-[#1f1f1f] rounded-2xl shadow-2xl flex flex-col max-h-[85vh] border border-white/5"
             >
                 {/* Modal Header */}
@@ -91,14 +91,14 @@ const UserItemsModal: React.FC<UserItemsModalProps> = ({ title, items, onClose, 
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-[#121212]">
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
                         {items.map((item) => (
-                            <div 
-                                key={item.id} 
-                                onClick={() => onItemClick?.(item)} 
+                            <div
+                                key={item.id}
+                                onClick={() => onItemClick?.(item)}
                                 className="group cursor-pointer"
                             >
                                 {/* Thumbnail with image/color/icon logic */}
                                 <ThumbnailWrapper item={item} />
-                                
+
                                 {/* Item Metadata */}
                                 <h3 className="text-white text-xs font-bold truncate group-hover:text-[#FFD1D1] transition-colors">
                                     {item.name}

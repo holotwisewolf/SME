@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLogin } from "../../auth/components/LoginProvider";
@@ -50,6 +50,16 @@ const UserProfile = () => {
     const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
     const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
     const [viewAllModal, setViewAllModal] = useState<{ title: string, items: any[] } | null>(null);
+
+    // Refs for dropdown click-outside detection
+    const favDropdownRef = useRef<HTMLDivElement>(null);
+    const ratingDropdownRef = useRef<HTMLDivElement>(null);
+    const currentUserRef = useRef(currentUser); // Ref to avoid re-creating loadProfileData
+
+    // Keep ref up to date
+    useEffect(() => {
+        currentUserRef.current = currentUser;
+    }, [currentUser]);
 
     const isOwnProfile = currentUser?.id === userId;
 
@@ -116,10 +126,10 @@ const UserProfile = () => {
         try {
             const profileData = await getPublicProfile(userId);
             setProfile(profileData);
-            
-            if (profileData.is_private_profile && currentUser?.id !== userId) { 
-                setLoading(false); 
-                return; 
+
+            if (profileData.is_private_profile && currentUserRef.current?.id !== userId) {
+                setLoading(false);
+                return;
             }
 
             const [ratingRes, pls, favs, rates, comms] = await Promise.all([
@@ -156,24 +166,38 @@ const UserProfile = () => {
 
             // Handle potential string return from average rating service
             const avgVal = typeof ratingRes === 'string' ? parseFloat(ratingRes) : (ratingRes as any).average || 0;
-            
-            setRatingStats({ 
-                average: avgVal, 
-                count: comms.count || enrichedRates.length 
+
+            setRatingStats({
+                average: avgVal,
+                count: comms.count || enrichedRates.length
             });
             setCommentCount(comms.count || 0);
             setPlaylists(enrichedPls);
             setEnrichedFavorites(enrichedFavs);
             setEnrichedRatings(enrichedRates);
             setRecentComments(formattedComments);
-        } catch (e) { 
-            console.error(e); 
-        } finally { 
-            setLoading(false); 
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
         }
-    }, [userId, currentUser]);
+    }, [userId]); // Only re-create when userId changes, not currentUser
 
     useEffect(() => { if (userId) loadProfileData(); }, [loadProfileData, userId]);
+
+    // Close dropdowns on outside click
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (favDropdownRef.current && !favDropdownRef.current.contains(event.target as Node)) {
+                setIsFavDropdownOpen(false);
+            }
+            if (ratingDropdownRef.current && !ratingDropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const isLocked = profile?.is_private_profile && !isOwnProfile;
 
@@ -251,7 +275,7 @@ const UserProfile = () => {
                             <div className="w-12 h-1.5 bg-[#FFD1D1] mb-8 rounded-full shadow-[0_0_15px_rgba(255,209,209,0.3)]" />
                             <p className="text-white/40 text-center font-bold text-sm leading-relaxed uppercase tracking-widest max-w-[280px]">
                                 This user has set their profile to private. <br />
-                                
+
                             </p>
                         </div>
                     </motion.div>
@@ -295,7 +319,7 @@ const UserProfile = () => {
                                     <div className="flex justify-between items-end mb-4 px-1">
                                         <div className="flex items-center gap-8 text-white">
                                             <h2 className="text-xl font-bold uppercase tracking-tight">Favorites</h2>
-                                            <div className="relative">
+                                            <div className="relative" ref={favDropdownRef}>
                                                 <button onClick={() => setIsFavDropdownOpen(!isFavDropdownOpen)} className="bg-black/40 border border-white/5 rounded-full px-5 py-2 text-[11px] font-bold text-white/80 hover:bg-black/60 transition-all flex items-center gap-4 uppercase shadow-lg min-w-[140px]">
                                                     <span className="flex-1 text-left">{favFilter === 'all' ? 'All Types' : favFilter === 'playlist' ? 'Playlists' : favFilter + 's'}</span>
                                                     <ChevronDown size={14} className={`ml-auto transition-transform ${isFavDropdownOpen ? 'rotate-180' : ''}`} />
@@ -332,7 +356,7 @@ const UserProfile = () => {
                                     <div className="flex justify-between items-end mb-4 px-1 text-white">
                                         <div className="flex items-center gap-8">
                                             <h2 className="text-xl font-bold uppercase tracking-tight">Ratings</h2>
-                                            <div className="relative">
+                                            <div className="relative" ref={ratingDropdownRef}>
                                                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="bg-black/40 border border-white/5 rounded-full px-5 py-2 text-[11px] font-bold text-white/80 hover:bg-black/60 transition-all flex items-center gap-4 uppercase shadow-lg min-w-[140px]">
                                                     <span className="flex-1 text-left">{starFilter === 0 ? 'All Ratings' : starFilter}</span>
                                                     <ChevronDown size={14} className={`ml-auto transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -386,7 +410,7 @@ const UserProfile = () => {
 
             <AnimatePresence>
                 {showCommentsModal && <UserCommentsModal userId={userId!} onClose={() => setShowCommentsModal(false)} />}
-                {viewAllModal && <UserItemsModal title={viewAllModal.title} items={viewAllModal.items} onClose={() => setViewAllModal(null)} onItemClick={(i: any) => { handleItemClick(i); setViewAllModal(null); }} />}
+                {viewAllModal && <UserItemsModal title={viewAllModal.title} items={viewAllModal.items} onClose={() => setViewAllModal(null)} onItemClick={(i: any) => { handleItemClick(i); }} />}
             </AnimatePresence>
         </div>
     );

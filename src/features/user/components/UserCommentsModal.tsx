@@ -17,7 +17,7 @@ const UserCommentsModal: React.FC<UserCommentsModalProps> = ({ userId, onClose }
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
-    
+
     // Configured pagination limit to 5 per request
     const LIMIT = 5;
 
@@ -26,7 +26,7 @@ const UserCommentsModal: React.FC<UserCommentsModalProps> = ({ userId, onClose }
         const trackIds = [...new Set(items.filter(i => i.item_type === 'track').map(i => i.item_id))];
         const albumIds = [...new Set(items.filter(i => i.item_type === 'album').map(i => i.item_id))];
         const playlistIds = [...new Set(items.filter(i => i.item_type === 'playlist').map(i => i.item_id))];
-        
+
         let trackMap = new Map();
         let albumMap = new Map();
         let playlistMap = new Map();
@@ -84,7 +84,7 @@ const UserCommentsModal: React.FC<UserCommentsModalProps> = ({ userId, onClose }
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="relative w-full max-w-2xl bg-[#1f1f1f] border border-white/10 rounded-3xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
                 <div className="flex items-center justify-between p-8 border-b border-white/5 bg-[#1f1f1f]">
                     <div>
-                        <h2 className="text-xl font-bold text-white uppercase tracking-tighter italic">Comment History</h2>
+                        <h2 className="text-xl font-bold text-white uppercase tracking-tighter">Comment History</h2>
                         <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-1">Full interaction history</p>
                     </div>
                     <button onClick={onClose} className="p-3 hover:bg-white/5 rounded-full transition-all text-gray-500 hover:text-white"><X className="w-6 h-6" /></button>
