@@ -1,6 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import SpotifyResultItem from './SpotifyResultItem';
 import SpotifyAlbumItem from './SpotifyAlbumItem';
 import SpotifyArtistItem from './SpotifyArtistItem';
@@ -10,13 +9,7 @@ import { TrackReviewModal } from '../../favourites/favourites_tracks/components/
 import { PlaylistSelectCard } from './PlaylistSelectCard';
 import { ArtistDetailModal } from './ArtistDetailModal';
 import { ExpandedAlbumCard } from '../../favourites/favourites_albums/components/expanded_card/ExpandedAlbumCard';
-import { useTrackPreview } from '../hooks/useTrackPreview';
-import { useArtistPopup } from '../hooks/useArtistPopup';
-import { addToFavourites } from '../../favourites/services/favourites_services';
-import { getAlbumDetails } from '../services/spotify_services';
-import { useSuccess } from '../../../context/SuccessContext';
-import { useError } from '../../../context/ErrorContext';
-import type { ArtistFullDetail } from '../type/artist_type';
+import { useSpotifyResultList } from '../hooks/useSpotifyResultList';
 import type { SpotifyTrack, SpotifyAlbum, SpotifyArtist } from '../type/spotify_types';
 
 type SearchType = 'Tracks' | 'Albums' | 'Artists';
@@ -26,7 +19,7 @@ interface SpotifyResultListProps {
     type: SearchType;
     selectedIndex: number;
     isLoading: boolean;
-    isOpen?: boolean; // Controls visibility - when false, results are hidden
+    isOpen?: boolean;
     onClose?: () => void;
     searchText?: string;
 }
@@ -36,127 +29,40 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
     type,
     selectedIndex,
     isLoading,
-    isOpen = true, // Default to true for backward compatibility
+    isOpen = true,
     onClose,
     searchText = ''
 }) => {
-    // Navigation hook for "View Full Page" button
-    const navigate = useNavigate();
+    const {
+        containerRef,
+        playPreview,
+        stopPreview,
+        isArtistPopupOpen,
+        selectedArtist,
+        closeArtistPopup,
+        playlistModalTrack,
+        setPlaylistModalTrack,
+        selectedTrack,
+        setSelectedTrack,
+        selectedAlbum,
+        setSelectedAlbum,
+        activeMenuId,
+        setActiveMenuId,
+        handleAddToFavourites,
+        handleAddAlbumToFavourites,
+        handleAddToPlaylist,
+        handleImportAlbumToPlaylist,
+        handleTrackClick,
+        handleAlbumClick,
+        handleArtistClick,
+        handleViewFullPage
+    } = useSpotifyResultList(type, searchText, onClose);
 
-    // Ref for the results container (used for positioning calculations)
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    // Track preview audio controls
-    const { playPreview, stopPreview } = useTrackPreview();
-
-    // Artist popup modal state management
-    const { isOpen: isArtistPopupOpen, selectedArtist, openPopup: openArtistPopup, closePopup: closeArtistPopup } = useArtistPopup();
-
-    // Playlist selection modal state
-    const [playlistModalTrack, setPlaylistModalTrack] = useState<{ id?: string; name: string; trackIds?: string[] } | null>(null);
-
-    // Track detail modal state
-    const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
-
-    // Album detail modal state
-    const [selectedAlbum, setSelectedAlbum] = useState<SpotifyAlbum | null>(null);
-
-    // Active menu state for controlled dropdowns
-    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-
-    const { showSuccess } = useSuccess();
-    const { showError } = useError();
-
-    // Handler: Add track to user's favourites
-    const handleAddToFavourites = async (trackId: string) => {
-        try {
-            await addToFavourites(trackId, 'track');
-            showSuccess('Track added to favorites!');
-        } catch (error) {
-            console.error('Error adding to favourites:', error);
-            showError('Failed to add track to favorites');
-        }
-    };
-
-    // Handler: Add album to user's favourites
-    const handleAddAlbumToFavourites = async (albumId: string) => {
-        try {
-            await addToFavourites(albumId, 'album');
-            showSuccess('Album added to favorites!');
-        } catch (error) {
-            console.error('Error adding album to favourites:', error);
-            showError('Failed to add album to favorites');
-        }
-    };
-
-    // Handler: Open playlist selection modal for a track
-    const handleAddToPlaylist = (trackId: string, trackName: string) => {
-        setPlaylistModalTrack({ id: trackId, name: trackName });
-    };
-
-    // Handler: Import all album tracks to playlist
-    const handleImportAlbumToPlaylist = async (albumId: string, albumName: string) => {
-        try {
-            const albumDetails = await getAlbumDetails(albumId);
-            const tracks = albumDetails?.tracks?.items || [];
-            const trackIds = tracks.map((t: any) => t.id);
-
-            if (trackIds.length > 0) {
-                setPlaylistModalTrack({
-                    name: albumName,
-                    trackIds: trackIds
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching album tracks:', error);
-        }
-    };
-
-    // Handler: Open track detail modal
-    const handleTrackClick = (track: SpotifyTrack) => {
-        setSelectedTrack(track);
-    };
-
-    // Handler: Open album detail modal
-    const handleAlbumClick = (album: SpotifyAlbum) => {
-        setSelectedAlbum(album);
-    };
-
-    // Handler: Open artist details popup when artist is clicked
-    const handleArtistClick = (artist: SpotifyArtist) => {
-        const artistDetail: ArtistFullDetail = {
-            id: artist.id,
-            name: artist.name,
-            imageUrl: artist.images?.[0]?.url,
-            genres: artist.genres,
-            followers: artist.followers?.total,
-            externalUrl: artist.external_urls?.spotify
-        };
-        openArtistPopup(artistDetail);
-    };
-
-    // Handler: Navigate to full page view based on search type
-    const handleViewFullPage = () => {
-        const searchParam = searchText ? `?search=${encodeURIComponent(searchText)}` : '';
-        if (type === 'Tracks') {
-            navigate(`/tracksfullpage${searchParam}`);
-        } else if (type === 'Albums') {
-            navigate(`/albumsfullpage${searchParam}`);
-        } else if (type === 'Artists') {
-            navigate(`/artistsfullpage${searchParam}`);
-        }
-        onClose?.();
-    };
-
-    // Early return: Don't render if no results, not loading, AND no search text
     if ((!results || !Array.isArray(results) || results.length === 0) && !isLoading && !searchText) return null;
-
 
     return (
         <>
-            {/* Main Results Dropdown with Animation */}
             <AnimatePresence>
-                {/* Render only if isOpen is true AND (there are results OR loading OR valid search text) */}
                 {isOpen && (results.length > 0 || isLoading || searchText) && (
                     <motion.div
                         ref={containerRef}
@@ -167,31 +73,24 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                         className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/5 rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col"
                         style={{ maxHeight: '24rem' }}
                     >
-                        {/* Scrollable Content Area - RTL for scrollbar positioning */}
                         <div
                             className="overflow-y-auto flex-1 premium-scrollbar"
                             style={{
                                 scrollbarWidth: 'thin',
                                 scrollbarColor: '#4a5568 transparent',
-                                direction: 'rtl' // Scrollbar on left side
+                                direction: 'rtl'
                             }}
                         >
-                            {/* Content wrapper - LTR to restore normal text direction */}
                             <div style={{ direction: 'ltr' }}>
-                                {/* Loading State */}
                                 {isLoading && results.length === 0 ? (
                                     <div className="p-4 text-center text-gray-500 text-sm">
                                         Searching Spotify...
                                     </div>
                                 ) : (
-                                    /* Results List */
                                     <div className="p-2 space-y-1">
                                         {results.length > 0 ? (
-                                            /* Map through results and render based on type */
                                             results.map((item, index) => {
                                                 const isSelected = index === selectedIndex;
-
-                                                /* Render Tracks with preview audio and dropdown menu */
                                                 if (type === 'Tracks') {
                                                     const track = item as SpotifyTrack;
                                                     return (
@@ -223,7 +122,6 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                                                             </div>
                                                         </TrackPreviewAudio>
                                                     );
-                                                    /* Render Albums */
                                                 } else if (type === 'Albums') {
                                                     return (
                                                         <div className="flex items-center gap-2">
@@ -236,7 +134,7 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                                                                 />
                                                             </div>
                                                             <ResultMenuDropdown
-                                                                trackId={item.id} // Reusing trackId prop for ID
+                                                                trackId={item.id}
                                                                 trackName={item.name}
                                                                 spotifyUrl={(item as SpotifyAlbum).external_urls.spotify}
                                                                 isOpen={activeMenuId === item.id}
@@ -247,7 +145,6 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                                                             />
                                                         </div>
                                                     );
-                                                    /* Render Artists with click handler for popup */
                                                 } else {
                                                     return (
                                                         <div className="flex items-center gap-2">
@@ -287,7 +184,6 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                             </div>
                         </div>
 
-                        {/* Footer - "View Full Page" Button (sticky at bottom) */}
                         {results.length > 0 && (
                             <div className="border-t border-white/5 bg-[#1a1a1a]">
                                 <button
@@ -302,7 +198,6 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 )}
             </AnimatePresence>
 
-            {/* Artist Details Popup Modal */}
             {isArtistPopupOpen && selectedArtist && (
                 <ArtistDetailModal
                     artist={selectedArtist}
@@ -310,7 +205,6 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 />
             )}
 
-            {/* Track Review Modal */}
             {selectedTrack && (
                 <TrackReviewModal
                     track={selectedTrack}
@@ -318,7 +212,6 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 />
             )}
 
-            {/* Album Expanded Card */}
             {selectedAlbum && (
                 <ExpandedAlbumCard
                     albumId={selectedAlbum.id}
@@ -326,7 +219,6 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 />
             )}
 
-            {/* Playlist Selection Modal */}
             {playlistModalTrack && (
                 <PlaylistSelectCard
                     trackId={playlistModalTrack.id}
@@ -336,7 +228,6 @@ const SpotifyResultList: React.FC<SpotifyResultListProps> = ({
                 />
             )}
 
-            {/* Custom Scrollbar Styles */}
             <style>{`
                 .premium-scrollbar::-webkit-scrollbar {
                     width: 6px;
