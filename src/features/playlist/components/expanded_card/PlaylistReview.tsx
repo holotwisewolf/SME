@@ -59,7 +59,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                         onBlur={() => { if (reviewText !== playlist?.description) { handleDescriptionUpdate(); } }}
                         readOnly={!onDescriptionChange}
                         placeholder={onDescriptionChange
-                            ? "Write your review here..."
+                            ? "Turn on editing mode to edit description"
                             : (playlist.description ? "" : "The creator has not provided a description for this playlist.")}
                         className={`w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed ${!onDescriptionChange ? 'cursor-default select-none' : ''}`}
                     />

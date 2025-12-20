@@ -47,10 +47,10 @@ export const useFilterDropdown = ({
     };
 
     const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Auto-capitalization logic for better UX
         const val = e.target.value;
-        // Simple capitalization: first letter upper
-        setTagInput(val.charAt(0).toUpperCase() + val.slice(1));
+        // Sanitize to lowercase letters only (consistent with your tag system)
+        const sanitized = val.toLowerCase().replace(/[^a-z]/g, '');
+        setTagInput(sanitized);
     };
 
     const handleAddTag = () => {
