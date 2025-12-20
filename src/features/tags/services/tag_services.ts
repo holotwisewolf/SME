@@ -119,23 +119,26 @@ export async function assignTagToItem(
 }
 
 /**
- * Remove tag from an item
+ * Remove tag from an item (only removes current user's tag)
  */
 export async function removeTagFromItem(
   itemId: string,
   itemType: ItemType,
   tagId: string
 ): Promise<void> {
+  const userId = await getCurrentUserId();
+
   const { error } = await supabase
     .from('item_tags')
     .delete()
-    .match({ item_id: itemId, item_type: itemType, tag_id: tagId });
+    .match({ item_id: itemId, item_type: itemType, tag_id: tagId, user_id: userId });
 
   if (error) throw new Error(`Failed to remove tag: ${error.message}`);
 }
 
 /**
- * Get all tags applied to an item
+ * Get all UNIQUE tags applied to an item (for community tags display)
+ * Deduplicates by tag_id so each tag only appears once regardless of how many users added it
  */
 export async function getItemTags(
   itemId: string,
@@ -152,6 +155,41 @@ export async function getItemTags(
 
   if (error) {
     throw new Error(`Failed to fetch item tags: ${error.message}`);
+  }
+
+  // Deduplicate by tag_id to get unique tags only
+  const uniqueTagsMap = new Map<string, Tag>();
+  (data ?? []).forEach((entry) => {
+    const tag = entry.tags as Tag;
+    if (tag && !uniqueTagsMap.has(tag.id)) {
+      uniqueTagsMap.set(tag.id, tag);
+    }
+  });
+
+  return Array.from(uniqueTagsMap.values());
+}
+
+/**
+ * Get tags applied to an item by the CURRENT user only (for personal tags display)
+ */
+export async function getCurrentUserItemTags(
+  itemId: string,
+  itemType: ItemType
+): Promise<Tag[]> {
+  const userId = await getCurrentUserId();
+
+  const { data, error } = await supabase
+    .from('item_tags')
+    .select(`
+      tag_id,
+      tags (*)
+    `)
+    .eq('item_id', itemId)
+    .eq('item_type', itemType)
+    .eq('user_id', userId);
+
+  if (error) {
+    throw new Error(`Failed to fetch user tags: ${error.message}`);
   }
 
   return (data ?? []).map((entry) => entry.tags as Tag);

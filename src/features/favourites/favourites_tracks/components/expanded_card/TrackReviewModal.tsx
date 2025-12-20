@@ -5,7 +5,7 @@ import { submitPersonalRating, getPersonalRating } from '../../../../ratings/ser
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../../services/favourites_services';
 import { deleteItemRating } from '../../../services/item_services';
 import { getItemComments, createComment } from '../../../../comments/services/comment_services';
-import { getItemTags } from '../../../../tags/services/tag_services';
+import { getItemTags, getCurrentUserItemTags } from '../../../../tags/services/tag_services';
 import { supabase } from '../../../../../lib/supabaseClient';
 import { useError } from '../../../../../context/ErrorContext';
 import { useSuccess } from '../../../../../context/SuccessContext';
@@ -54,7 +54,8 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
 
     // Data States
     const [userRating, setUserRating] = useState<number>(0);
-    const [tags, setTags] = useState<string[]>([]);
+    const [personalTags, setPersonalTags] = useState<string[]>([]);  // Current user's tags only
+    const [communityTags, setCommunityTags] = useState<string[]>([]); // All users' tags
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [comments, setComments] = useState<any[]>([]);
     const [isFavourite, setIsFavourite] = useState(false);
@@ -80,9 +81,10 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                 return;
             }
 
-            const [userRatingData, tagsData, globalRatingData, commentsData, isFav] = await Promise.all([
+            const [userRatingData, personalTagsData, allTagsData, globalRatingData, commentsData, isFav] = await Promise.all([
                 getPersonalRating(user.id, track.id, 'track'),
-                getItemTags(track.id, 'track'),
+                getCurrentUserItemTags(track.id, 'track'),  // Personal tags only
+                getItemTags(track.id, 'track'),              // All community tags
                 getTrackRating(track.id),
                 getItemComments(track.id, 'track'),
                 checkIsFavourite(track.id, 'track')
@@ -97,7 +99,8 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
 
             setUserName(profileData?.display_name || profileData?.username || 'You');
             setUserRating(userRatingData?.rating || 0);
-            setTags(tagsData.map(tag => tag.name));
+            setPersonalTags(personalTagsData.map(tag => tag.name));
+            setCommunityTags(allTagsData.map(tag => tag.name));
             setRatingData(globalRatingData);
             setComments(commentsData);
             setIsFavourite(isFav);
@@ -147,17 +150,20 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
             }
 
             const tagToAdd = newTag.trim();
-            if (tags.includes(tagToAdd)) {
+            if (personalTags.includes(tagToAdd)) {
                 showError('Tag already exists');
                 setNewTag('');
                 return;
             }
 
             try {
-                // Import and use addItemTag which creates custom tag if needed and links it
                 const { addItemTag } = await import('../../../services/item_services');
                 await addItemTag(track.id, 'track', tagToAdd);
-                setTags([...tags, tagToAdd]);
+                setPersonalTags([...personalTags, tagToAdd]);
+                // Also add to community tags if not already there
+                if (!communityTags.includes(tagToAdd)) {
+                    setCommunityTags([...communityTags, tagToAdd]);
+                }
                 setNewTag('');
                 showSuccess(`Tag #${tagToAdd} added`);
             } catch (error) {
@@ -168,8 +174,8 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
     };
 
     const removeTag = async (tagToRemove: string) => {
-        const prevTags = [...tags];
-        setTags(tags.filter(tag => tag !== tagToRemove));
+        const prevTags = [...personalTags];
+        setPersonalTags(personalTags.filter(tag => tag !== tagToRemove));
 
         try {
             const { removeItemTag } = await import('../../../services/item_services');
@@ -177,7 +183,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
             showSuccess(`Tag #${tagToRemove} removed`);
         } catch (error) {
             console.error('Error removing tag:', error);
-            setTags(prevTags); // Revert on error
+            setPersonalTags(prevTags); // Revert on error
             showError('Failed to remove tag');
         }
     };
@@ -273,7 +279,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                     imgError={imgError}
                     setImgError={setImgError}
                     userRating={userRating}
-                    tags={tags}
+                    tags={personalTags}
                     newTag={newTag}
                     setNewTag={setNewTag}
                     handleRatingClick={handleRatingClick}
@@ -308,7 +314,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                             <TrackReview
                                 track={track}
                                 userRating={userRating}
-                                tags={tags}
+                                tags={personalTags}
                                 newTag={newTag}
                                 setNewTag={setNewTag}
                                 isTagMenuOpen={isTagMenuOpen}
@@ -328,7 +334,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = ({
                                 handleAddComment={handleAddComment}
                                 commentLoading={commentLoading}
                                 ratingData={ratingData}
-                                tags={tags}
+                                tags={communityTags}
                             />
                         )}
 

@@ -172,9 +172,12 @@ export async function addItemTag(itemId: string, itemType: ItemType, tag: string
 }
 
 /**
- * Remove a tag from an item
+ * Remove a tag from an item (only removes current user's tag)
  */
 export async function removeItemTag(itemId: string, itemType: ItemType, tag: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
     // 1. Get tag ID
     const { data: tagData } = await supabase
         .from('tags')
@@ -184,13 +187,14 @@ export async function removeItemTag(itemId: string, itemType: ItemType, tag: str
 
     if (!tagData) return;
 
-    // 2. Remove link
+    // 2. Remove link (only for current user)
     const { error } = await supabase
         .from('item_tags')
         .delete()
         .eq('item_id', itemId)
         .eq('item_type', itemType)
-        .eq('tag_id', tagData.id);
+        .eq('tag_id', tagData.id)
+        .eq('user_id', user.id);
 
     if (error) throw error;
 }

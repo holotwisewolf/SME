@@ -3,7 +3,7 @@ import LoadingSpinner from '../../../../../components/ui/LoadingSpinner';
 import { useError } from '../../../../../context/ErrorContext';
 import { useSuccess } from '../../../../../context/SuccessContext';
 import { getAlbum, getAlbumTracks } from '../../../../spotify/services/spotify_services';
-import { getItemTags } from '../../../../tags/services/tag_services';
+import { getItemTags, getCurrentUserItemTags } from '../../../../tags/services/tag_services';
 import { getItemRating, getUserItemRating, getItemComments, addItemComment } from '../../../services/item_services';
 import { removeFromFavourites, addToFavourites, checkIsFavourite } from '../../../services/favourites_services';
 import { AlbumHeader } from './AlbumHeader';
@@ -33,7 +33,8 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
     // Data States
     const [album, setAlbum] = useState<any>(null);
     const [tracks, setTracks] = useState<any[]>([]);
-    const [tags, setTags] = useState<string[]>([]);
+    const [personalTags, setPersonalTags] = useState<string[]>([]);  // Current user's tags only
+    const [communityTags, setCommunityTags] = useState<string[]>([]); // All users' tags
     const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
     const [userRating, setUserRating] = useState<number | null>(null);
     const [userName, setUserName] = useState('You');
@@ -112,13 +113,15 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
             setComments(commentsData);
 
             // Fetch tags and ratings after albumData is available
-            const [tagsData, ratingRes, userRatingRes] = await Promise.all([
-                getItemTags(albumId, 'album'),
+            const [personalTagsData, allTagsData, ratingRes, userRatingRes] = await Promise.all([
+                user ? getCurrentUserItemTags(albumId, 'album') : Promise.resolve([]),  // Personal tags only
+                getItemTags(albumId, 'album'),  // All community tags
                 getItemRating(albumId, 'album'),
                 user ? getUserItemRating(albumId, 'album') : Promise.resolve(null) // Only fetch user rating if user is logged in
             ]);
 
-            setTags(tagsData.map(tag => tag.name));
+            setPersonalTags(personalTagsData.map(tag => tag.name));
+            setCommunityTags(allTagsData.map(tag => tag.name));
             setRatingData(ratingRes);
             setUserRating(userRatingRes);
 
@@ -233,7 +236,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                     album={album}
                     ratingData={ratingData}
                     userRating={userRating}
-                    tags={tags}
+                    tags={personalTags}
                     onRatingUpdate={handleRatingUpdate}
                     userName={userName}
                     onClose={onClose}
@@ -300,8 +303,8 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                                 albumId={albumId}
                                 album={album}
                                 userRating={userRating}
-                                tags={tags}
-                                setTags={setTags}
+                                tags={personalTags}
+                                setTags={setPersonalTags}
                                 onRatingUpdate={handleRatingUpdate}
                                 userName={userName}
                             />
@@ -315,7 +318,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = ({ albumId, o
                                 handleAddComment={handleAddComment}
                                 commentLoading={commentLoading}
                                 ratingData={ratingData}
-                                tags={tags}
+                                tags={communityTags}
                             />
                         )}
 
