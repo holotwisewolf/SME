@@ -158,7 +158,18 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
             </div>
             <div className="flex-1 flex flex-col min-h-[120px]">
                 <p className="text-gray-400 text-xs mb-2">Description</p>
-                <div className="bg-white/5 rounded-lg border border-white/5 flex-1 flex flex-col overflow-hidden"><textarea value={reviewText} onChange={(e) => setReviewText(e.target.value)} onBlur={() => { if (reviewText !== playlist?.description) { handleDescriptionUpdate(); } }} readOnly={!isEditingEnabled} placeholder={isEditingEnabled ? "Write your thoughts on this playlist..." : (playlist.description ? "" : "Creator has not provided a description.")} className={`w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed ${!isEditingEnabled ? 'cursor-default' : ''}`} /></div>
+                <div className="bg-white/5 rounded-lg border border-white/5 flex-1 flex flex-col overflow-hidden">
+                    <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        onBlur={() => { if (reviewText !== playlist?.description) { handleDescriptionUpdate(); } }}
+                        readOnly={!onDescriptionChange}
+                        placeholder={onDescriptionChange
+                            ? "Write your review here..."
+                            : (playlist.description ? "" : "The creator has not provided a description for this playlist.")}
+                        className={`w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed ${!onDescriptionChange ? 'cursor-default select-none' : ''}`}
+                    />
+                </div>
             </div>
             <div className="mb-2">
                 <div className="flex items-center justify-between mb-1">
@@ -208,7 +219,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                 {/* Fixed height h-[45px] - items-center for vertical centering */}
                 <div className="bg-white/5 rounded-lg px-2 border border-white/5 h-[45px] overflow-y-auto custom-scrollbar flex items-center py-1.5">
                     {tags.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 items-center">
                             {tags.map((tag, index) => (
                                 <span key={index} className="group relative text-xs bg-white/10 text-gray-300 px-2 py-1 rounded-full hover:bg-white/20 transition-colors cursor-pointer"><span className="group-hover:opacity-0 transition-opacity">#{tag}</span><button onClick={() => handleRemoveTag(tag)} className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-200" title="Remove tag"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></span>
                             ))}

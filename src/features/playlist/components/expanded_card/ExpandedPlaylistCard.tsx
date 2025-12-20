@@ -472,7 +472,6 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     onRatingUpdate={handleRatingUpdate}
                     onImageUpdate={handleImageUpdate}
                     trackCount={tracks.length}
-                    isOwner={isOwner}
                 />
 
                 <div className="w-full md:w-[65%] p-6 flex flex-col bg-transparent overflow-hidden">
@@ -521,7 +520,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                                 // Review tab always shows current user's PERSONAL tags (editable)
                                 tags={userTags}
                                 setTags={setUserTags}
-                                isEditingEnabled={true} // Guest can always edit their own tags
+                                isEditingEnabled={true} // Tags are always editable (user's personal tags)
                                 // Show current user's name for "Based on X" 
                                 userName={currentUserName}
                                 onDescriptionChange={isOwner ? (newDescription) => { playlist.description = newDescription; } : undefined}

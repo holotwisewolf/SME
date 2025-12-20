@@ -77,12 +77,24 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
     };
 
     const getActionText = () => {
-        switch (activity.type) {
-            case 'rating': return 'rated';
-            case 'comment': return 'commented on';
-            case 'favorite': return 'favourited';
-            case 'tag': return 'added a tag to';
-            default: return 'interacted with';
+        // Normalize to lowercase for matching
+        const activityType = (activity.type || '').toLowerCase();
+        const itemTypeLower = type; // Already lowercased above
+
+        switch (activityType) {
+            case 'rating': return `rated`;
+            case 'comment': return `commented on`;
+            case 'favorite': return `favourited`;
+            case 'tag': {
+                // More descriptive text for tags
+                const itemLabel = itemTypeLower === 'playlist' ? 'a playlist'
+                    : itemTypeLower === 'album' ? 'an album'
+                        : 'a track';
+                return `tagged ${itemLabel}`;
+            }
+            default:
+                console.warn('Unknown activity type:', activity.type, activity);
+                return 'interacted with';
         }
     };
 
@@ -99,8 +111,11 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
     // Left side click: User who performed the action
     const handleLeftNameClick = (e: React.MouseEvent) => {
         e.stopPropagation();
+        console.log('👤 Profile click:', { userId: activity.user?.id, hasHandler: !!onUserClick });
         if (activity.user?.id && onUserClick) {
             onUserClick(activity.user.id);
+        } else {
+            console.warn('Missing user.id or onUserClick handler', { user: activity.user, onUserClick: !!onUserClick });
         }
     };
 
@@ -177,7 +192,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
                         <button
                             onClick={handleRightNameClick}
                             disabled={!resolvedRightId && !artistName}
-                            className="font-semibold text-[#D1D1D1] hover: transition-colors cursor-pointer disabled:text-[#D1D1D1]/50 disabled:no-underline"
+                            className="font-semibold text-[#D1D1D1] hover:underline transition-colors cursor-pointer disabled:text-[#D1D1D1]/50 disabled:no-underline disabled:cursor-default"
                         >
                             {artistName}
                         </button>
@@ -202,6 +217,13 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
                                     className={`w-4 h-4 mr-0.5 ${i < (activity.value || 0) ? 'fill-[#FFD1D1] text-[#FFD1D1]' : 'text-[#D1D1D1]/20'}`}
                                 />
                             ))}
+                        </div>
+                    )}
+
+                    {activity.type === 'tag' && activity.tag_name && (
+                        <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFD1D1]/10 border border-[#FFD1D1]/20">
+                            <Tag className="w-3 h-3 text-[#FFD1D1]" />
+                            <span className="text-xs font-medium text-[#FFD1D1]">#{activity.tag_name}</span>
                         </div>
                     )}
 

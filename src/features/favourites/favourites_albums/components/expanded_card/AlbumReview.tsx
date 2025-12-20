@@ -258,7 +258,7 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
                 {/* Fixed height h-[45px] - items-center for vertical centering */}
                 <div className="bg-white/5 rounded-lg px-2 border border-white/5 h-[45px] overflow-y-auto custom-scrollbar flex items-center py-1.5">
                     {tags.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 items-center">
                             {tags.map((tag, index) => (
                                 <span
                                     key={index}

@@ -5,7 +5,6 @@ import TextInput from "../../../components/ui/TextInput";
 import PasswordInput from "../../../components/ui/PasswordInput";
 import InputGroup from "../../../components/ui/InputGroup";
 import { useState } from "react";
-import Checkbox from "../../../components/ui/CheckboxIcon";
 import { AuthService } from "../services/auth_services";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import { signInWithSpotify } from "../../spotify/services/spotify_auth";
@@ -112,7 +111,14 @@ const LoginDrawer = () => {
                             <div className="flex items-center justify-between mt-4 select-none">
                                 <button
                                     type="button"
-                                    onClick={signInWithSpotify}
+                                    onClick={async () => {
+                                        try {
+                                            await signInWithSpotify();
+                                        } catch (error: any) {
+                                            console.error('Spotify login failed:', error);
+                                            showError(error?.message || 'Spotify login failed. You may need to be added as an authorized developer.');
+                                        }
+                                    }}
                                     className="text-sm text-gray-400 hover:text-[white] transition mt-2 font-medium"
                                 >
                                     Sign In with Spotify

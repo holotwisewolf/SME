@@ -35,18 +35,8 @@ export async function submitPersonalRating(
         throw new Error(`Failed to submit personal rating: ${error.message}`);
     }
 
-    // Fire-and-forget activity log
-    supabase
-        .from('activity_log')
-        .insert({
-            user_id: userId,
-            item_id: itemId,
-            item_type: itemType,
-            activity_type: 'rating',
-        })
-        .then(({ error }) => {
-            if (error) console.warn('Activity log failed:', error);
-        });
+    // Activity log is handled by DB trigger on 'ratings' table insert
+    // Removed manual insertion to prevent duplicates
 
     return data;
 }
@@ -101,7 +91,7 @@ export async function getPersonalRating(
         .eq('user_id', userId)
         .eq('item_id', itemId)
         .eq('item_type', itemType)
-        .maybeSingle(); 
+        .maybeSingle();
 
     if (error) {
         console.error('Error fetching personal rating:', error);

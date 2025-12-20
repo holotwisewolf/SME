@@ -56,7 +56,11 @@ async function cacheItems(items: any[], type: 'track' | 'album' | 'artist'): Pro
     .upsert(rows as any, { onConflict: 'resource_id' });
 
   if (error) {
-    console.warn('Cache write error:', error.message);
+    // Silently skip caching if not authenticated or RLS blocks it
+    // This is expected behavior - caching is just an optimization
+    if (error.code !== 'PGRST301' && !error.message?.includes('row-level security')) {
+      console.warn('Cache write error:', error.message);
+    }
   }
 }
 

@@ -255,6 +255,7 @@ const CommunityActivity: React.FC = () => {
         { value: 'rating' as ActivityType, label: 'Ratings', count: activities.filter(a => a.type === 'rating').length },
         { value: 'comment' as ActivityType, label: 'Comments', count: activities.filter(a => a.type === 'comment').length },
         { value: 'favorite' as ActivityType, label: 'Favorites', count: activities.filter(a => a.type === 'favorite').length },
+        { value: 'tag' as ActivityType, label: 'Tags', count: activities.filter(a => a.type === 'tag').length },
     ];
 
     return (
@@ -287,8 +288,8 @@ const CommunityActivity: React.FC = () => {
                         key={type.value}
                         onClick={() => setFilterType(type.value)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${filterType === type.value
-                                ? 'bg-[#FFD1D1] text-black'
-                                : 'bg-[#292929] text-[#D1D1D1]/70 hover:text-[#D1D1D1] border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30'
+                            ? 'bg-[#FFD1D1] text-black'
+                            : 'bg-[#292929] text-[#D1D1D1]/70 hover:text-[#D1D1D1] border border-[#D1D1D1]/10 hover:border-[#FFD1D1]/30'
                             }`}
                     >
                         {type.label}

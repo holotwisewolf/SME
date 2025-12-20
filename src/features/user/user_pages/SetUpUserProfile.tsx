@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import TextInput from "../../../components/ui/TextInput";
 import DefUserAvatar from "../../../components/ui/DefUserAvatar";
 import EditIcon from "../../../components/ui/EditIcon";
@@ -8,10 +8,13 @@ import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import { AuthService } from "../../auth/services/auth_services";
 import { useLogin } from "../../auth/components/LoginProvider";
 import { useSuccess } from "../../../context/SuccessContext";
+import { useError } from "../../../context/ErrorContext";
 
 const SetUpUserProfile = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { showSuccess } = useSuccess();
+    const { showError } = useError();
     const { profile, setProfile } = useLogin();
     const [userId, setUserId] = useState<string | null>(null);
     const [username, setUsername] = useState("");
@@ -22,6 +25,21 @@ const SetUpUserProfile = () => {
     const [initializing, setInitializing] = useState(true);
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [bioPlaceholder, setBioPlaceholder] = useState("Tell us about yourself...");
+
+    // Check for OAuth errors in URL (e.g., Spotify rejecting non-developer users)
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const error = params.get('error');
+        const errorDescription = params.get('error_description');
+
+        if (error) {
+            const message = errorDescription
+                ? decodeURIComponent(errorDescription.replace(/\+/g, ' '))
+                : 'Spotify login failed. You may need to be added as an authorized developer.';
+            showError(message);
+            navigate('/', { replace: true }); // Redirect to home without error params in history
+        }
+    }, [location.search, showError, navigate]);
 
     // Random Bio Placeholder on Mount
     useEffect(() => {

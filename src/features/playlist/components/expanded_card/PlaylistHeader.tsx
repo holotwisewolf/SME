@@ -22,7 +22,6 @@ interface PlaylistHeaderProps {
     onRatingUpdate: () => void;
     onImageUpdate?: () => void;
     trackCount: number;
-    isOwner?: boolean;
 }
 
 export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
@@ -41,8 +40,7 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
     isEditingEnabled,
     onRatingUpdate,
     onImageUpdate,
-    trackCount,
-    isOwner = true
+    trackCount
 }) => {
     // All logic extracted to hook
     const {
@@ -84,6 +82,8 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                                 onChange={(e) => setPlaylistTitle(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleTitleUpdate()}
                                 onBlur={handleTitleUpdate}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
                                 autoFocus
                                 className="text-2xl font-bold text-white bg-transparent border-b border-white/20 focus:outline-none focus:border-[#696969] w-full"
                             />
@@ -139,8 +139,9 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = ({
                         {[1, 2, 3, 4, 5].map((star) => (
                             <button
                                 key={star}
-                                onClick={() => handleRate(star)}
-                                className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
+                                onClick={isEditingEnabled ? () => handleRate(star) : undefined}
+                                disabled={!isEditingEnabled}
+                                className={`focus:outline-none transition-transform ${isEditingEnabled ? 'hover:scale-110 cursor-pointer' : 'cursor-default'}`}
                             >
                                 <svg
                                     className={`w-5 h-5 ${star <= (userRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}

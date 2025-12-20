@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TrendingUp, Clock, Activity, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getTrendingTags, getRecentActivity, getCommunityQuickStats } from '../services/trending_services';
 import { supabase } from '../../../lib/supabaseClient';
 import type { TrendingFilters } from '../types/trending';
@@ -16,6 +17,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalItems: 0, totalMembers: 0, currentActiveUsers: 0, thisWeek: 0 });
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     // Debounced fetch to prevent rapid-fire API calls
     const fetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -170,18 +172,22 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                                 {recentActivity.map((activity) => (
                                     <div key={activity.id} className="text-sm border-b border-[#D1D1D1]/5 pb-2 last:border-0 last:pb-0">
                                         <p className="text-[#D1D1D1]/70 leading-relaxed">
-                                            <span className="text-[#FFD1D1] text-xs font-medium">
+                                            <button
+                                                onClick={() => {
+                                                    const userId = typeof activity.user === 'object' ? activity.user.id : activity.user_id;
+                                                    if (userId) navigate(`/profile/${userId}`);
+                                                }}
+                                                className="text-[#FFD1D1] text-xs font-medium hover:underline cursor-pointer"
+                                            >
                                                 @{typeof activity.user === 'object' ? (activity.user.display_name || activity.user.username) : (activity.user_display_name || activity.user || 'User')}
-                                            </span>{' '}
+                                            </button>{' '}
                                             <span className="text-[#D1D1D1]/50 text-xs">
                                                 {activity.type === 'rating' && `rated ${activity.itemType || 'item'}`}
                                                 {activity.type === 'comment' && `commented on ${activity.itemType || 'item'}`}
                                                 {activity.type === 'favorite' && `favorited ${activity.itemType || 'item'}`}
-                                                {!['rating', 'comment', 'favorite'].includes(activity.type) && 'interacted with item'}
+                                                {activity.type === 'tag' && `tagged ${activity.itemType || 'item'}`}
+                                                {!['rating', 'comment', 'favorite', 'tag'].includes(activity.type) && 'interacted with item'}
                                             </span>
-                                            {activity.type === 'rating' && (activity.rating_value || activity.value) && (
-                                                <span className="text-[#FFD1D1] ml-1">({activity.rating_value || activity.value}★)</span>
-                                            )}
                                         </p>
                                         {activity.content && (
                                             <p className="text-[#D1D1D1]/50 text-xs mt-1 italic pl-2 border-l border-[#D1D1D1]/20">
