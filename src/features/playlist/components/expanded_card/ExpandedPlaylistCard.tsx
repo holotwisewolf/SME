@@ -1,37 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import type { Tables } from '../../../../types/supabase';
-import { supabase } from '../../../../lib/supabaseClient';
-import {
-    fetchPlaylistTracksWithDetails,
-    getPlaylistRating,
-    getPlaylistComments,
-    addPlaylistComment,
-    updatePlaylistTitle,
-    removeTrackFromPlaylist,
-    updatePlaylistPublicStatus,
-    getUserPlaylistRating,
-    getPlaylistRatingByUserId,
-    deletePlaylist,
-    updatePlaylistColor,
-    reorderPlaylistTracks,
-    copyPlaylist
-} from '../../services/playlist_services';
-import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../../favourites/services/favourites_services';
-import { getItemTags, getCreatorItemTags } from '../../../tags/services/tag_services';
-import { getProfile, getSession } from '../../../auth/services/auth_services';
-import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
-import { useError } from '../../../../context/ErrorContext';
-import { useSuccess } from '../../../../context/SuccessContext';
+import { useExpandedPlaylist } from '../../hooks/useExpandedPlaylist';
 import { PlaylistHeader } from './PlaylistHeader';
 import { PlaylistTracks } from './PlaylistTracks';
 import { PlaylistCommunity } from './PlaylistCommunity';
 import { PlaylistSettings } from './PlaylistSettings';
 import { PlaylistReview } from './PlaylistReview';
 import ExpandButton from '../../../../components/ui/ExpandButton';
+import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
-import { exportPlaylistToSpotify, isSpotifyConnected, checkSpotifyTokenValid, refreshSpotifyToken, signInWithSpotify } from '../../../spotify/services/spotify_auth';
-import { useConfirmation } from '../../../../context/ConfirmationContext';
 import SpotifyReconnectModal from '../../../../components/ui/SpotifyReconnectModal';
 import type { EnhancedPlaylist } from '../../services/playlist_services';
 
@@ -46,421 +24,57 @@ interface ExpandedPlaylistCardProps {
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
 }
 
-type ActiveTab = 'tracks' | 'review' | 'community' | 'settings';
+export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props) => {
+    const {
+        // State
+        activeTab, setActiveTab,
+        imgError, setImgError,
+        playlistImgUrl,
+        loading,
+        filteredTracks,
+        creatorTags,
+        userTags, setUserTags,
+        communityTags,
+        ratingData,
+        userRating,
+        creatorRating,
+        comments,
+        creatorName,
+        currentUserName,
+        playlistTitle, setPlaylistTitle,
+        isPublic,
+        playlistColor,
+        isEditingTitle, setIsEditingTitle,
+        newComment, setNewComment,
+        commentLoading,
+        isEditingEnabled, setIsEditingEnabled,
+        selectedTrack, setSelectedTrack,
+        searchQuery, setSearchQuery,
+        isOwner,
+        isFavourite,
+        showSpotifyReconnect, setShowSpotifyReconnect,
 
-export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
-    playlist, onClose, onTitleChange, currentTitle, onDeletePlaylist, onColorChange, currentColor,
-    onPlaylistUpdate
-}) => {
-    // --- Context Hooks ---
-    const { showError } = useError();
-    const { showSuccess } = useSuccess();
-    const { showConfirmation } = useConfirmation();
-
-    // --- State Management ---
-    const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
-    const [imgError, setImgError] = useState(false);
-    const [imageUrl, setImageUrl] = useState<string | null>((playlist as any).playlistimg_url || null);
-    const [loading, setLoading] = useState(true);
-
-    // Data States
-    const [tracks, setTracks] = useState<any[]>([]);
-    const [creatorTags, setCreatorTags] = useState<string[]>([]);
-    const [userTags, setUserTags] = useState<string[]>([]);
-    const [communityTags, setCommunityTags] = useState<string[]>([]);
-    const [ratingData, setRatingData] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
-    const [userRating, setUserRating] = useState<number | null>(null);
-    const [creatorRating, setCreatorRating] = useState<number | null>(null);
-    const [comments, setComments] = useState<any[]>([]);
-
-    // UI States
-    const [creatorName, setCreatorName] = useState('Creator');
-    const [currentUserName, setCurrentUserName] = useState('You');
-    const [playlistTitle, setPlaylistTitle] = useState(currentTitle ?? playlist.title);
-    const [isPublic, setIsPublic] = useState(playlist.is_public || false);
-    const [playlistColor, setPlaylistColor] = useState<string | undefined>(currentColor || playlist.color || undefined);
-
-    const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const [newComment, setNewComment] = useState('');
-    const [commentLoading, setCommentLoading] = useState(false);
-    const [isEditingEnabled, setIsEditingEnabled] = useState(false);
-
-    const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
-
-    const [searchQuery, setSearchQuery] = useState('');
-    const [isOwner, setIsOwner] = useState(false);
-    const [isFavourite, setIsFavourite] = useState(false);
-    const [showSpotifyReconnect, setShowSpotifyReconnect] = useState(false); // DEV: set to true for testing
-
-    // --- Effects ---
-
-    // Check ownership and favorite status on mount
-    useEffect(() => {
-        const checkOwnership = async () => {
-            const session = await getSession();
-            setIsOwner(session?.user?.id === playlist.user_id);
-        };
-        checkOwnership();
-        checkIsFavourite(playlist.id, 'playlist').then(setIsFavourite);
-    }, [playlist.user_id, playlist.id]);
-
-    // Filter tracks for search
-    const filteredTracks = tracks.filter(track =>
-        (track.details?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        track.details?.artists?.some((a: any) => (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-
-    // Use local state for image URL to enable real-time updates
-    // Falls back to storage URL if no custom image is set
-    const playlistImgUrl = imageUrl
-        ? `${imageUrl}?t=${Date.now()}`  // Add timestamp to bust cache
-        : supabase.storage.from('playlists').getPublicUrl(playlist.id).data.publicUrl;
-    // [FIX END] ---------------------------------------------------------------
-
-    // Handle image updates from PlaylistHeader
-    const handleImageUpdate = async () => {
-        // Refetch the playlist to get the new image URL
-        const { data: updatedPlaylist } = await supabase
-            .from('playlists')
-            .select('playlistimg_url')
-            .eq('id', playlist.id)
-            .single();
-
-        setImageUrl(updatedPlaylist?.playlistimg_url || null);
-        if (!updatedPlaylist?.playlistimg_url) {
-            setImgError(true); // Show default placeholder
-        } else {
-            setImgError(false);
-        }
-    };
-
-    useEffect(() => {
-        loadData();
-    }, [playlist.id]);
-
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const session = await getSession();
-            const currentUserId = session?.user?.id;
-
-            const [tracksData, allTagsData, creatorTagsData, userTagsData, ratingRes, userRatingRes, creatorRatingRes, commentsData, profileData, currentUserProfile] = await Promise.all([
-                fetchPlaylistTracksWithDetails(playlist.id),
-                getItemTags(playlist.id, 'playlist'),
-                getCreatorItemTags(playlist.id, 'playlist', playlist.user_id),
-                currentUserId ? getCreatorItemTags(playlist.id, 'playlist', currentUserId) : Promise.resolve([]),
-                getPlaylistRating(playlist.id),
-                getUserPlaylistRating(playlist.id),
-                getPlaylistRatingByUserId(playlist.id, playlist.user_id), // Fetch creator's rating
-                getPlaylistComments(playlist.id),
-                getProfile(playlist.user_id),
-                currentUserId ? getProfile(currentUserId) : Promise.resolve(null)
-            ]);
-
-            setTracks(tracksData);
-            setCreatorTags(creatorTagsData.map(tag => tag.name));
-            setUserTags(userTagsData.map(tag => tag.name));
-            setCommunityTags(allTagsData.map(tag => tag.name));
-            setRatingData(ratingRes);
-            setUserRating(userRatingRes);
-            setCreatorRating(creatorRatingRes); // Set creator's rating
-            setComments(commentsData);
-            setCreatorName(profileData?.display_name || profileData?.username || 'Creator');
-            setCurrentUserName(currentUserProfile?.display_name || currentUserProfile?.username || 'You');
-        } catch (error) {
-            console.error('Error loading playlist details:', error);
-            showError('Failed to load playlist details');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // --- Handlers ---
-
-    const handleTitleUpdate = async () => {
-        if (!playlistTitle.trim() || playlistTitle === playlist.title) {
-            setIsEditingTitle(false);
-            return;
-        }
-        setIsEditingTitle(false);
-        try {
-            await updatePlaylistTitle(playlist.id, playlistTitle);
-            if (onTitleChange) onTitleChange(playlistTitle);
-            showSuccess('Playlist title updated');
-        } catch (error) {
-            console.error('Error updating title:', error);
-            showError('Failed to update title');
-            setPlaylistTitle(playlist.title);
-            setIsEditingTitle(true);
-        }
-    };
-
-    const handleRatingUpdate = async () => {
-        const [ratingRes, userRatingRes] = await Promise.all([
-            getPlaylistRating(playlist.id),
-            getUserPlaylistRating(playlist.id)
-        ]);
-        setRatingData(ratingRes);
-        setUserRating(userRatingRes);
-
-        if (onPlaylistUpdate) {
-            const now = new Date().toISOString();
-            onPlaylistUpdate(playlist.id, {
-                rating_avg: ratingRes.average,
-                rating_count: ratingRes.count,
-                rated_at: now,
-                user_rating: userRatingRes || 0,
-                user_rated_at: now
-            });
-        }
-    };
-
-    const handleRemoveTrack = async (trackId: string) => {
-        try {
-            await removeTrackFromPlaylist(playlist.id, trackId);
-            setTracks(tracks.filter(t => t.spotify_track_id !== trackId));
-        } catch (error) {
-            console.error('Error removing track:', error);
-        }
-    };
-
-    const handleReorderTracks = async (newOrder: any[]) => {
-        setTracks(newOrder);
-        try {
-            const updates = newOrder.map((track, index) => ({
-                id: track.id,
-                position: index
-            }));
-            await reorderPlaylistTracks(updates);
-        } catch (error) {
-            console.error('Error reordering tracks:', error);
-            showError('Failed to save new order');
-            loadData();
-        }
-    };
-
-    const handleAddComment = async () => {
-        if (!newComment.trim()) return;
-        setCommentLoading(true);
-        try {
-            await addPlaylistComment(playlist.id, newComment);
-            showSuccess('Comment posted');
-            setNewComment('');
-            const commentsData = await getPlaylistComments(playlist.id);
-            setComments(commentsData);
-
-            if (onPlaylistUpdate) {
-                onPlaylistUpdate(playlist.id, {
-                    comment_count: commentsData.length,
-                    commented_at: new Date().toISOString()
-                });
-            }
-        } catch (error: any) {
-            console.error('Error adding comment:', error);
-            // Show user-friendly message for auth/permission errors
-            if (error?.message?.includes('row-level security') || error?.code === 'PGRST301') {
-                showError('Please sign in to post comments');
-            } else {
-                showError('Failed to post comment');
-            }
-        } finally {
-            setCommentLoading(false);
-        }
-    };
-
-    const handlePublicStatusChange = async (newStatus: boolean) => {
-        try {
-            await updatePlaylistPublicStatus(playlist.id, newStatus);
-            setIsPublic(newStatus);
-            showSuccess(newStatus ? 'Playlist is now public' : 'Playlist is now private');
-        } catch (error) {
-            console.error('Error updating public status:', error);
-            setIsPublic(!newStatus);
-        }
-    };
-
-    const handleColorChange = async (newColor: string) => {
-        const oldColor = playlistColor;
-        setPlaylistColor(newColor);
-        if (onColorChange) onColorChange(newColor);
-        try {
-            await updatePlaylistColor(playlist.id, newColor);
-            showSuccess('Playlist color updated');
-        } catch (error) {
-            console.error('Error updating playlist color:', error);
-            setPlaylistColor(oldColor);
-            if (onColorChange && oldColor) onColorChange(oldColor);
-        }
-    };
-
-    const handleExportToSpotify = async () => {
-        const confirmed = await showConfirmation({
-            title: 'Export to Spotify',
-            message: `Export "${playlist.title}" to your Spotify account? This will create a new playlist.`,
-            confirmText: 'Export',
-            variant: 'primary'
-        });
-        if (!confirmed) return;
-
-        try {
-            // First check if user has Spotify connection at all
-            const connected = await isSpotifyConnected();
-            if (!connected) {
-                showError('Please sign in with Spotify to export playlists');
-                return;
-            }
-
-            // Check if the token is still valid
-            const tokenValid = await checkSpotifyTokenValid();
-            if (!tokenValid) {
-                // Token expired - show reconnect modal
-                setShowSpotifyReconnect(true);
-                return;
-            }
-
-            // Proceed with export
-            await executeSpotifyExport();
-        } catch (error) {
-            console.error('Error exporting to Spotify:', error);
-            showError('Failed to export playlist to Spotify');
-        }
-    };
-
-    const executeSpotifyExport = async () => {
-        const trackSpotifyIds = tracks
-            .map(t => t.spotify_track_id)
-            .filter((id): id is string => !!id);
-
-        if (trackSpotifyIds.length === 0) {
-            showError('No tracks to export');
-            return;
-        }
-
-        const result = await exportPlaylistToSpotify(
-            playlist.title || 'Untitled Playlist',
-            playlist.description,
-            trackSpotifyIds
-        );
-
-        if (result.success) {
-            showSuccess(`Playlist exported to Spotify!${result.playlistUrl ? ' Opening...' : ''}`);
-            if (result.playlistUrl) {
-                window.open(result.playlistUrl, '_blank');
-            }
-        } else {
-            showError(result.error || 'Failed to export playlist');
-        }
-    };
-
-    const handleSpotifyReconnect = async (): Promise<boolean> => {
-        const success = await refreshSpotifyToken();
-        if (success) {
-            showSuccess('Spotify reconnected! You can now export.');
-            // Retry the export after successful reconnect
-            await executeSpotifyExport();
-        }
-        return success;
-    };
-
-    const handleCopyPlaylist = async () => {
-        const confirmed = await showConfirmation({
-            title: 'Copy Playlist',
-            message: `Create a copy of "${playlist.title}" in your library?`,
-            confirmText: 'Copy',
-            variant: 'primary'
-        });
-        if (!confirmed) return;
-
-        try {
-            const newPlaylist = await copyPlaylist(playlist.id);
-            showSuccess(`Playlist copied as "${newPlaylist.title}"`);
-        } catch (error) {
-            console.error('Error copying playlist:', error);
-            showError('Failed to copy playlist');
-        }
-    };
-
-    const handleDeletePlaylist = async () => {
-        const confirmed = await showConfirmation({
-            title: 'Delete Playlist',
-            message: `Are you sure you want to delete "${playlist.title}"? This action cannot be undone.`,
-            confirmText: 'Delete',
-            variant: 'danger'
-        });
-        if (!confirmed) return;
-
-        try {
-            await deletePlaylist(playlist.id);
-            showSuccess('Playlist deleted');
-            if (onDeletePlaylist) onDeletePlaylist();
-            if (onClose) onClose();
-        } catch (error) {
-            console.error('Error deleting playlist:', error);
-            showError('Failed to delete playlist');
-        }
-    };
-
-    const handleToggleFavourite = async () => {
-        const willBeFavourite = !isFavourite;
-
-        if (!willBeFavourite) {
-            // Removing favourite - show confirmation first
-            const confirmed = await showConfirmation({
-                title: 'Remove from Favourites',
-                message: `Remove "${playlist.title}" from your favourites?`,
-                confirmText: 'Remove',
-                variant: 'danger'
-            });
-            if (!confirmed) return;
-
-            setIsFavourite(false);
-            try {
-                await removeFromFavourites(playlist.id, 'playlist');
-                showSuccess('Playlist removed from favourites');
-            } catch (error) {
-                console.error('Error removing from favourites:', error);
-                setIsFavourite(true);
-                showError('Failed to remove from favourites');
-            }
-            return;
-        }
-
-        // Adding favourite - no confirmation needed
-        setIsFavourite(true);
-        try {
-            await addToFavourites(playlist.id, 'playlist');
-            showSuccess('Playlist added to favourites');
-        } catch (error) {
-            console.error('Error adding to favourites:', error);
-            setIsFavourite(false);
-            showError('Failed to add to favourites');
-        }
-    };
-
-    const handleTrackClick = (track: any) => {
-        setSelectedTrack(track);
-    };
-
-    const handleTagsSync = (newUserTags: string[]) => {
-        const mergedTags = Array.from(new Set([...communityTags, ...newUserTags]));
-        setCommunityTags(mergedTags);
-
-        if (onPlaylistUpdate) {
-            const now = new Date().toISOString();
-            onPlaylistUpdate(playlist.id, {
-                tags: mergedTags,
-                tag_count: mergedTags.length,
-                tagged_at: now,
-                user_tags: newUserTags,
-                user_tag_count: newUserTags.length,
-                user_tagged_at: now
-            });
-        }
-    };
+        // Handlers
+        handleImageUpdate,
+        handleTitleUpdate,
+        handleRatingUpdate,
+        handleRemoveTrack,
+        handleReorderTracks,
+        handleAddComment,
+        handlePublicStatusChange,
+        handleColorChange,
+        handleExportToSpotify,
+        handleSpotifyReconnect,
+        handleCopyPlaylist,
+        handleDeletePlaylist,
+        handleToggleFavourite,
+        handleTagsSync,
+        signInWithSpotify
+    } = useExpandedPlaylist(props);
 
     if (loading) {
         return createPortal(
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={props.onClose}>
                 <div className="flex items-center justify-center w-full max-w-5xl h-[500px] bg-[#1e1e1e] rounded-2xl shadow-2xl border border-white/5 mx-auto" onClick={(e) => e.stopPropagation()}>
                     <LoadingSpinner className="w-12 h-12 text-[white]" />
                 </div>
@@ -470,7 +84,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={props.onClose}>
             <div
                 className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative h-[515px]"
                 onClick={(e) => e.stopPropagation()}
@@ -481,18 +95,16 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                 }}
             >
                 <div className="absolute top-4 right-4 z-10">
-                    <ExpandButton onClick={onClose} className="rotate-180 hover:bg-white/10 rounded-full p-1" strokeColor="white" title="Collapse" />
+                    <ExpandButton onClick={props.onClose} className="rotate-180 hover:bg-white/10 rounded-full p-1" strokeColor="white" title="Collapse" />
                 </div>
 
-                {/* Playlist Header containing the image */}
                 <PlaylistHeader
-                    playlistId={playlist.id}
+                    playlistId={props.playlist.id}
                     creatorName={creatorName}
                     playlistImgUrl={playlistImgUrl}
                     imgError={imgError}
                     setImgError={setImgError}
                     ratingData={ratingData}
-                    // Show creator's rating in left column for guests, user's rating for owner
                     userRating={isOwner ? userRating : creatorRating}
                     tags={creatorTags}
                     isEditingTitle={isEditingTitle}
@@ -503,7 +115,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     isEditingEnabled={isEditingEnabled}
                     onRatingUpdate={handleRatingUpdate}
                     onImageUpdate={handleImageUpdate}
-                    trackCount={tracks.length}
+                    trackCount={filteredTracks.length}
                 />
 
                 <div className="w-full md:w-[65%] p-6 flex flex-col bg-transparent overflow-hidden">
@@ -530,7 +142,6 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full bg-[#151515]/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[white]/40 transition-colors"
-                                // Prevent drag behavior to allow text selection
                                 draggable={false}
                                 onDragStart={(e) => e.preventDefault()}
                                 onMouseDown={(e) => e.stopPropagation()}
@@ -542,20 +153,18 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
 
                     <div className="flex-1 bg-[#151515]/80 rounded-xl border border-white/5 p-4 shadow-inner overflow-hidden flex flex-col backdrop-blur-sm">
                         {activeTab === 'tracks' && (
-                            <PlaylistTracks tracks={filteredTracks} isEditingEnabled={isEditingEnabled} onRemoveTrack={handleRemoveTrack} onReorderTracks={handleReorderTracks} onTrackClick={handleTrackClick} />
+                            <PlaylistTracks tracks={filteredTracks} isEditingEnabled={isEditingEnabled} onRemoveTrack={handleRemoveTrack} onReorderTracks={handleReorderTracks} onTrackClick={(track) => setSelectedTrack(track)} />
                         )}
 
                         {activeTab === 'review' && (
                             <PlaylistReview
-                                playlist={playlist}
+                                playlist={props.playlist}
                                 userRating={userRating}
-                                // Review tab always shows current user's PERSONAL tags (editable)
                                 tags={userTags}
                                 setTags={setUserTags}
-                                isEditingEnabled={true} // Tags are always editable (user's personal tags)
-                                // Show current user's name for "Based on X" 
+                                isEditingEnabled={true}
                                 userName={currentUserName}
-                                onDescriptionChange={isOwner ? (newDescription) => { playlist.description = newDescription; } : undefined}
+                                onDescriptionChange={isOwner ? (newDescription) => { props.playlist.description = newDescription; } : undefined}
                                 onTagsUpdate={handleTagsSync}
                                 onRatingUpdate={handleRatingUpdate}
                             />
@@ -567,7 +176,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
 
                         {activeTab === 'settings' && (
                             <PlaylistSettings
-                                playlistId={playlist.id}
+                                playlistId={props.playlist.id}
                                 handleExportToSpotify={handleExportToSpotify}
                                 handleCopyPlaylist={handleCopyPlaylist}
                                 isEditingEnabled={isEditingEnabled}
