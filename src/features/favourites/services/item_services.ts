@@ -49,18 +49,42 @@ export async function updateItemRating(itemId: string, itemType: ItemType, ratin
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const { error } = await supabase
+    // Check if rating exists
+    const { data: existingRating } = await supabase
         .from('ratings')
-        .upsert({
-            item_id: itemId,
-            item_type: itemType,
-            user_id: user.id,
-            rating: rating
-        }, { onConflict: 'item_id, item_type, user_id' });
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('item_id', itemId)
+        .eq('item_type', itemType)
+        .maybeSingle();
+
+    let error;
+
+    if (existingRating) {
+        // Update existing
+        const result = await supabase
+            .from('ratings')
+            .update({
+                rating: rating,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', existingRating.id);
+        error = result.error;
+    } else {
+        // Insert new
+        const result = await supabase
+            .from('ratings')
+            .insert({
+                item_id: itemId,
+                item_type: itemType,
+                user_id: user.id,
+                rating: rating
+            });
+        error = result.error;
+    }
 
     if (error) throw error;
 }
-
 /**
  * Delete item rating
  */
@@ -120,18 +144,23 @@ export async function addItemComment(itemId: string, itemType: ItemType, content
 }
 
 /**
- * Add a tag to an item
+ * Add a tag to an item (only removes current user's tag)
+ * Tag names are sanitized to lowercase letters only
  */
 export async function addItemTag(itemId: string, itemType: ItemType, tag: string): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
+
+    // Sanitize tag name: lowercase letters only
+    const sanitizedTag = tag.toLowerCase().replace(/[^a-z]/g, '');
+    if (!sanitizedTag) throw new Error('Tag must contain at least one letter');
 
     // 1. Check if tag exists
     let tagId: string;
     const { data: existingTag } = await supabase
         .from('tags')
         .select('id')
-        .eq('name', tag)
+        .eq('name', sanitizedTag)
         .maybeSingle();
 
     if (existingTag) {
@@ -141,7 +170,7 @@ export async function addItemTag(itemId: string, itemType: ItemType, tag: string
         const { data: newTag, error: createError } = await supabase
             .from('tags')
             .insert({
-                name: tag,
+                name: sanitizedTag,
                 type: 'custom',
                 creator_id: user.id
             })

@@ -41,10 +41,12 @@ interface FilterDropdownProps {
     onFilterChange: (newFilter: FilterState) => void;
     onSortChange: (newSort: SortOptionType) => void;
     onClearAll: () => void;
+    showFavoritesFilter?: boolean;
+    hiddenSorts?: SortOptionType[];
 }
 
 const FilterDropdown: React.FC<FilterDropdownProps> = ({
-    isOpen, onClose, anchorRef, currentFilter, currentSort, onFilterChange, onSortChange, onClearAll
+    isOpen, onClose, anchorRef, currentFilter, currentSort, onFilterChange, onSortChange, onClearAll, showFavoritesFilter = true, hiddenSorts = []
 }) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [tagInput, setTagInput] = useState('');
@@ -121,12 +123,15 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
         </div>
     );
 
-    const SortItem = ({ label, value, isSubItem = false }: { label: string, value: SortOptionType, isSubItem?: boolean }) => (
-        <button onClick={() => { onSortChange(value); onClose(); }} className={`w-full text-left px-3 py-1.5 text-xs rounded transition-colors flex items-center justify-between ${isSubItem ? 'pl-6 text-gray-400' : 'text-gray-200'} ${currentSort === value ? 'text-[#FFD1D1] font-bold bg-white/5' : 'hover:bg-white/5'}`}>
-            <span>{label}</span>
-            {currentSort === value && <Check className="w-3 h-3 text-[#FFD1D1]" />}
-        </button>
-    );
+    const SortItem = ({ label, value, isSubItem = false }: { label: string, value: SortOptionType, isSubItem?: boolean }) => {
+        if (hiddenSorts.includes(value)) return null;
+        return (
+            <button onClick={() => { onSortChange(value); onClose(); }} className={`w-full text-left px-3 py-1.5 text-xs rounded transition-colors flex items-center justify-between ${isSubItem ? 'pl-6 text-gray-400' : 'text-gray-200'} ${currentSort === value ? 'text-[#FFD1D1] font-bold bg-white/5' : 'hover:bg-white/5'}`}>
+                <span>{label}</span>
+                {currentSort === value && <Check className="w-3 h-3 text-[#FFD1D1]" />}
+            </button>
+        );
+    };
 
     return (
         <>
@@ -202,12 +207,16 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
                             <div className="border-t border-white/5"></div>
 
                             {/* 3. Favorites */}
-                            <button onClick={() => onFilterChange({ ...currentFilter, onlyFavorites: !currentFilter.onlyFavorites })} className={`w-full flex items-center justify-between p-2 rounded-lg border transition-all ${currentFilter.onlyFavorites ? 'bg-[#FFD1D1]/10 border-[#FFD1D1] text-[#FFD1D1]' : 'bg-[#121212] border-white/10 text-gray-400 hover:border-white/30'}`}>
-                                <span className="text-xs font-medium flex items-center gap-2"><Heart className={`w-3.5 h-3.5 ${currentFilter.onlyFavorites ? 'fill-current' : ''}`} /> Show Favorites Only</span>
-                                {currentFilter.onlyFavorites && <Check className="w-3.5 h-3.5" />}
-                            </button>
+                            {showFavoritesFilter && (
+                                <>
+                                    <button onClick={() => onFilterChange({ ...currentFilter, onlyFavorites: !currentFilter.onlyFavorites })} className={`w-full flex items-center justify-between p-2 rounded-lg border transition-all ${currentFilter.onlyFavorites ? 'bg-[#FFD1D1]/10 border-[#FFD1D1] text-[#FFD1D1]' : 'bg-[#121212] border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                        <span className="text-xs font-medium flex items-center gap-2"><Heart className={`w-3.5 h-3.5 ${currentFilter.onlyFavorites ? 'fill-current' : ''}`} /> Show Favorites Only</span>
+                                        {currentFilter.onlyFavorites && <Check className="w-3.5 h-3.5" />}
+                                    </button>
 
-                            <div className="border-t border-white/10 my-2"></div>
+                                    <div className="border-t border-white/10 my-2"></div>
+                                </>
+                            )}
 
                             {/* Sort Section */}
                             <div>

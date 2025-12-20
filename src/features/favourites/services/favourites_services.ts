@@ -67,19 +67,19 @@ export async function checkIsFavourite(itemId: string, itemType: ItemType): Prom
 /**
  * Get all favourite tracks for the current user
  */
-export async function getFavouriteTracks(): Promise<string[]> {
+export async function getFavouriteTracks(): Promise<{ item_id: string; created_at: string }[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
     const { data, error } = await supabase
         .from('favorites')
-        .select('item_id')
+        .select('item_id, created_at')
         .eq('user_id', user.id)
         .eq('item_type', 'track')
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data.map(item => item.item_id);
+    return data;
 }
 
 /**
@@ -103,17 +103,17 @@ export async function getFavouritePlaylists(): Promise<string[]> {
 /**
  * Get all favourite albums for the current user
  */
-export async function getFavouriteAlbums(): Promise<string[]> {
+export async function getFavouriteAlbums(): Promise<{ item_id: string; created_at: string }[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
     const { data, error } = await supabase
         .from('favorites')
-        .select('item_id')
+        .select('item_id, created_at')
         .eq('user_id', user.id)
         .eq('item_type', 'album')
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data.map(item => item.item_id);
+    return data;
 }

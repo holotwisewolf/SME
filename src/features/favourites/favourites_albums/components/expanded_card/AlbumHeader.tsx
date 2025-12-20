@@ -184,17 +184,17 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = ({
             </div>
 
             {/* Tags Container */}
-            <div className="flex-1 w-full">
-                <div className="flex items-center gap-2 mb-3">
+            <div className="w-full shrink-0">
+                <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-xs text-gray-400 uppercase tracking-wider font-medium">Tags</h3>
                 </div>
-                {/* Fixed max-height with subtle scrollbar styling like playlist */}
-                <div className="flex flex-wrap gap-2 max-h-[80px] overflow-y-auto content-start pr-1 scrollbar-thin scrollbar-thumb-white/10">
+                {/* Compact container with smaller tags */}
+                <div className="flex flex-wrap gap-1.5 max-h-[46px] overflow-y-auto content-start pr-1 scrollbar-thin scrollbar-thumb-white/10">
                     {tags.length > 0 ? (
                         tags.map((tag, index) => (
                             <span
                                 key={index}
-                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-full border border-white/5 transition-colors flex items-center gap-1 group"
+                                className="px-2 py-1 bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] rounded-full border border-white/5 transition-colors"
                             >
                                 #{tag}
                             </span>

@@ -13,8 +13,8 @@ const YourAlbums: React.FC = () => {
 
     const loadAlbums = async () => {
         try {
-            const albumIds = await getFavouriteAlbums();
-            setAlbums(albumIds);
+            const albumsData = await getFavouriteAlbums();
+            setAlbums(albumsData.map(a => a.item_id));
         } catch (error) {
             console.error('Error loading albums:', error);
         } finally {

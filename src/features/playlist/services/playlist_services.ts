@@ -553,15 +553,19 @@ export async function addPlaylistTag(playlistId: string, tag: string): Promise<v
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    // Sanitize tag name: lowercase letters only
+    const sanitizedTag = tag.toLowerCase().replace(/[^a-z]/g, '');
+    if (!sanitizedTag) throw new Error('Tag must contain at least one letter');
+
     let tagId: string;
-    const { data: existingTag } = await supabase.from('tags').select('id').eq('name', tag).maybeSingle();
+    const { data: existingTag } = await supabase.from('tags').select('id').eq('name', sanitizedTag).maybeSingle();
 
     if (existingTag) {
         tagId = existingTag.id;
     } else {
         const { data: newTag, error: createError } = await supabase
             .from('tags')
-            .insert({ name: tag, type: 'custom', creator_id: user.id })
+            .insert({ name: sanitizedTag, type: 'custom', creator_id: user.id })
             .select('id')
             .single();
 

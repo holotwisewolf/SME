@@ -11,34 +11,51 @@ export async function submitPersonalRating(
     itemId: string,
     itemType: ItemType,
     ratingValue: number
-    // Removed isPublic argument
 ): Promise<Rating[]> {
-    const { data, error } = await supabase
+    // Check if rating exists
+    const { data: existingRating } = await supabase
         .from('ratings')
-        .upsert(
-            {
+        .select('id')
+        .eq('user_id', userId)
+        .eq('item_id', itemId)
+        .eq('item_type', itemType)
+        .maybeSingle();
+
+    let data, error;
+
+    if (existingRating) {
+        // Update existing rating
+        const result = await supabase
+            .from('ratings')
+            .update({
+                rating: ratingValue,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', existingRating.id)
+            .select();
+        data = result.data;
+        error = result.error;
+    } else {
+        // Insert new rating
+        const result = await supabase
+            .from('ratings')
+            .insert({
                 user_id: userId,
                 item_id: itemId,
                 item_type: itemType,
                 rating: ratingValue,
-                // Visibility is handled by RLS policies checking profiles.is_public_profile
-            },
-            {
-                onConflict: 'user_id,item_id,item_type',
-                ignoreDuplicates: false,
-            }
-        )
-        .select();
+            })
+            .select();
+        data = result.data;
+        error = result.error;
+    }
 
     if (error) {
         console.error('Error submitting personal rating:', error);
         throw new Error(`Failed to submit personal rating: ${error.message}`);
     }
 
-    // Activity log is handled by DB trigger on 'ratings' table insert
-    // Removed manual insertion to prevent duplicates
-
-    return data;
+    return data || [];
 }
 
 /**

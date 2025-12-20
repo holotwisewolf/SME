@@ -12,6 +12,16 @@ async function getCurrentUserId(): Promise<string> {
 }
 
 /**
+ * Sanitize tag name: lowercase letters only, no numbers or symbols
+ * Removes all non-letter characters and converts to lowercase
+ */
+export function sanitizeTagName(tagName: string): string {
+  return tagName
+    .toLowerCase()           // Convert to lowercase
+    .replace(/[^a-z]/g, ''); // Remove anything that's not a lowercase letter
+}
+
+/**
  * Fetch all tags (system + custom)
  */
 export async function getAllTags(): Promise<Tag[]> {
@@ -58,18 +68,25 @@ export async function getUserCustomTags(): Promise<Tag[]> {
 /**
  * Create a tag (custom or premade)
  * If a tag with the same name and type already exists, returns the existing tag
+ * Tag names are sanitized to lowercase letters only
  */
 export async function createTag(
   tagName: string,
   type: TagType = 'custom'
 ): Promise<Tag> {
   const userId = await getCurrentUserId();
+  const sanitizedName = sanitizeTagName(tagName);
+
+  // Validate sanitized name is not empty
+  if (!sanitizedName) {
+    throw new Error('Tag name must contain at least one letter');
+  }
 
   // First, check if tag already exists
   const { data: existingTag } = await supabase
     .from('tags')
     .select()
-    .eq('name', tagName)
+    .eq('name', sanitizedName)
     .eq('type', type)
     .maybeSingle();
 
@@ -82,7 +99,7 @@ export async function createTag(
   const { data, error } = await supabase
     .from('tags')
     .insert({
-      name: tagName,
+      name: sanitizedName,
       type,
       creator_id: userId,
     })

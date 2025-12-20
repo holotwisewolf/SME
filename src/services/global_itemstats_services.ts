@@ -63,3 +63,23 @@ export async function getAverageRating(
     const stats = await getItemStats(itemId, itemType);
     return stats?.average_rating ?? null;
 }
+
+/**
+ * Fetch stats for multiple items efficiently.
+ * Useful for lists to avoid N+1 queries.
+ */
+export async function getMultipleItemStats(
+    itemIds: string[],
+    itemType: ItemType
+): Promise<ItemStats[]> {
+    if (itemIds.length === 0) return [];
+
+    const { data, error } = await supabase
+        .from("item_stats")
+        .select("*")
+        .in("item_id", itemIds)
+        .eq("item_type", itemType);
+
+    if (error) throw error;
+    return (data as ItemStats[]) ?? [];
+}

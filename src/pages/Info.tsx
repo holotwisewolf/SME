@@ -1,12 +1,12 @@
 import React from 'react';
-import { 
-  Database, 
-  Star, 
-  Tags, 
-  Share2, 
-  GitMerge, 
-  Users, 
-  ShieldCheck, 
+import {
+  Database,
+  Star,
+  Tags,
+  Share2,
+  GitMerge,
+  Users,
+  ShieldCheck,
   Zap,
   AlertTriangle,
   Clock
@@ -16,7 +16,7 @@ export default function InfoPage() {
   return (
     <div className="min-h-screen bg-[#696969] text-white p-6 md:p-12 overflow-y-auto">
       <div className="max-w-6xl mx-auto space-y-20">
-        
+
         {/* --- Hero Section --- */}
         <section className="text-center space-y-6 pt-10">
           <div className="inline-block px-4 py-1.5 rounded-full border border-[#FFD1D1]/50 bg-[#FFD1D1]/10 text-[#FFD1D1] text-sm font-bold tracking-widest mb-4 uppercase">
@@ -26,24 +26,24 @@ export default function InfoPage() {
             Spotify Music Explorer
           </h1>
           <p className="text-xl text-white/80 max-w-3xl mx-auto leading-relaxed font-medium">
-            A robust discovery platform designed to bridge the gap between music streaming and community interaction. 
+            A robust discovery platform designed to bridge the gap between music streaming and community interaction.
             Featuring advanced <span className="text-[#FFD1D1] font-bold">tagging</span>, <span className="text-[#FFD1D1] font-bold">global ratings</span>, and a custom <span className="text-[#FFD1D1] font-bold">graph-based recommendation engine</span>.
           </p>
         </section>
 
         {/* --- Features Section (Project Goals) --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <InfoCard 
+          <InfoCard
             icon={<Star className="w-8 h-8 text-[#FFD1D1]" />}
             title="Granular Ratings"
-            desc="Moving beyond the simple 'Like' button. Rate Tracks, Albums, and Playlists on a 1-10 scale to create a nuanced personal library."
+            desc="Moving beyond the simple 'Like' button. Rate Tracks, Albums, and Playlists on a 1-5 scale to create a nuanced personal library."
           />
-          <InfoCard 
+          <InfoCard
             icon={<Tags className="w-8 h-8 text-[#FFD1D1]" />}
             title="Deep Organization"
             desc="The ultimate tagging system. Categorize music by Mood, Vibe, or Custom Tags, allowing for powerful filtering and search."
           />
-          <InfoCard 
+          <InfoCard
             icon={<GitMerge className="w-8 h-8 text-[#FFD1D1]" />}
             title="Graph Discovery"
             desc="Our 'For You' page uses a graph traversal algorithm, connecting nodes (artists, genres, tags) to find similar content based on user preferences."
@@ -58,7 +58,7 @@ export default function InfoPage() {
           <h2 className="text-3xl font-bold mb-8 flex items-center gap-3 text-white">
             <Database className="text-[#FFD1D1]" /> System Architecture
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
             <div>
               <h3 className="text-xl font-bold mb-4 text-[#FFD1D1]">Core Stack</h3>
@@ -95,31 +95,31 @@ export default function InfoPage() {
             <ShieldCheck size={14} /> Data & Access Information
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* Login Restriction Info */}
             <div className="bg-black/10 border border-white/5 p-5 rounded-xl flex items-start gap-4 transition-colors hover:bg-black/20">
-                <div className="p-2.5 bg-white/5 rounded-lg shrink-0 border border-white/5">
-                    <AlertTriangle className="w-5 h-5 text-[#FFD1D1]" />
-                </div>
-                <div>
-                    <h4 className="text-md font-bold text-white/90 mb-1">Spotify Login Restricted</h4>
-                    <p className="text-white/60 text-xs leading-relaxed">
-                        Currently in <span className="text-[#FFD1D1]">Developer Mode</span>. Only authorized developer accounts can log in via Spotify. Please use <strong>Email Sign Up</strong> to access the platform.
-                    </p>
-                </div>
+              <div className="p-2.5 bg-white/5 rounded-lg shrink-0 border border-white/5">
+                <AlertTriangle className="w-5 h-5 text-[#FFD1D1]" />
+              </div>
+              <div>
+                <h4 className="text-md font-bold text-white/90 mb-1">Spotify Login Restricted</h4>
+                <p className="text-white/60 text-xs leading-relaxed">
+                  Currently in <span className="text-[#FFD1D1]">Developer Mode</span>. Only authorized developer accounts can log in via Spotify. Please use <strong>Email Sign Up</strong> to access the platform.
+                </p>
+              </div>
             </div>
 
             {/* Retention Policy Info */}
             <div className="bg-black/10 border border-white/5 p-5 rounded-xl flex items-start gap-4 transition-colors hover:bg-black/20">
-                <div className="p-2.5 bg-white/5 rounded-lg shrink-0 border border-white/5">
-                    <Clock className="w-5 h-5 text-[#FFD1D1]" />
-                </div>
-                <div>
-                    <h4 className="text-md font-bold text-white/90 mb-1">Data Retention Policy</h4>
-                    <p className="text-white/60 text-xs leading-relaxed">
-                        To maintain server performance, inactive accounts are automatically deleted after <span className="text-[#FFD1D1] font-bold">60 days</span>. All personal ratings and tags will be wiped.
-                    </p>
-                </div>
+              <div className="p-2.5 bg-white/5 rounded-lg shrink-0 border border-white/5">
+                <Clock className="w-5 h-5 text-[#FFD1D1]" />
+              </div>
+              <div>
+                <h4 className="text-md font-bold text-white/90 mb-1">Data Retention Policy</h4>
+                <p className="text-white/60 text-xs leading-relaxed">
+                  To maintain server performance, inactive accounts are automatically deleted after <span className="text-[#FFD1D1] font-bold">60 days</span>. All personal ratings and tags will be wiped.
+                </p>
+              </div>
             </div>
 
           </div>
@@ -132,7 +132,7 @@ export default function InfoPage() {
             <span>Powered by</span>
             <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_White.png" alt="Spotify" className="h-6 opacity-80" />
             <span className="mx-2">|</span>
-            <span className="flex items-center gap-1"><Database size={14}/> Supabase</span>
+            <span className="flex items-center gap-1"><Database size={14} /> Supabase</span>
           </div>
         </footer>
 
