@@ -30,8 +30,9 @@ import { PlaylistSettings } from './PlaylistSettings';
 import { PlaylistReview } from './PlaylistReview';
 import ExpandButton from '../../../../components/ui/ExpandButton';
 import { TrackReviewModal } from '../../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
-import { exportPlaylistToSpotify, isSpotifyConnected } from '../../../spotify/services/spotify_auth';
+import { exportPlaylistToSpotify, isSpotifyConnected, checkSpotifyTokenValid, refreshSpotifyToken, signInWithSpotify } from '../../../spotify/services/spotify_auth';
 import { useConfirmation } from '../../../../context/ConfirmationContext';
+import SpotifyReconnectModal from '../../../../components/ui/SpotifyReconnectModal';
 import type { EnhancedPlaylist } from '../../services/playlist_services';
 
 interface ExpandedPlaylistCardProps {
@@ -89,6 +90,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
     const [searchQuery, setSearchQuery] = useState('');
     const [isOwner, setIsOwner] = useState(false);
     const [isFavourite, setIsFavourite] = useState(false);
+    const [showSpotifyReconnect, setShowSpotifyReconnect] = useState(false); // DEV: set to true for testing
 
     // --- Effects ---
 
@@ -301,39 +303,63 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
         if (!confirmed) return;
 
         try {
+            // First check if user has Spotify connection at all
             const connected = await isSpotifyConnected();
             if (!connected) {
                 showError('Please sign in with Spotify to export playlists');
                 return;
             }
 
-            const trackSpotifyIds = tracks
-                .map(t => t.spotify_track_id)
-                .filter((id): id is string => !!id);
-
-            if (trackSpotifyIds.length === 0) {
-                showError('No tracks to export');
+            // Check if the token is still valid
+            const tokenValid = await checkSpotifyTokenValid();
+            if (!tokenValid) {
+                // Token expired - show reconnect modal
+                setShowSpotifyReconnect(true);
                 return;
             }
 
-            const result = await exportPlaylistToSpotify(
-                playlist.title || 'Untitled Playlist',
-                playlist.description,
-                trackSpotifyIds
-            );
-
-            if (result.success) {
-                showSuccess(`Playlist exported to Spotify!${result.playlistUrl ? ' Opening...' : ''}`);
-                if (result.playlistUrl) {
-                    window.open(result.playlistUrl, '_blank');
-                }
-            } else {
-                showError(result.error || 'Failed to export playlist');
-            }
+            // Proceed with export
+            await executeSpotifyExport();
         } catch (error) {
             console.error('Error exporting to Spotify:', error);
             showError('Failed to export playlist to Spotify');
         }
+    };
+
+    const executeSpotifyExport = async () => {
+        const trackSpotifyIds = tracks
+            .map(t => t.spotify_track_id)
+            .filter((id): id is string => !!id);
+
+        if (trackSpotifyIds.length === 0) {
+            showError('No tracks to export');
+            return;
+        }
+
+        const result = await exportPlaylistToSpotify(
+            playlist.title || 'Untitled Playlist',
+            playlist.description,
+            trackSpotifyIds
+        );
+
+        if (result.success) {
+            showSuccess(`Playlist exported to Spotify!${result.playlistUrl ? ' Opening...' : ''}`);
+            if (result.playlistUrl) {
+                window.open(result.playlistUrl, '_blank');
+            }
+        } else {
+            showError(result.error || 'Failed to export playlist');
+        }
+    };
+
+    const handleSpotifyReconnect = async (): Promise<boolean> => {
+        const success = await refreshSpotifyToken();
+        if (success) {
+            showSuccess('Spotify reconnected! You can now export.');
+            // Retry the export after successful reconnect
+            await executeSpotifyExport();
+        }
+        return success;
     };
 
     const handleCopyPlaylist = async () => {
@@ -566,6 +592,13 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = ({
                     onClose={() => setSelectedTrack(null)}
                 />
             )}
+
+            <SpotifyReconnectModal
+                isOpen={showSpotifyReconnect}
+                onClose={() => setShowSpotifyReconnect(false)}
+                onReconnect={handleSpotifyReconnect}
+                onFullLogin={signInWithSpotify}
+            />
 
         </div>,
         document.body

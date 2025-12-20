@@ -10,7 +10,7 @@ export async function signInWithSpotify() {
     options: {
       scopes: 'user-read-email user-read-private playlist-read-private playlist-read-collaborative user-library-read user-top-read playlist-modify-public playlist-modify-private',
       redirectTo: window.location.origin + '/setup-profile',
-      
+
       // FIX: Force Spotify to show the login dialog every time.
       // This allows users to click "Not you?" and switch accounts.
       queryParams: {
@@ -62,6 +62,54 @@ export async function getSpotifyUserId(): Promise<string | null> {
 export async function isSpotifyConnected(): Promise<boolean> {
   const token = await getSpotifyUserToken();
   return !!token;
+}
+
+/**
+ * Check if the current Spotify token is still valid by making a test API call.
+ * Returns true if valid, false if expired or invalid.
+ */
+export async function checkSpotifyTokenValid(): Promise<boolean> {
+  const token = await getSpotifyUserToken();
+  if (!token) return false;
+
+  try {
+    const response = await fetch('https://api.spotify.com/v1/me', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Attempt to refresh the Spotify access token using the refresh token.
+ * Returns true if successful, false if refresh failed (user needs to re-login).
+ */
+export async function refreshSpotifyToken(): Promise<boolean> {
+  try {
+    // Supabase's refreshSession() will also refresh the provider token if available
+    const { data, error } = await supabase.auth.refreshSession();
+
+    if (error || !data.session) {
+      console.error('Failed to refresh session:', error);
+      return false;
+    }
+
+    // Check if we got a fresh provider token
+    const newToken = data.session.provider_token;
+    if (!newToken) {
+      console.warn('No provider token after refresh - full re-auth needed');
+      return false;
+    }
+
+    // Verify the new token works
+    const isValid = await checkSpotifyTokenValid();
+    return isValid;
+  } catch (error) {
+    console.error('Error refreshing Spotify token:', error);
+    return false;
+  }
 }
 
 /**
