@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { updatePlaylistDescription, updatePlaylistRating, deletePlaylistRating } from '../services/playlist_services';
-import { getPreMadeTags, assignTagToItem, createCustomTag, searchTags, removeTagFromItem } from '../../tags/services/tag_services';
+import { getPreMadeTags, assignTagToItem, searchTags, removeTagFromItem } from '../../tags/services/tag_services';
 import type { Tag } from '../../tags/type/tag_types';
 import { useError } from '../../../context/ErrorContext';
 import { useSuccess } from '../../../context/SuccessContext';
@@ -87,22 +87,43 @@ export const usePlaylistReview = ({
 
     const handleAddCustomTag = async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && customTagInput.trim()) {
-            const tagName = customTagInput.trim();
-            if (tags.includes(tagName)) { showError('Tag already added'); return; }
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) { showError('Log in to add tags'); return; }
+
+            // CRITICAL FIX: Sanitize BEFORE checking/displaying
+            const rawTag = customTagInput.trim();
+            const sanitizedTag = rawTag.toLowerCase().replace(/[^a-z]/g, '');
+
+            // Validate sanitized tag is not empty
+            if (!sanitizedTag) {
+                showError('Tag must contain at least one letter');
+                setCustomTagInput('');
+                return;
+            }
+
+            // Check if sanitized tag already exists
+            if (tags.includes(sanitizedTag)) {
+                showError('Tag already added');
+                setCustomTagInput('');
+                return;
+            }
+
+            // Show what the tag will actually be saved as
+            if (rawTag !== sanitizedTag) {
+                console.log(`Tag sanitized: "${rawTag}" → "${sanitizedTag}"`);
+            }
+
             const prevTags = [...tags];
-            const optimisticTags = [...tags, tagName];
+            const optimisticTags = [...tags, sanitizedTag];
             setTags(optimisticTags);
             if (onTagsUpdate) onTagsUpdate(optimisticTags);
             setCustomTagInput('');
+
             try {
-                const existingTags = await searchTags(tagName);
-                let tagToAssign;
-                if (existingTags.length > 0 && existingTags[0].name.toLowerCase() === tagName.toLowerCase()) tagToAssign = existingTags[0];
-                else tagToAssign = await createCustomTag(tagName);
-                await assignTagToItem(playlist.id, 'playlist', tagToAssign.id);
-                showSuccess(`Tag #${tagToAssign.name} added`);
+                // Use addItemTag which creates custom tag if needed and links it
+                const { addItemTag } = await import('../../favourites/services/item_services');
+                await addItemTag(playlist.id, 'playlist', sanitizedTag);
+                showSuccess(`Tag #${sanitizedTag} added`);
             } catch (error) {
                 console.error('Error adding custom tag:', error);
                 showError('Failed to add custom tag');

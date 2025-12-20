@@ -134,22 +134,44 @@ export const useTrackReview = ({ track, onClose, onRemove }: UseTrackReviewProps
                 return;
             }
 
-            const tagToAdd = newTag.trim();
-            if (personalTags.includes(tagToAdd)) {
+            // CRITICAL FIX: Sanitize BEFORE checking/displaying
+            const rawTag = newTag.trim();
+            const sanitizedTag = rawTag.toLowerCase().replace(/[^a-z]/g, '');
+
+            // Validate sanitized tag is not empty
+            if (!sanitizedTag) {
+                showError('Tag must contain at least one letter');
+                setNewTag('');
+                return;
+            }
+
+            // Check if sanitized tag already exists (not the raw input)
+            if (personalTags.includes(sanitizedTag)) {
                 showError('Tag already exists');
                 setNewTag('');
                 return;
             }
 
+            // Show what the tag will actually be saved as
+            if (rawTag !== sanitizedTag) {
+                console.log(`Tag sanitized: "${rawTag}" → "${sanitizedTag}"`);
+            }
+
             try {
                 const { addItemTag } = await import('../../services/item_services');
-                await addItemTag(track.id, 'track', tagToAdd);
-                setPersonalTags([...personalTags, tagToAdd]);
-                if (!communityTags.includes(tagToAdd)) {
-                    setCommunityTags([...communityTags, tagToAdd]);
+
+                // Add to database (this will sanitize again server-side)
+                await addItemTag(track.id, 'track', sanitizedTag);
+
+                // IMPORTANT: Add the SANITIZED version to UI state, not the raw input
+                setPersonalTags([...personalTags, sanitizedTag]);
+
+                if (!communityTags.includes(sanitizedTag)) {
+                    setCommunityTags([...communityTags, sanitizedTag]);
                 }
+
                 setNewTag('');
-                showSuccess(`Tag #${tagToAdd} added`);
+                showSuccess(`Tag #${sanitizedTag} added`);
             } catch (error) {
                 console.error('Error adding tag:', error);
                 showError('Failed to add tag');

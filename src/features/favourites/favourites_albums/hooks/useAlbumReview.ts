@@ -104,20 +104,40 @@ export const useAlbumReview = ({
                 return;
             }
 
-            const tagToAdd = newTag.trim();
-            if (tags.includes(tagToAdd)) {
-                showError('Tag already exists');
+            // CRITICAL FIX: Sanitize BEFORE checking/displaying
+            const rawTag = newTag.trim();
+            const sanitizedTag = rawTag.toLowerCase().replace(/[^a-z]/g, '');
+
+            // Validate sanitized tag is not empty
+            if (!sanitizedTag) {
+                showError('Tag must contain at least one letter');
+                setNewTag('');
                 return;
+            }
+
+            // Check if sanitized tag already exists
+            if (tags.includes(sanitizedTag)) {
+                showError('Tag already exists');
+                setNewTag('');
+                return;
+            }
+
+            // Show what the tag will actually be saved as
+            if (rawTag !== sanitizedTag) {
+                console.log(`Tag sanitized: "${rawTag}" → "${sanitizedTag}"`);
             }
 
             try {
                 // Use addItemTag which creates custom tag if needed and links it
                 const { addItemTag } = await import('../../services/item_services');
-                await addItemTag(albumId, 'album', tagToAdd);
-                setTags([...tags, tagToAdd]);
+                await addItemTag(albumId, 'album', sanitizedTag);
+
+                // IMPORTANT: Add the SANITIZED version to UI state
+                setTags([...tags, sanitizedTag]);
+
                 setNewTag('');
                 setIsTagMenuOpen(false);
-                showSuccess(`Tag #${tagToAdd} added`);
+                showSuccess(`Tag #${sanitizedTag} added`);
             } catch (error) {
                 console.error('Error adding tag:', error);
                 showError('Failed to add tag');
