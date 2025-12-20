@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import AlbumCard from './AlbumCard';
-import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, closestCenter } from '@dnd-kit/core';
-import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
-import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { SortableAlbumCard } from './SortableAlbumCard';
+import { useAlbumGrid } from '../hooks/useAlbumGrid';
 
 interface AlbumGridProps {
     albums: string[]; // Array of album IDs
@@ -12,46 +12,14 @@ interface AlbumGridProps {
 }
 
 const AlbumGrid: React.FC<AlbumGridProps> = ({ albums, onDelete, searchQuery = '' }) => {
-    const [removedAlbums, setRemovedAlbums] = useState<Set<string>>(new Set());
-    const [sortedAlbums, setSortedAlbums] = useState<string[]>(albums);
-    const [activeAlbum, setActiveAlbum] = useState<string | null>(null);
-
-    // Update sorted albums when props change
-    React.useEffect(() => {
-        setSortedAlbums(albums);
-    }, [albums]);
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        })
-    );
-
-    const handleRemove = (albumId: string) => {
-        setRemovedAlbums(prev => new Set([...prev, albumId]));
-        onDelete?.();
-    };
-
-    const handleDragStart = (event: DragStartEvent) => {
-        setActiveAlbum(event.active.id as string);
-    };
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveAlbum(null);
-
-        if (over && active.id !== over.id) {
-            const oldIndex = sortedAlbums.indexOf(active.id as string);
-            const newIndex = sortedAlbums.indexOf(over.id as string);
-
-            const newOrder = arrayMove(sortedAlbums, oldIndex, newIndex);
-            setSortedAlbums(newOrder);
-        }
-    };
-
-    const visibleAlbums = sortedAlbums.filter(id => !removedAlbums.has(id));
+    const {
+        activeAlbum,
+        visibleAlbums,
+        sensors,
+        handleRemove,
+        handleDragStart,
+        handleDragEnd
+    } = useAlbumGrid({ albums, onDelete });
 
     return (
         <DndContext

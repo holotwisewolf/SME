@@ -1,26 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { getFavouriteAlbums } from '../services/favourites_services';
+import React from 'react';
 import AlbumGrid from './components/AlbumGrid';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import { useYourAlbums } from './hooks/useYourAlbums';
 
 const YourAlbums: React.FC = () => {
-    const [albums, setAlbums] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        loadAlbums();
-    }, []);
-
-    const loadAlbums = async () => {
-        try {
-            const albumsData = await getFavouriteAlbums();
-            setAlbums(albumsData.map(a => a.item_id));
-        } catch (error) {
-            console.error('Error loading albums:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { albums, loading, loadAlbums } = useYourAlbums();
 
     if (loading) {
         return (
