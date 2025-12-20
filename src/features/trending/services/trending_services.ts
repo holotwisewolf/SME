@@ -481,16 +481,15 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
     try {
         const offset = (page - 1) * limit;
 
-        // Use the recent_activity_feed view (pre-merged activity stream)
-        const { data: activities, error } = await supabase
-            .from('recent_activity_feed')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .range(offset, offset + limit - 1);
+        // Use a window function to get only the latest activity per user/type/item combo
+        const { data: activities, error } = await supabase.rpc('get_latest_activities', {
+            p_limit: limit,
+            p_offset: offset
+        });
 
         if (error) {
             console.error('Error fetching recent activity from view:', error);
-            return [];
+            return getRecentActivityFallback(limit, page);
         }
 
         if (!activities || activities.length === 0) return [];
@@ -619,6 +618,45 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
         console.error('Error in getRecentActivity:', error);
         return [];
     }
+}
+
+/**
+ * Fallback method using client-side deduplication if database function doesn't exist
+ */
+async function getRecentActivityFallback(limit = 10, page = 1): Promise<any[]> {
+    const offset = (page - 1) * limit;
+
+    // Fetch more than needed to account for deduplication
+    const fetchLimit = limit * 3;
+
+    const { data: activities, error } = await supabase
+        .from('recent_activity_feed')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + fetchLimit - 1);
+
+    if (error || !activities) return [];
+
+    // Deduplicate: Keep only the latest activity per user/item/activity_type combo
+    const seen = new Map<string, any>();
+
+    activities.forEach(activity => {
+        const key = `${activity.user_id}_${activity.item_id}_${activity.activity_type}`;
+        const existing = seen.get(key);
+
+        // Keep the one with the latest timestamp (handle nulls safely)
+        const currentParams = activity.created_at || new Date(0).toISOString();
+        const existingParams = existing?.created_at || new Date(0).toISOString();
+
+        if (!existing || new Date(currentParams) > new Date(existingParams)) {
+            seen.set(key, activity);
+        }
+    });
+
+    // Convert back to array, sort by created_at, and limit
+    return Array.from(seen.values())
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, limit);
 }
 
 /**
