@@ -10,5 +10,4 @@ export interface ITagService {
     removeTagFromItem(itemId: string, itemType: ItemType, tagId: string): Promise<void>;
     getItemTags(itemId: string, itemType: ItemType): Promise<Tag[]>;
     searchTags(query: string): Promise<Tag[]>;
-    createCustomTag(name: string): Promise<Tag>;
 }

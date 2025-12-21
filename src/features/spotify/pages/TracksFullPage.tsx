@@ -22,7 +22,8 @@ export function TracksFullPage() {
         favoritedTracks,
         handleLoadMore,
         handleTrackClick,
-        handleToggleFavourite
+        handleToggleFavourite,
+        handleFavoriteChange
     } = useTracksFullPage();
 
     const { playPreview, stopPreview } = useTrackPreview();
@@ -120,6 +121,7 @@ export function TracksFullPage() {
                 <TrackReviewModal
                     track={selectedTrack}
                     onClose={() => setSelectedTrack(null)}
+                    onFavoriteChange={(isFavorite) => handleFavoriteChange(selectedTrack.id, isFavorite)}
                 />
             )}
 

@@ -41,7 +41,7 @@ export const useAppSidebar = () => {
                 { path: '/discovery/for-you', icon: Sparkles, label: 'For You' }
             ]
         },
-        { path: '/Info', icon: infoIcon, label: 'Info' },
+        { path: '/about', icon: infoIcon, label: 'About' },
         { path: '/testing-ground', icon: SettingsIcon, label: 'Testing Ground', requiredRole: 'dev' },
     ];
 

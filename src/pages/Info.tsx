@@ -12,7 +12,7 @@ import {
   Clock
 } from 'lucide-react';
 
-export default function InfoPage() {
+export default function AboutPage() {
   return (
     <div className="min-h-screen bg-[#696969] text-white p-6 md:p-12 overflow-y-auto">
       <div className="max-w-6xl mx-auto space-y-20">
@@ -20,7 +20,7 @@ export default function InfoPage() {
         {/* --- Hero Section --- */}
         <section className="text-center space-y-6 pt-10">
           <div className="inline-block px-4 py-1.5 rounded-full border border-[#FFD1D1]/50 bg-[#FFD1D1]/10 text-[#FFD1D1] text-sm font-bold tracking-widest mb-4 uppercase">
-            Info Page
+            About
           </div>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white drop-shadow-lg">
             Spotify Music Explorer

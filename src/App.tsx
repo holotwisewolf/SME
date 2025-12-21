@@ -13,7 +13,7 @@ import LibraryPlaylists from "./pages/library/LibraryPlaylists";
 import LibraryTracks from "./pages/library/LibraryTracks";
 import LibraryAlbums from "./pages/library/LibraryAlbums";
 
-import Info from "./pages/Info";
+import About from "./pages/Info";
 import SignUpPage from "./features/auth/pages/SignUp";
 import TestingGround from "./features/dev/dev_pages/testing_ground";
 import DevRoute from "./features/dev/DevRoute";
@@ -110,12 +110,12 @@ function App() {
 
 
 
-                    {/* INFO */}
+                    {/* ABOUT */}
                     <Route
-                      path="/info"
+                      path="/about"
                       element={
                         <PageWrapper>
-                          <Info />
+                          <About />
                         </PageWrapper>
                       }
                     />

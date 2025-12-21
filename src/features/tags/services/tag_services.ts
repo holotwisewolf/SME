@@ -253,12 +253,7 @@ export async function searchTags(query: string): Promise<Tag[]> {
   return data ?? [];
 }
 
-/**
- * Legacy alias for createTag(..., "custom")
- */
-export function createCustomTag(name: string) {
-  return createTag(name, 'custom');
-}
+
 
 export const TagService: ITagService = {
   getAllTags,
@@ -268,6 +263,5 @@ export const TagService: ITagService = {
   assignTagToItem,
   removeTagFromItem,
   getItemTags,
-  searchTags,
-  createCustomTag
+  searchTags
 };

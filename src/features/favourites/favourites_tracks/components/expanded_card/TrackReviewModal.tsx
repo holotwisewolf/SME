@@ -14,6 +14,7 @@ interface TrackReviewModalProps {
     track: SpotifyTrack;
     onClose: () => void;
     onRemove?: () => void;
+    onFavoriteChange?: (isFavorite: boolean) => void;
 }
 
 export const TrackReviewModal: React.FC<TrackReviewModalProps> = (props) => {

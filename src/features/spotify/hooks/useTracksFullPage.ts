@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchTracks } from '../services/spotify_services';
-import { addToFavourites, removeFromFavourites } from '../../favourites/services/favourites_services';
+import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../favourites/services/favourites_services';
 import type { SpotifyTrack } from '../type/spotify_types';
 import { useSuccess } from '../../../context/SuccessContext';
 import { useError } from '../../../context/ErrorContext';
+import { supabase } from '../../../lib/supabaseClient';
 
 export const useTracksFullPage = () => {
     const [searchParams] = useSearchParams();
@@ -27,6 +28,37 @@ export const useTracksFullPage = () => {
     useEffect(() => {
         loadTracks(true);
     }, [artistId, artistName, search]);
+
+    // Load favorited status for all tracks
+    useEffect(() => {
+        const loadFavorites = async () => {
+            if (tracks.length === 0) return;
+
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                // Check favorite status for all tracks
+                const favoriteChecks = await Promise.all(
+                    tracks.map(track => checkIsFavourite(track.id, 'track'))
+                );
+
+                const newFavoritedSet = new Set<string>();
+                tracks.forEach((track, index) => {
+                    if (favoriteChecks[index]) {
+                        newFavoritedSet.add(track.id);
+                    }
+                });
+
+                setFavoritedTracks(newFavoritedSet);
+            } catch (error) {
+                console.error('Error loading favorites:', error);
+            }
+        };
+
+        loadFavorites();
+    }, [tracks.length]); // Only re-run when tracks array length changes
+
 
     const loadTracks = async (reset = false) => {
         if (reset) {
@@ -104,6 +136,18 @@ export const useTracksFullPage = () => {
         }
     };
 
+    const handleFavoriteChange = (trackId: string, isFavorite: boolean) => {
+        setFavoritedTracks(prev => {
+            const newSet = new Set(prev);
+            if (isFavorite) {
+                newSet.add(trackId);
+            } else {
+                newSet.delete(trackId);
+            }
+            return newSet;
+        });
+    };
+
     return {
         artistName,
         search,
@@ -116,6 +160,7 @@ export const useTracksFullPage = () => {
         favoritedTracks,
         handleLoadMore,
         handleTrackClick,
-        handleToggleFavourite
+        handleToggleFavourite,
+        handleFavoriteChange
     };
 };

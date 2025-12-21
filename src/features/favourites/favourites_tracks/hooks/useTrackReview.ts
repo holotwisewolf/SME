@@ -13,6 +13,7 @@ interface UseTrackReviewProps {
     track: SpotifyTrack;
     onClose: () => void;
     onRemove?: () => void;
+    onFavoriteChange?: (isFavorite: boolean) => void;
 }
 
 // Helper function to get track rating data
@@ -33,7 +34,7 @@ async function getTrackRating(trackId: string): Promise<{ average: number; count
     };
 }
 
-export const useTrackReview = ({ track, onClose, onRemove }: UseTrackReviewProps) => {
+export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange }: UseTrackReviewProps) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
 
@@ -235,6 +236,10 @@ export const useTrackReview = ({ track, onClose, onRemove }: UseTrackReviewProps
                     onRemove();
                     onClose();
                 }
+            }
+            // Notify parent component of the change
+            if (onFavoriteChange) {
+                onFavoriteChange(willBeFavourite);
             }
         } catch (error) {
             console.error('Error toggling favourite:', error);

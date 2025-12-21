@@ -48,16 +48,12 @@ export const TrackSettings: React.FC<TrackSettingsProps> = ({
                         {/* Add to Favorites */}
                         <button
                             onClick={onToggleFavourite}
-                            disabled={!onToggleFavourite}
+                            disabled={!onToggleFavourite || isFavourite}
                             className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors group mb-3 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <div className="flex items-center gap-3">
-                                <Heart
-                                    className={`w-5 h-5 transition-colors ${isFavourite ? 'text-red-500 fill-red-500' : 'text-[#1DB954]'}`}
-                                />
-                                <span className="text-gray-300">
-                                    {isFavourite ? 'Remove from Favorites' : 'Add to Favorites'}
-                                </span>
+                                <Heart className={`w-5 h-5 text-[#1DB954]`} />
+                                <span className="text-gray-300">Add to Favorites</span>
                             </div>
                         </button>
 
