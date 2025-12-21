@@ -317,15 +317,7 @@ export function formatDuration(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-export const logoutSpotify = () => {
-  localStorage.removeItem('spotify_access_token');
-  localStorage.removeItem('spotify_refresh_token');
-  localStorage.removeItem('spotify_token_expiry');
-  localStorage.removeItem('spotify_token_timestamp');
-  localStorage.removeItem('spotify_verifier');
 
-  console.log('Spotify tokens cleared from local storage');
-};
 
 export const SpotifyService = {
   searchTracks,
@@ -343,6 +335,5 @@ export const SpotifyService = {
   getTrackPreview,
   generateSpotifyLink,
   extractSpotifyId,
-  formatDuration,
-  logoutSpotify
+  formatDuration
 };
