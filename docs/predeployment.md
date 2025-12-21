@@ -1,4 +1,4 @@
-# 🚀 Before Deployment Checklist
+# Before Deployment Checklist
 
 This is a crucial checklist to run **before you share your project link publicly**.  
 These steps will save you from **security vulnerabilities**, **database bloat**, and **bot abuse**.

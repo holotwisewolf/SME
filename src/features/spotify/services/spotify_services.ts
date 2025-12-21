@@ -258,83 +258,6 @@ export async function getAlbumTracks(albumId: string) {
 }
 
 
-// ============================================
-// Playlist Management Functions
-// ============================================
-
-/**
- * Create a Spotify playlist for the user.
- * Requires playlist-modify-public or playlist-modify-private scope.
- */
-export async function createSpotifyPlaylist(
-  userId: string,
-  name: string,
-  description: string,
-  isPublic: boolean
-) {
-  const token = await getSpotifyToken();
-
-  // FIX: Updated to correct Spotify API endpoint
-  const response = await fetch(
-    `https://api.spotify.com/v1/users/${userId}/playlists`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        description,
-        public: isPublic,
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(
-      `Spotify Create Playlist Error ${response.status}: ${error.error?.message || response.statusText}`
-    );
-  }
-
-  return await response.json();
-}
-
-/**
- * Add tracks to an existing Spotify playlist.
- * Requires playlist-modify-public or playlist-modify-private scope.
- */
-export async function addTracksToSpotifyPlaylist(
-  playlistId: string,
-  trackUris: string[] // Array of Spotify URIs (e.g., spotify:track:ID)
-) {
-  const token = await getSpotifyToken();
-
-  // FIX: Updated to correct Spotify API endpoint
-  const response = await fetch(
-    `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        uris: trackUris,
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(
-      `Spotify Add Tracks Error ${response.status}: ${error.error?.message || response.statusText}`
-    );
-  }
-
-  return await response.json();
-}
 
 // ============================================
 // Helper/Utility Functions
@@ -416,8 +339,7 @@ export const SpotifyService = {
   getMultipleAlbums,
   getAlbum,
   getAlbumTracks,
-  createSpotifyPlaylist,
-  addTracksToSpotifyPlaylist,
+
   getTrackPreview,
   generateSpotifyLink,
   extractSpotifyId,

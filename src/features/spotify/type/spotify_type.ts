@@ -8,8 +8,7 @@ export interface ISpotifyService {
     getArtistDetails(artistId: string): Promise<any>;
     getMultipleTracks(trackIds: string[]): Promise<any>;
     getMultipleAlbums(albumIds: string[]): Promise<any>;
-    createSpotifyPlaylist(userId: string, name: string, description: string, isPublic: boolean): Promise<any>;
-    addTracksToSpotifyPlaylist(playlistId: string, trackUris: string[]): Promise<any>;
+
     getTrackPreview(trackId: string): Promise<string | null>;
     generateSpotifyLink(resourceId: string, type: 'track' | 'album' | 'artist' | 'playlist'): string;
     extractSpotifyId(input: string): string | null;

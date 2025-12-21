@@ -32,6 +32,7 @@ import { ErrorProvider } from "./context/ErrorContext";
 import ErrorMessage from "./components/ui/ErrorMessage";
 import { SuccessProvider } from "./context/SuccessContext";
 import SuccessMessage from "./components/ui/SuccessMessage";
+import MobileWarning from "./components/ui/MobileWarning";
 import { ConfirmationProvider } from "./context/ConfirmationContext";
 
 //new added for UserProfile
@@ -45,6 +46,7 @@ function App() {
         <ConfirmationProvider>
           <ErrorMessage />
           <SuccessMessage />
+          <MobileWarning />
           <LoginProvider>
             <AnimatePresence mode="wait">
               {location.pathname === "/signup" && (
