@@ -7,6 +7,7 @@ import { useFeaturedBanner } from '../hooks/useFeaturedBanner';
 interface FeaturedBannerProps {
     topThree: TrendingItem[];
     onItemClick: (item: TrendingItem) => void;
+    topItem?: TrendingItem;
 }
 
 const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }) => {
