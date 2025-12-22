@@ -78,6 +78,7 @@ export const useYourTracks = () => {
                 const data = await getMultipleTracks(batch);
 
                 const stats = await getMultipleItemStats(batch, 'track');
+                console.log('[YourTracks] Fetched item_stats for', batch.length, 'tracks:', stats.length, 'stats found');
                 const statsMap = new Map(stats.map(s => [s.item_id, s]));
 
                 const enhancedTracks: EnhancedTrack[] = await Promise.all(
@@ -85,10 +86,21 @@ export const useYourTracks = () => {
                         const itemStats = statsMap.get(track.id);
 
                         const [userRating, globalTags, userTags] = await Promise.all([
-                            user ? getUserItemRating(track.id, 'track').catch(() => null) : null,
-                            getItemTags(track.id, 'track').catch(() => []),
-                            user ? getCurrentUserItemTags(track.id, 'track').catch(() => []) : []
+                            user ? getUserItemRating(track.id, 'track').catch((e) => { console.warn('[YourTracks] getUserItemRating failed for', track.id, e); return null; }) : null,
+                            getItemTags(track.id, 'track').catch((e) => { console.warn('[YourTracks] getItemTags failed for', track.id, e); return []; }),
+                            user ? getCurrentUserItemTags(track.id, 'track').catch((e) => { console.warn('[YourTracks] getCurrentUserItemTags failed for', track.id, e); return []; }) : []
                         ]);
+
+                        // Debug log for first few tracks
+                        if (data.tracks.indexOf(track) < 3) {
+                            console.log('[YourTracks] Track', track.name, ':', {
+                                rating_avg: itemStats?.average_rating ?? 0,
+                                user_rating: userRating || 0,
+                                globalTags: globalTags.map(t => t.name),
+                                userTags: userTags.map(t => t.name),
+                                comment_count: itemStats?.comment_count ?? 0
+                            });
+                        }
 
                         return {
                             ...track,
@@ -103,6 +115,7 @@ export const useYourTracks = () => {
                     })
                 );
 
+                console.log('[YourTracks] Final enhanced tracks:', enhancedTracks.length);
                 setTracks(enhancedTracks);
             } else {
                 setTracks([]);
@@ -166,12 +179,15 @@ export const useYourTracks = () => {
         }
 
         // 4. Sorting
+        // UX NOTE: 'asc' (up arrow) = highest values at top (best first)
+        //          'desc' (down arrow) = lowest values at top
         if (activeSort !== 'custom') {
             processed.sort((a, b) => {
                 let valA: any, valB: any;
 
                 switch (activeSort) {
                     case 'alphabetical':
+                        // For alphabetical: 'asc' = A→Z at top, 'desc' = Z→A at top
                         return sortDirection === 'asc'
                             ? a.name.localeCompare(b.name)
                             : b.name.localeCompare(a.name);
@@ -195,7 +211,8 @@ export const useYourTracks = () => {
                 }
 
                 if (typeof valA === 'number' && typeof valB === 'number') {
-                    return sortDirection === 'asc' ? valA - valB : valB - valA;
+                    // INVERTED: 'asc' = highest first (valB - valA), 'desc' = lowest first (valA - valB)
+                    return sortDirection === 'asc' ? valB - valA : valA - valB;
                 }
                 return 0;
             });

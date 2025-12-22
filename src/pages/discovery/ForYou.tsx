@@ -150,7 +150,9 @@ const ForYou: React.FC = () => {
                 </div>
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center max-w-md">
-                        <h2 className="text-4xl font-bold text-[#FFD1D1] mb-2">!!</h2>
+                        <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                            <span className="text-2xl">!!</span>
+                        </div>
                         <p className="text-[#D1D1D1]/60">{error}</p>
                     </div>
                 </div>

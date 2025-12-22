@@ -205,6 +205,11 @@ export async function spotifyFetch<T = any>(
           res.statusText ||
           "Unknown Spotify API error";
 
+        // FIX: Improve error message for specific Spotify Dashboard error
+        if (msg.includes("User not registered in the Developer Dashboard") || res.status === 403) {
+          throw new Error("Access failed: Login was cancelled OR User is not registered in Spotify Developer Dashboard");
+        }
+
         throw new Error(`Spotify API Error ${res.status}: ${msg}`);
       }
 
