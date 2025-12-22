@@ -78,8 +78,13 @@ export async function getUserAverageRating(userId: string): Promise<number> {
 
 /**
  * Get user's ratings grouped by artist
+ * Can accept pre-fetched track/album maps to avoid duplicate API calls
  */
-async function getArtistRatings(userId: string): Promise<Map<string, number>> {
+async function getArtistRatings(
+    userId: string,
+    prefetchedTrackMap?: Map<string, any>,
+    prefetchedAlbumMap?: Map<string, any>
+): Promise<Map<string, number>> {
     const artistRatings = new Map<string, number>();
 
     // Get all user's track ratings
@@ -91,19 +96,26 @@ async function getArtistRatings(userId: string): Promise<Map<string, number>> {
 
     if (error || !ratings) return artistRatings;
 
-    // Group ratings by item type for batch fetching
-    const trackIds = ratings.filter(r => r.item_type === 'track').map(r => r.item_id);
-    const albumIds = ratings.filter(r => r.item_type === 'album').map(r => r.item_id);
+    let trackMap: Map<string, any>;
+    let albumMap: Map<string, any>;
 
-    // Fetch Spotify data to get artist info
-    const [tracksData, albumsData] = await Promise.all([
-        trackIds.length > 0 ? getMultipleTracks(trackIds.slice(0, 50)) : { tracks: [] },
-        albumIds.length > 0 ? getMultipleAlbums(albumIds.slice(0, 50)) : { albums: [] }
-    ]);
+    // Use prefetched data if available, otherwise fetch (should rarely happen)
+    if (prefetchedTrackMap && prefetchedAlbumMap) {
+        trackMap = prefetchedTrackMap;
+        albumMap = prefetchedAlbumMap;
+    } else {
+        // Fallback: fetch only if not provided (legacy/standalone usage)
+        const trackIds = ratings.filter(r => r.item_type === 'track').map(r => r.item_id);
+        const albumIds = ratings.filter(r => r.item_type === 'album').map(r => r.item_id);
 
-    // Create maps for quick lookup
-    const trackMap = new Map(tracksData.tracks?.map((t: any) => [t.id, t]) || []);
-    const albumMap = new Map(albumsData.albums?.map((a: any) => [a.id, a]) || []);
+        const [tracksData, albumsData] = await Promise.all([
+            trackIds.length > 0 ? getMultipleTracks(trackIds.slice(0, 50)) : { tracks: [] },
+            albumIds.length > 0 ? getMultipleAlbums(albumIds.slice(0, 50)) : { albums: [] }
+        ]);
+
+        trackMap = new Map(tracksData.tracks?.map((t: any) => [t.id, t]) || []);
+        albumMap = new Map(albumsData.albums?.map((a: any) => [a.id, a]) || []);
+    }
 
     // Calculate average rating per artist
     const artistRatingsSum = new Map<string, { sum: number; count: number }>();
@@ -176,10 +188,7 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
     // Calculate average rating
     const avgRating = await getUserAverageRating(userId);
 
-    // Get artist-specific ratings
-    const artistRatings = await getArtistRatings(userId);
-
-    // Collect artist IDs from favorites
+    // Collect artist IDs from favorites - FETCH FIRST to reuse for artist ratings
     const trackFavIds = (favorites || []).filter(f => f.item_type === 'track').map(f => f.item_id).slice(0, 50);
     const albumFavIds = (favorites || []).filter(f => f.item_type === 'album').map(f => f.item_id).slice(0, 50);
 
@@ -198,6 +207,13 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
         tracksReturned: tracksData.tracks?.length || 0,
         albumsReturned: albumsData.albums?.length || 0
     });
+
+    // Create maps for reuse by getArtistRatings
+    const trackMap = new Map(tracksData.tracks?.map((t: any) => [t.id, t]) || []);
+    const albumMap = new Map(albumsData.albums?.map((a: any) => [a.id, a]) || []);
+
+    // Get artist-specific ratings - pass pre-fetched maps to avoid duplicate API calls
+    const artistRatings = await getArtistRatings(userId, trackMap, albumMap);
 
     // Extract unique artist IDs
     const artistIds = new Set<string>();
@@ -256,7 +272,7 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
 
     // NEW: Calculate artist track counts (tracks rated above avg per artist)
     const artistTrackCounts = new Map<string, number>();
-    const trackMap = new Map((tracksData.tracks || []).map((t: any) => [t.id, t]));
+    // Reuse trackMap created earlier (line ~212)
 
     for (const rating of (ratings || []).filter(r => r.item_type === 'track' && r.rating > avgRating)) {
         const track = trackMap.get(rating.item_id);

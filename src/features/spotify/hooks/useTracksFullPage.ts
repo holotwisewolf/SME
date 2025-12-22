@@ -6,6 +6,7 @@ import type { SpotifyTrack } from '../type/spotify_types';
 import { useSuccess } from '../../../context/SuccessContext';
 import { useError } from '../../../context/ErrorContext';
 import { supabase } from '../../../lib/supabaseClient';
+import { parseSpotifyError } from '../services/spotifyConnection';
 
 export const useTracksFullPage = () => {
     const [searchParams] = useSearchParams();
@@ -89,6 +90,8 @@ export const useTracksFullPage = () => {
             setTotal(results.total);
         } catch (error) {
             console.error('Error loading tracks:', error);
+            const msg = parseSpotifyError(error, 'Failed to load tracks');
+            showError(msg);
         } finally {
             setLoading(false);
             setLoadingMore(false);

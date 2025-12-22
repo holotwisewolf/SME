@@ -303,6 +303,7 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
             }
         } catch (error) {
             console.error('Error fetching track metadata from Spotify:', error);
+            if (String(error).toLowerCase().includes('rate limit')) throw error;
             // Fallback: use IDs as names for all tracks
             tracks.forEach(track => {
                 if (!track.name) {
@@ -335,6 +336,7 @@ async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]
             }
         } catch (error) {
             console.error('Error fetching album metadata from Spotify:', error);
+            if (String(error).toLowerCase().includes('rate limit')) throw error;
             // Fallback: use IDs as names for all albums
             albums.forEach(album => {
                 if (!album.name) {

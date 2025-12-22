@@ -24,6 +24,7 @@ import { useError } from '../../../context/ErrorContext';
 import { useSuccess } from '../../../context/SuccessContext';
 import { exportPlaylistToSpotify, isSpotifyConnected, checkSpotifyTokenValid, refreshSpotifyToken, signInWithSpotify } from '../../spotify/services/spotify_auth';
 import { useConfirmation } from '../../../context/ConfirmationContext';
+import { parseSpotifyError } from '../../spotify/services/spotifyConnection';
 
 export type ActiveTab = 'tracks' | 'review' | 'community' | 'settings';
 
@@ -157,7 +158,8 @@ export const useExpandedPlaylist = ({
             setCurrentUserName(currentUserProfile?.display_name || currentUserProfile?.username || 'You');
         } catch (error) {
             console.error('Error loading playlist details:', error);
-            showError('Failed to load playlist details');
+            const msg = parseSpotifyError(error, 'Failed to load playlist details');
+            showError(msg);
         } finally {
             setLoading(false);
         }

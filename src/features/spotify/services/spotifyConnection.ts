@@ -239,3 +239,18 @@ export function clearSpotifyToken(): void {
   cachedToken = null;
   tokenExpiry = null;
 }
+
+/**
+ * Helper to parse Spotify errors for UI display
+ * Standardizes rate limit and auth error messages
+ */
+export function parseSpotifyError(err: any, defaultMsg: string = "An error occurred"): string {
+  const msg = err?.message || String(err);
+  if (msg.toLowerCase().includes('rate limit')) {
+    return `Spotify rate limit reached. ${msg}`;
+  }
+  if (msg.includes('Access failed')) {
+    return msg;
+  }
+  return defaultMsg;
+}

@@ -17,6 +17,8 @@ import { getItemTags, getCurrentUserItemTags } from '../../../tags/services/tag_
 import type { SpotifyTrack } from '../../../spotify/type/spotify_types';
 import type { FilterState, SortOptionType } from '../../../../components/ui/FilterDropdown';
 import { supabase } from '../../../../lib/supabaseClient';
+import { useError } from '../../../../context/ErrorContext';
+import { parseSpotifyError } from '../../../spotify/services/spotifyConnection';
 
 export interface EnhancedTrack extends SpotifyTrack {
     added_at?: string;
@@ -29,6 +31,7 @@ export interface EnhancedTrack extends SpotifyTrack {
 }
 
 export const useYourTracks = () => {
+    const { showError } = useError();
     const [tracks, setTracks] = useState<EnhancedTrack[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
@@ -115,6 +118,8 @@ export const useYourTracks = () => {
                     })
                 );
 
+
+
                 console.log('[YourTracks] Final enhanced tracks:', enhancedTracks.length);
                 setTracks(enhancedTracks);
             } else {
@@ -122,6 +127,8 @@ export const useYourTracks = () => {
             }
         } catch (error) {
             console.error('Error loading tracks:', error);
+            const msg = parseSpotifyError(error, 'Failed to load tracks');
+            showError(msg);
         } finally {
             setLoading(false);
         }

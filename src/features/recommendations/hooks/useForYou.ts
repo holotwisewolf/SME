@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { getRecommendationSections, getAlbumRecommendations } from '../services/recommendation_services';
 import type { RecommendedItem } from '../types/recommendation_types';
+import { parseSpotifyError } from '../../spotify/services/spotifyConnection';
 
 interface UseForYouReturn {
     // Track Data
@@ -73,9 +74,10 @@ export const useForYou = (): UseForYouReturn => {
             } else {
                 setIsEmpty(false);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error loading recommendations:', err);
-            setError('Failed to load recommendations. Please try again.');
+            const msg = parseSpotifyError(err, 'Failed to load recommendations. Please try again.');
+            setError(msg);
         } finally {
             setIsLoading(false);
         }

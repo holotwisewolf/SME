@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { getTrendingTracks, getTrendingAlbums, getTrendingPlaylists } from '../services/trending_services';
 import type { TrendingItem, TrendingFilters } from '../types/trending';
+import { useError } from '../../../context/ErrorContext';
+import { parseSpotifyError } from '../../spotify/services/spotifyConnection';
 
 type TabType = 'tracks' | 'albums' | 'playlists';
 
@@ -20,6 +22,7 @@ export function useTrendingData(
     limit: number = 20,
     refreshKey: number = 0
 ): UseTrendingDataReturn {
+    const { showError } = useError();
     const [items, setItems] = useState<TrendingItem[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -43,6 +46,8 @@ export function useTrendingData(
             setItems(fetchedItems);
         } catch (error) {
             console.error('Error fetching trending items:', error);
+            const msg = parseSpotifyError(error, 'Failed to fetch trending items');
+            showError(msg);
             setItems([]);
         } finally {
             setLoading(false);

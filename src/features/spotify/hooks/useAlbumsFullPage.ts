@@ -6,6 +6,7 @@ import type { SpotifyAlbum, SpotifyTrack } from '../type/spotify_types';
 import { useSuccess } from '../../../context/SuccessContext';
 import { useError } from '../../../context/ErrorContext';
 import { useSidebarBlur } from '../../../hooks/useSidebarBlur';
+import { parseSpotifyError } from '../services/spotifyConnection';
 
 export interface AlbumTrack {
     id: string;
@@ -136,6 +137,8 @@ export const useAlbumsFullPage = () => {
             setFavoritedAlbums(favSet);
         } catch (error) {
             console.error('Error loading albums:', error);
+            const msg = parseSpotifyError(error, 'Failed to load albums');
+            showError(msg);
         } finally {
             setLoading(false);
             setLoadingMore(false);
