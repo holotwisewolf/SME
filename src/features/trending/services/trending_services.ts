@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabaseClient';
 import type { TrendingFilters, TrendingItem, CommunityStats, TimeRange, SortBy } from '../types/trending';
 import type { ItemType } from '../../../types/global';
 import { getMultipleTracks, getMultipleAlbums } from '../../spotify/services/spotify_services';
+import { coordinateBatchFetch } from '../../spotify/services/spotifyConnection';
 
 /**
  * Get the date threshold based on time range
@@ -523,9 +524,13 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
         const ratingUserIds = ratingActivities.map(a => a.user_id).filter((id): id is string => id !== null);
 
         // Fetch Metadata in Parallel (including ratings for rating activities)
+        // Use coordinateBatchFetch to prevent duplicate operations from multiple components
+        const trackKey = trackIds.length > 0 ? `tracks:${trackIds.sort().join(',')}` : null;
+        const albumKey = albumIds.length > 0 ? `albums:${albumIds.sort().join(',')}` : null;
+
         const [trackData, albumData, internalPLData, ratingsData] = await Promise.all([
-            trackIds.length > 0 ? getMultipleTracks(trackIds) : Promise.resolve(null),
-            albumIds.length > 0 ? getMultipleAlbums(albumIds) : Promise.resolve(null),
+            trackKey ? coordinateBatchFetch(trackKey, () => getMultipleTracks(trackIds)) : Promise.resolve(null),
+            albumKey ? coordinateBatchFetch(albumKey, () => getMultipleAlbums(albumIds)) : Promise.resolve(null),
             internalPlaylistIds.length > 0 ? supabase.from('playlists').select('id, title, user_id, profiles:user_id(display_name, is_private_profile)').in('id', internalPlaylistIds) : Promise.resolve({ data: [] }),
             ratingUserIds.length > 0 ? supabase.from('ratings').select('user_id, item_id, item_type, rating').in('user_id', ratingUserIds) : Promise.resolve({ data: [] })
         ]);

@@ -14,6 +14,7 @@ let tokenExpiry: number | null = null;
 const MAX_CONCURRENT_REQUESTS = 3;
 const REQUEST_DELAY_MS = 100; // Delay between requests
 const CIRCUIT_BREAKER_COOLDOWN_MS = 60000; // 60 second (1 minute) cooldown when rate limited
+const MAX_BACKOFF_MS = 300000; // 5 minute max backoff
 
 // Request queue management
 let activeRequests = 0;
@@ -24,6 +25,13 @@ const pendingRequests = new Map<string, Promise<any>>(); // Deduplication
 let isCircuitOpen = false;
 let circuitOpenUntil: number = 0;
 let rateLimitCallbacks: ((message: string) => void)[] = [];
+
+// Exponential backoff - tracks consecutive rate limits
+let consecutiveRateLimits = 0;
+let lastRateLimitTime = 0;
+
+// Global fetch coordinator - prevents duplicate batch operations  
+const pendingBatchOperations = new Map<string, Promise<any>>();
 
 /**
  * Register a callback to be notified when rate limit is hit
@@ -59,18 +67,68 @@ export function isRateLimited(): boolean {
 
 /**
  * Open the circuit breaker - blocks ALL requests for cooldown period
+ * Uses exponential backoff for repeated rate limits
  */
 function openCircuitBreaker(retryAfterSeconds: number) {
-  const cooldownMs = Math.max(retryAfterSeconds * 1000, CIRCUIT_BREAKER_COOLDOWN_MS);
+  const now = Date.now();
+
+  // Track consecutive rate limits (reset if 5+ minutes since last)
+  if (now - lastRateLimitTime > MAX_BACKOFF_MS) {
+    consecutiveRateLimits = 0;
+  }
+  consecutiveRateLimits++;
+  lastRateLimitTime = now;
+
+  // Calculate backoff multiplier (1, 2, 4, 8...) capped at reasonable level
+  const backoffMultiplier = Math.min(Math.pow(2, consecutiveRateLimits - 1), 8);
+  const baseCooldown = Math.max(retryAfterSeconds * 1000, CIRCUIT_BREAKER_COOLDOWN_MS);
+  const cooldownMs = Math.min(baseCooldown * backoffMultiplier, MAX_BACKOFF_MS);
+
   isCircuitOpen = true;
-  circuitOpenUntil = Date.now() + cooldownMs;
+  circuitOpenUntil = now + cooldownMs;
 
   // Clear the request queue - don't process any more
   requestQueue.length = 0;
 
-  const message = `Spotify rate limit hit. Requests paused for ${Math.ceil(cooldownMs / 1000)} seconds.`;
+  // Also clear pending batch operations to prevent retries
+  pendingBatchOperations.clear();
+
+  const message = `Spotify rate limit hit (attempt ${consecutiveRateLimits}). Requests paused for ${Math.ceil(cooldownMs / 1000)} seconds.`;
   console.warn(`Circuit breaker opened: ${message}`);
   notifyRateLimitError(message);
+}
+
+/**
+ * Reset backoff counter after successful request
+ * Call this after any successful Spotify API call
+ */
+function resetBackoffCounter() {
+  if (consecutiveRateLimits > 0 && Date.now() - lastRateLimitTime > 30000) {
+    // Reset after 30 seconds of successful requests
+    consecutiveRateLimits = 0;
+  }
+}
+
+/**
+ * Coordinate batch fetches to prevent duplicate operations
+ * If the same batch operation is already in flight, return that promise
+ */
+export function coordinateBatchFetch<T>(
+  key: string,
+  fetchFn: () => Promise<T>
+): Promise<T> {
+  // Check if same operation is already in flight
+  if (pendingBatchOperations.has(key)) {
+    return pendingBatchOperations.get(key) as Promise<T>;
+  }
+
+  // Start new operation
+  const promise = fetchFn().finally(() => {
+    pendingBatchOperations.delete(key);
+  });
+
+  pendingBatchOperations.set(key, promise);
+  return promise;
 }
 
 /**
@@ -212,6 +270,9 @@ export async function spotifyFetch<T = any>(
 
         throw new Error(`Spotify API Error ${res.status}: ${msg}`);
       }
+
+      // Success! Reset backoff counter
+      resetBackoffCounter();
 
       return res.json();
     } catch (error) {
