@@ -18,6 +18,7 @@ interface ParallaxImageTrackProps {
     onRefresh?: () => Promise<void>;
     isRefreshing?: boolean;
     tabs?: { id: string; label: string; items: RecommendedItem[] }[];
+    extraHeaderContent?: React.ReactNode;
 }
 
 const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
@@ -28,7 +29,8 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
     onAddToFavourites,
     onRefresh,
     isRefreshing,
-    tabs
+    tabs,
+    extraHeaderContent
 }) => {
     const trackRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -192,9 +194,7 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
                 (image as HTMLElement).style.objectPosition = '100% center';
             }
         }
-        // Auto-refresh on tab change
-        onRefresh?.();
-    }, [onRefresh]);
+    }, []);
 
     const handleNextPage = useCallback(() => {
         if (!trackRef.current) return;
@@ -217,8 +217,6 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
         }
     }, [currentPercentage, maxScrollPercentage]);
 
-    if (displayItems.length === 0) return null;
-
     const canGoNext = currentPercentage > maxScrollPercentage;
     const activeTab = tabs?.find(t => t.id === activeTabId);
 
@@ -226,9 +224,14 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
         <div className="w-full flex flex-col">
             {/* Header with Dropdown */}
             <div className="mb-6 flex items-center justify-between shrink-0">
-                <div>
-                    {title && <h2 className="text-2xl font-bold text-[#D1D1D1]">{title}</h2>}
-                    {subtitle && <p className="text-sm text-[#D1D1D1]/60 mt-1">{subtitle}</p>}
+                <div className="flex items-center gap-4">
+                    {(title || subtitle) && (
+                        <div>
+                            {title && <h2 className="text-2xl font-bold text-[#D1D1D1]">{title}</h2>}
+                            {subtitle && <p className="text-sm text-[#D1D1D1]/60 mt-1">{subtitle}</p>}
+                        </div>
+                    )}
+                    {extraHeaderContent}
                 </div>
                 <div className="flex items-center gap-2">
                     {tabs && tabs.length > 0 && (
@@ -271,63 +274,73 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
                 </div>
             </div>
 
-            {/* Parallax Track Container - overflow-x-clip, overflow-y-visible for hover effect */}
-            <div
-                ref={containerRef}
-                className="relative w-full select-none overflow-x-clip overflow-y-visible"
-                style={{ height: '56vmin', cursor: isMouseDownRef.current ? 'grabbing' : 'grab' }}
-                onMouseDown={onMouseDown}
-                onMouseUp={onMouseUp}
-                onMouseMove={onMouseMove}
-                onTouchStart={onTouchStart}
-                onTouchEnd={onTouchEnd}
-                onTouchMove={onTouchMove}
-            >
-                {/* Image Track - starts at left edge, not center */}
+            {/* Empty State */}
+            {displayItems.length === 0 ? (
                 <div
-                    ref={trackRef}
-                    className="absolute left-0 h-full flex items-center pl-2"
-                    style={{
-                        transform: 'translate(0%, 0%)',
-                        gap: '4vmin'
-                    }}
-                    data-mouse-down-at="0"
-                    data-prev-percentage="0"
-                    data-percentage="0"
+                    className="w-full flex items-center justify-center text-white/50 border border-white/5 rounded-2xl bg-white/5"
+                    style={{ height: '56vmin' }}
                 >
-                    {displayItems.map((item) => (
-                        <ParallaxCard
-                            key={item.id}
-                            item={item}
-                            onItemClick={onItemClick}
-                            onAddToFavourites={onAddToFavourites}
-                            isPlaying={currentTrackId === item.id}
-                            onPlayToggle={(url) => {
-                                if (currentTrackId === item.id) {
-                                    stopPreview();
-                                } else if (url) {
-                                    playPreview(url, item.id);
-                                }
-                            }}
-                            wasClick={wasClick}
-                        />
-                    ))}
+                    <p>No items found in this section</p>
                 </div>
-
-                {/* Right Arrow Navigation */}
-                {canGoNext && (
-                    <button
-                        onClick={handleNextPage}
-                        className="absolute right-0 top-0 h-full w-20 z-20 group flex items-center justify-end pr-4"
+            ) : (
+                /* Parallax Track Container */
+                <div
+                    ref={containerRef}
+                    className="relative w-full select-none overflow-x-clip overflow-y-visible"
+                    style={{ height: '56vmin', cursor: isMouseDownRef.current ? 'grabbing' : 'grab' }}
+                    onMouseDown={onMouseDown}
+                    onMouseUp={onMouseUp}
+                    onMouseMove={onMouseMove}
+                    onTouchStart={onTouchStart}
+                    onTouchEnd={onTouchEnd}
+                    onTouchMove={onTouchMove}
+                >
+                    {/* Image Track - starts at left edge, not center */}
+                    <div
+                        ref={trackRef}
+                        className="absolute left-0 h-full flex items-center pl-2"
+                        style={{
+                            transform: 'translate(0%, 0%)',
+                            gap: '4vmin'
+                        }}
+                        data-mouse-down-at="0"
+                        data-prev-percentage="0"
+                        data-percentage="0"
                     >
-                        {/* Vertical glow effect */}
-                        <div className="absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-white/30 via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        {displayItems.map((item) => (
+                            <ParallaxCard
+                                key={item.id}
+                                item={item}
+                                onItemClick={onItemClick}
+                                onAddToFavourites={onAddToFavourites}
+                                isPlaying={currentTrackId === item.id}
+                                onPlayToggle={(url) => {
+                                    if (currentTrackId === item.id) {
+                                        stopPreview();
+                                    } else if (url) {
+                                        playPreview(url, item.id);
+                                    }
+                                }}
+                                wasClick={wasClick}
+                            />
+                        ))}
+                    </div>
 
-                        {/* Arrow icon */}
-                        <ChevronRight className="w-10 h-10 text-white/60 group-hover:text-white transition-all duration-300 relative z-10" strokeWidth={2} />
-                    </button>
-                )}
-            </div>
+                    {/* Right Arrow Navigation */}
+                    {canGoNext && (
+                        <button
+                            onClick={handleNextPage}
+                            className="absolute right-0 top-0 h-full w-20 z-20 group flex items-center justify-end pr-4"
+                        >
+                            {/* Vertical glow effect */}
+                            <div className="absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-white/30 via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                            {/* Arrow icon */}
+                            <ChevronRight className="w-10 h-10 text-white/60 group-hover:text-white transition-all duration-300 relative z-10" strokeWidth={2} />
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

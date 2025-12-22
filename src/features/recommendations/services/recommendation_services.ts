@@ -641,6 +641,7 @@ export async function getRecommendations(
 
 /**
  * Get recommendations grouped by section
+ * Each item is categorized by its PRIMARY (first) reason type
  */
 export async function getRecommendationSections(userId: string): Promise<{
     forYou: RecommendedItem[];
@@ -649,20 +650,26 @@ export async function getRecommendationSections(userId: string): Promise<{
 }> {
     const allRecommendations = await getRecommendations(userId, 50);
 
-    // Group by recommendation type
+    // Categorize by PRIMARY reason (first reason in the array)
+    const artistItems: RecommendedItem[] = [];
+    const genreItems: RecommendedItem[] = [];
+    const otherItems: RecommendedItem[] = [];
+
+    for (const item of allRecommendations) {
+        const primaryReason = item.reasons[0]?.type;
+        if (primaryReason === 'same_artist' || primaryReason === 'related_artist') {
+            artistItems.push(item);
+        } else if (primaryReason === 'same_genre' || primaryReason === 'similar_genre') {
+            genreItems.push(item);
+        } else {
+            otherItems.push(item);
+        }
+    }
+
+    // Distribute: Top Picks gets a mix, others get their specific category
     const forYou = allRecommendations.slice(0, 12);
-
-    const basedOnArtists = allRecommendations
-        .filter(r => r.reasons.some(reason =>
-            reason.type === 'same_artist' || reason.type === 'related_artist'
-        ))
-        .slice(0, 12);
-
-    const genreDiscovery = allRecommendations
-        .filter(r => r.reasons.some(reason =>
-            reason.type === 'same_genre' || reason.type === 'similar_genre'
-        ))
-        .slice(0, 12);
+    const basedOnArtists = artistItems.slice(0, 12);
+    const genreDiscovery = genreItems.slice(0, 12);
 
     return { forYou, basedOnArtists, genreDiscovery };
 }

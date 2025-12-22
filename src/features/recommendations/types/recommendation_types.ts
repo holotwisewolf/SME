@@ -102,8 +102,8 @@ export const SCORING_CONSTANTS = {
     DIVERSITY_PENALTY: 15,    // Penalty per repeated artist in feed
     COMMUNITY_WEIGHT: 10,     // Multiplier for community rating (0-5 scale)
     USER_RATING_WEIGHT: 15,   // Multiplier for user's personal rating
-    RANDOM_VARIANCE: 5,       // ±5 random points for discovery
-    SIMILAR_GENRE_BOOST: 30   // Bonus for similar/related genres (partial match)
+    RANDOM_VARIANCE: 15,      // ±15 random points for discovery (increased for freshness)
+    SIMILAR_GENRE_BOOST: 45   // Bonus for similar/related genres (increased to rival exact matches)
 };
 
 /**
