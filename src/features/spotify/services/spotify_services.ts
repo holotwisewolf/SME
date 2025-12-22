@@ -147,12 +147,15 @@ export async function getArtistDetails(artistId: string) {
 export async function getMultipleTracks(trackIds: string[]) {
   if (!trackIds.length) return { tracks: [] };
 
+  // Deduplicate IDs to prevent duplicate API calls
+  const uniqueIds = [...new Set(trackIds)];
+
   // 1. Check cache first
-  const cachedMap = await getCachedItems(trackIds, 'track');
+  const cachedMap = await getCachedItems(uniqueIds, 'track');
   const cachedTracks: any[] = [];
   const uncachedIds: string[] = [];
 
-  for (const id of trackIds) {
+  for (const id of uniqueIds) {
     if (cachedMap.has(id)) {
       cachedTracks.push(cachedMap.get(id));
     } else {
@@ -182,7 +185,7 @@ export async function getMultipleTracks(trackIds: string[]) {
     await cacheItems(fetchedTracks, 'track');
   }
 
-  // 4. Merge and return in original order
+  // 4. Merge and return in original order (keeping duplicates from original input)
   const allTracksMap = new Map<string, any>();
   cachedTracks.forEach(t => t && allTracksMap.set(t.id, t));
   fetchedTracks.forEach(t => t && allTracksMap.set(t.id, t));
@@ -198,12 +201,15 @@ export async function getMultipleTracks(trackIds: string[]) {
 export async function getMultipleAlbums(albumIds: string[]) {
   if (!albumIds.length) return { albums: [] };
 
+  // Deduplicate IDs to prevent duplicate API calls
+  const uniqueIds = [...new Set(albumIds)];
+
   // 1. Check cache first
-  const cachedMap = await getCachedItems(albumIds, 'album');
+  const cachedMap = await getCachedItems(uniqueIds, 'album');
   const cachedAlbums: any[] = [];
   const uncachedIds: string[] = [];
 
-  for (const id of albumIds) {
+  for (const id of uniqueIds) {
     if (cachedMap.has(id)) {
       cachedAlbums.push(cachedMap.get(id));
     } else {
@@ -233,7 +239,7 @@ export async function getMultipleAlbums(albumIds: string[]) {
     await cacheItems(fetchedAlbums, 'album');
   }
 
-  // 4. Merge and return in original order
+  // 4. Merge and return in original order (keeping duplicates from original input)
   const allAlbumsMap = new Map<string, any>();
   cachedAlbums.forEach(a => a && allAlbumsMap.set(a.id, a));
   fetchedAlbums.forEach(a => a && allAlbumsMap.set(a.id, a));
