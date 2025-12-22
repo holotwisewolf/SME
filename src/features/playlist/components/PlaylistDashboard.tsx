@@ -57,7 +57,20 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
             <FilterButton className="w-5 h-5" color="currentColor" isActive={isFilterOpen} />
           </div>
 
-          <FilterDropdown isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} anchorRef={filterButtonRef as React.RefObject<HTMLElement>} currentFilter={filterState} currentSort={activeSort} onFilterChange={setFilterState} onSortChange={setActiveSort} onClearAll={() => { setFilterState({ minRating: 0, tagMode: 'global', ratingMode: 'global', selectedTags: [], onlyFavorites: false }); setActiveSort('created_at'); setSortDirection('desc'); }} />
+          <FilterDropdown
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            anchorRef={filterButtonRef as React.RefObject<HTMLElement>}
+            currentFilter={filterState}
+            currentSort={activeSort}
+            onFilterChange={setFilterState}
+            onSortChange={setActiveSort}
+            onClearAll={() => { setFilterState({ minRating: 0, tagMode: 'global', ratingMode: 'global', selectedTags: [], onlyFavorites: false }); setActiveSort('created_at'); setSortDirection('desc'); }}
+            hiddenSorts={[
+              'global_rated_at',
+              'global_tagged_at'
+            ]}
+          />
 
           <LayoutGroup id="playlist-sort">
             <div className="bg-[#292929] rounded-full p-1 flex items-center h-10 relative isolate ml-2">

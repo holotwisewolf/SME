@@ -23,6 +23,8 @@ export type SortOptionType =
     // Personal Tags
     | 'personal_tag_count'
     | 'personal_tagged_at'
+    // Album-specific
+    | 'track_count'
     | 'custom';
 
 export interface FilterState {
@@ -176,6 +178,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
                                     {/* Basic */}
                                     <SortItem label="Alphabetical Order" value="alphabetical" />
                                     <SortItem label="Time (Date Added)" value="created_at" />
+                                    <SortItem label="Most Tracks" value="track_count" />
 
                                     <div className="py-1"></div>
                                     {/* Rating Group */}

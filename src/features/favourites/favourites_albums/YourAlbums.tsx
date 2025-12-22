@@ -73,14 +73,9 @@ const YourAlbums: React.FC = () => {
                         }}
                         showFavoritesFilter={false} // Already favourites page
                         hiddenSorts={[
-                            'comment_count', // Hidden for now if desired, or keep
-                            'commented_at',
+                            // Keep global timestamps hidden (we don't fetch global timestamps)
                             'global_rated_at',
-                            'personal_rated_at',
-                            'global_tagged_at',
-                            'personal_tagged_at',
-                            'most-tracks' as any, // Hide unsupported sorts
-                            'most-duration' as any
+                            'global_tagged_at'
                         ]}
                     />
 

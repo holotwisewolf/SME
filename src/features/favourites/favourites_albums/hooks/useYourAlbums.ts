@@ -18,6 +18,10 @@ export interface EnhancedAlbum extends SpotifyAlbum {
     user_rating: number;
     tags: string[];
     user_tags: string[];
+    // Timestamps for sorting
+    user_rated_at?: string;
+    user_commented_at?: string;
+    user_tagged_at?: string;
 }
 
 export const useYourAlbums = () => {
@@ -73,15 +77,42 @@ export const useYourAlbums = () => {
                 const stats = await getMultipleItemStats(albumIds, 'album');
                 const statsMap = new Map(stats.map(s => [s.item_id, s]));
 
+                // Batch fetch user timestamps (efficient - 3 queries total, not N+1)
+                const [userRatingsRes, userCommentsRes, userTagsRes] = await Promise.all([
+                    user ? supabase.from('ratings').select('item_id, rating, created_at, updated_at').eq('item_type', 'album').eq('user_id', user.id).in('item_id', albumIds) : { data: [] },
+                    user ? supabase.from('comments').select('item_id, created_at').eq('item_type', 'album').eq('user_id', user.id).in('item_id', albumIds) : { data: [] },
+                    user ? supabase.from('item_tags').select('item_id, created_at').eq('item_type', 'album').eq('user_id', user.id).in('item_id', albumIds) : { data: [] }
+                ]);
+
+                // Build maps for efficient lookup
+                const userRatingsMap = new Map((userRatingsRes.data || []).map(r => [r.item_id, r]));
+                const userCommentsMap = new Map<string, string>();
+                (userCommentsRes.data || []).forEach(c => {
+                    const existing = userCommentsMap.get(c.item_id);
+                    if (!existing || new Date(c.created_at) > new Date(existing)) {
+                        userCommentsMap.set(c.item_id, c.created_at);
+                    }
+                });
+                const userTagsMap = new Map<string, string>();
+                (userTagsRes.data || []).forEach(t => {
+                    const existing = userTagsMap.get(t.item_id);
+                    if (!existing || new Date(t.created_at) > new Date(existing)) {
+                        userTagsMap.set(t.item_id, t.created_at);
+                    }
+                });
+
                 const enhancedAlbums: EnhancedAlbum[] = await Promise.all(
                     allSpotifyAlbums.map(async (album) => {
                         const itemStats = statsMap.get(album.id);
+                        const userRating = userRatingsMap.get(album.id);
 
-                        const [userRating, globalTags, userTags] = await Promise.all([
-                            user ? getUserItemRating(album.id, 'album').catch(() => null) : null,
+                        const [globalTags, userTags] = await Promise.all([
                             getItemTags(album.id, 'album').catch(() => []),
                             user ? getCurrentUserItemTags(album.id, 'album').catch(() => []) : []
                         ]);
+
+                        // Get latest timestamp for rating (created_at or updated_at)
+                        const ratedAt = userRating ? (userRating.updated_at && new Date(userRating.updated_at) > new Date(userRating.created_at) ? userRating.updated_at : userRating.created_at) : undefined;
 
                         return {
                             ...album,
@@ -89,9 +120,12 @@ export const useYourAlbums = () => {
                             rating_avg: itemStats?.average_rating ?? 0,
                             rating_count: itemStats?.rating_count ?? 0,
                             comment_count: itemStats?.comment_count ?? 0,
-                            user_rating: userRating || 0,
+                            user_rating: userRating?.rating || 0,
                             tags: globalTags.map(t => t.name),
-                            user_tags: userTags.map(t => t.name)
+                            user_tags: userTags.map(t => t.name),
+                            user_rated_at: ratedAt,
+                            user_commented_at: userCommentsMap.get(album.id),
+                            user_tagged_at: userTagsMap.get(album.id)
                         };
                     })
                 );
@@ -164,8 +198,28 @@ export const useYourAlbums = () => {
                 case 'personal_rating': valA = a.user_rating; valB = b.user_rating; break;
                 case 'comment_count': valA = a.comment_count; valB = b.comment_count; break;
 
+                // Track count (from SpotifyAlbum)
+                case 'track_count':
+                    valA = a.total_tracks;
+                    valB = b.total_tracks;
+                    break;
+
+                // Timestamps
+                case 'personal_rated_at':
+                    valA = new Date(a.user_rated_at || 0).getTime();
+                    valB = new Date(b.user_rated_at || 0).getTime();
+                    break;
+                case 'commented_at':
+                    valA = new Date(a.user_commented_at || 0).getTime();
+                    valB = new Date(b.user_commented_at || 0).getTime();
+                    break;
+                case 'personal_tagged_at':
+                    valA = new Date(a.user_tagged_at || 0).getTime();
+                    valB = new Date(b.user_tagged_at || 0).getTime();
+                    break;
+
                 default:
-                    // Fallback to name
+                    // Fallback - no sorting
                     return 0;
             }
 

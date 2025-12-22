@@ -74,11 +74,9 @@ const LibraryAlbums: React.FC = () => {
                         }}
                         showFavoritesFilter={false}
                         hiddenSorts={[
-                            'commented_at',
+                            // Keep global timestamps hidden (we don't fetch global timestamps)
                             'global_rated_at',
-                            'personal_rated_at',
-                            'global_tagged_at',
-                            'personal_tagged_at'
+                            'global_tagged_at'
                         ]}
                     />
 

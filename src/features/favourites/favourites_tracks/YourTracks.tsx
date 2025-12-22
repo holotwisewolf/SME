@@ -83,11 +83,9 @@ const YourTracks: React.FC = () => {
                         }}
                         showFavoritesFilter={false} // Hidden for favorites page
                         hiddenSorts={[
-                            'commented_at',
+                            'track_count', // Only for albums/playlists
                             'global_rated_at',
-                            'personal_rated_at',
-                            'global_tagged_at',
-                            'personal_tagged_at'
+                            'global_tagged_at'
                         ]}
                     />
 
