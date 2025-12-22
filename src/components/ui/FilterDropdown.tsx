@@ -153,10 +153,9 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
                                         value={tagInput}
                                         onChange={handleTagInputChange}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                                        placeholder="Type tag name..."
-                                        className="flex-1 bg-[#121212] border border-white/10 rounded-l-md py-1.5 pl-8 pr-2 text-xs text-white focus:outline-none focus:border-[#FFD1D1] transition-colors"
+                                        placeholder="Type tag name + Enter..."
+                                        className="w-full bg-[#121212] border border-white/10 rounded-md py-1.5 pl-8 pr-2 text-xs text-white focus:outline-none focus:border-[#FFD1D1] transition-colors"
                                     />
-                                    <button onClick={handleAddTag} className="bg-[#FFD1D1] text-black px-3 py-1.5 rounded-r-md hover:bg-white transition-colors"><Plus className="w-4 h-4" /></button>
                                 </div>
 
                                 <div className="flex flex-wrap gap-2 min-h-[24px]">
