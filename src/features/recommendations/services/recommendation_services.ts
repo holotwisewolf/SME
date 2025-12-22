@@ -536,17 +536,32 @@ export function scoreCandidate(
     if (userRating !== undefined && userRating > 0) {
         const contribution = userRating * USER_RATING_WEIGHT;
         score += contribution;
-        // Don't add to reasons since user probably knows they rated it
+        reasons.push({
+            type: 'your_rating',
+            label: `You rated this: ${userRating}/5`,
+            contribution
+        });
     }
 
     // Step 5: Diversity penalty (applied per artist appearance in feed)
     if (artistAppearances > 0) {
-        score -= artistAppearances * DIVERSITY_PENALTY;
+        const penalty = artistAppearances * DIVERSITY_PENALTY;
+        score -= penalty;
+        reasons.push({
+            type: 'diversity_check',
+            label: 'Repeated artist adjustment',
+            contribution: -penalty
+        });
     }
 
-    // Step 6: Random variance for discovery (±5)
+    // Step 6: Random variance for discovery
     const randomBonus = Math.floor(Math.random() * (RANDOM_VARIANCE * 2 + 1)) - RANDOM_VARIANCE;
     score += randomBonus;
+    reasons.push({
+        type: 'discovery_shuffle',
+        label: 'Random discovery shuffle',
+        contribution: randomBonus
+    });
 
     return { score, reasons };
 }
@@ -666,10 +681,28 @@ export async function getRecommendationSections(userId: string): Promise<{
         }
     }
 
-    // Distribute: Top Picks gets a mix, others get their specific category
+    // Top Picks: Best 12 overall (uses base DIVERSITY_PENALTY of 10 - lenient)
     const forYou = allRecommendations.slice(0, 12);
     const basedOnArtists = artistItems.slice(0, 12);
-    const genreDiscovery = genreItems.slice(0, 12);
+
+    // Genre Discovery: Apply ADDITIONAL -10 penalty for repeated artists (total -20)
+    // This makes genre section prioritize variety over repeated favorite artists
+    const genreArtistCounts = new Map<string, number>();
+    for (const item of genreItems) {
+        genreArtistCounts.set(item.artistId, (genreArtistCounts.get(item.artistId) || 0) + 1);
+    }
+
+    // Sort genre items by score with additional penalty for repeated artists
+    const genreItemsSorted = [...genreItems].sort((a, b) => {
+        const aArtistCount = genreArtistCounts.get(a.artistId) || 0;
+        const bArtistCount = genreArtistCounts.get(b.artistId) || 0;
+        // Additional -10 per occurrence beyond the first (making total -20 for genre section)
+        const aExtraPenalty = Math.max(0, aArtistCount - 1) * 10;
+        const bExtraPenalty = Math.max(0, bArtistCount - 1) * 10;
+        return (b.score - bExtraPenalty) - (a.score - aExtraPenalty);
+    });
+
+    const genreDiscovery = genreItemsSorted.slice(0, 12);
 
     return { forYou, basedOnArtists, genreDiscovery };
 }

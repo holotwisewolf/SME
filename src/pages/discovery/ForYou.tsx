@@ -263,11 +263,11 @@ const ForYou: React.FC = () => {
                     </div>
 
                     {/* Featured Card + Score Breakdown - fills available space */}
-                    <div className="flex-1 flex flex-col gap-3 w-full overflow-hidden">
+                    <div className="flex-1 flex flex-col lg:flex-row gap-3 w-full overflow-hidden">
                         {/* Featured Card - fills full width */}
                         {featuredItem ? (
                             <div
-                                className="w-full aspect-[16/9] rounded-xl overflow-hidden relative cursor-pointer group shrink-0"
+                                className="w-full lg:flex-1 h-40 lg:h-auto rounded-xl overflow-hidden relative cursor-pointer group shrink-0"
                                 onClick={() => handleItemClick(featuredItem)}
                             >
                                 <img
@@ -282,7 +282,7 @@ const ForYou: React.FC = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="w-full aspect-[16/9] rounded-xl bg-white/5 flex items-center justify-center border-2 border-dashed border-white/20 shrink-0">
+                            <div className="w-full lg:flex-1 h-40 lg:h-auto rounded-xl bg-white/5 flex items-center justify-center border-2 border-dashed border-white/20 shrink-0">
                                 <div className="text-center text-gray-500">
                                     <Music className="w-12 h-12 mx-auto mb-2 opacity-50" />
                                     <p className="text-sm">Click a card to feature it</p>
@@ -292,7 +292,7 @@ const ForYou: React.FC = () => {
 
                         {/* Score Breakdown - fills remaining space */}
                         {featuredItem && (
-                            <div className="flex-1 w-full bg-white/5 rounded-xl p-4 text-left">
+                            <div className="flex-1 w-full bg-white/5 rounded-xl p-4 text-left overflow-y-auto">
                                 <p className="text-gray-400 text-xs font-medium mb-3 uppercase tracking-wider">Why We Recommend This</p>
                                 <div className="space-y-2">
                                     {/* Match Percentage */}

@@ -67,7 +67,7 @@ export interface RecommendedItem {
  * Reason why an item was recommended
  */
 export interface RecommendationReason {
-    type: 'same_artist' | 'related_artist' | 'same_genre' | 'similar_genre' | 'same_tag' | 'community_rating' | 'highly_rated_artist';
+    type: 'same_artist' | 'related_artist' | 'same_genre' | 'similar_genre' | 'same_tag' | 'community_rating' | 'highly_rated_artist' | 'your_rating' | 'diversity_check' | 'discovery_shuffle';
     label: string;          // Human-readable label
     contribution: number;   // How much this reason contributed to the score
 }
@@ -99,7 +99,7 @@ export interface ScoringWeights {
 export const SCORING_CONSTANTS = {
     BASE_SCORE: 50,           // Equal for all match types (same_artist, related_artist, genre_match)
     ARTIST_BOOST: 25,         // Bonus if 2+ tracks from artist rated above avg
-    DIVERSITY_PENALTY: 15,    // Penalty per repeated artist in feed
+    DIVERSITY_PENALTY: 15,    // Base penalty per repeated artist (for Top Picks)
     COMMUNITY_WEIGHT: 10,     // Multiplier for community rating (0-5 scale)
     USER_RATING_WEIGHT: 15,   // Multiplier for user's personal rating
     RANDOM_VARIANCE: 15,      // ±15 random points for discovery (increased for freshness)
