@@ -438,70 +438,65 @@ export function scoreCandidate(
     let score = 0;
     const reasons: RecommendationReason[] = [];
 
-    const { BASE_SCORE, ARTIST_BOOST, DIVERSITY_PENALTY, COMMUNITY_WEIGHT, USER_RATING_WEIGHT, RANDOM_VARIANCE } = SCORING_CONSTANTS;
-    const userAvg = preferences.averageRating;
+    const { BASE_SCORE, ARTIST_BOOST, DIVERSITY_PENALTY, COMMUNITY_WEIGHT, USER_RATING_WEIGHT, RANDOM_VARIANCE, SIMILAR_GENRE_BOOST } = SCORING_CONSTANTS;
 
-    // Step 1: Artist boost - Check if user rated 2+ tracks from this artist above avg
+    // Step 1: Highly Rated Artist - Check if user rated 2+ tracks from this artist above avg
     const artistTrackCount = preferences.artistTrackCounts.get(candidate.artistId) || 0;
-    if (artistTrackCount >= 2) {
-        score += ARTIST_BOOST;
-        reasons.push({
-            type: 'highly_rated_artist',
-            label: `You love this artist (${artistTrackCount} highly rated tracks)`,
-            contribution: ARTIST_BOOST
-        });
-    }
+    const artistBoostContribution = artistTrackCount >= 2 ? ARTIST_BOOST : 0;
+    score += artistBoostContribution;
+    reasons.push({
+        type: 'highly_rated_artist',
+        label: artistTrackCount >= 2
+            ? `You love this artist (${artistTrackCount} tracks)`
+            : 'Not a frequently rated artist',
+        contribution: artistBoostContribution
+    });
 
-    // Step 2: Match bonuses (equal base scores)
-
-    // 2a. Same artist bonus - only if user rated this artist ≥4
+    // Step 2a: Same Artist - only if user rated this artist ≥4
     const artistRating = preferences.artistRatings.get(candidate.artistId) || 0;
-    if (artistRating >= 4) {
-        score += BASE_SCORE;
-        reasons.push({
-            type: 'same_artist',
-            label: `From artist you love: ${candidate.artistName}`,
-            contribution: BASE_SCORE
-        });
-    }
+    const sameArtistContribution = artistRating >= 4 ? BASE_SCORE : 0;
+    score += sameArtistContribution;
+    reasons.push({
+        type: 'same_artist',
+        label: artistRating >= 4
+            ? `From artist you love: ${candidate.artistName}`
+            : 'Artist not highly rated',
+        contribution: sameArtistContribution
+    });
 
-    // 2b. Related artist bonus
-    if (candidate.sourceType === 'related_artist' && candidate.sourceArtistId) {
-        score += BASE_SCORE;
-        reasons.push({
-            type: 'related_artist',
-            label: 'Similar to artists you enjoy',
-            contribution: BASE_SCORE
-        });
-    }
+    // Step 2b: Related Artist
+    const isRelatedArtist = candidate.sourceType === 'related_artist' && candidate.sourceArtistId;
+    const relatedArtistContribution = isRelatedArtist ? BASE_SCORE : 0;
+    score += relatedArtistContribution;
+    reasons.push({
+        type: 'related_artist',
+        label: isRelatedArtist
+            ? 'Similar to artists you enjoy'
+            : 'Not from a related artist',
+        contribution: relatedArtistContribution
+    });
 
-    // 2c. Genre match bonus (exact match)
+    // Step 2c: Same Genre (exact match)
     const matchedGenres: string[] = [];
     for (const genre of candidate.genres) {
         if (preferences.genreWeights.has(genre)) {
             matchedGenres.push(genre);
         }
     }
-    if (matchedGenres.length > 0) {
-        score += BASE_SCORE;
-        reasons.push({
-            type: 'same_genre',
-            label: `Matches genres: ${matchedGenres.slice(0, 2).join(', ')}`,
-            contribution: BASE_SCORE
-        });
-    }
+    const sameGenreContribution = matchedGenres.length > 0 ? BASE_SCORE : 0;
+    score += sameGenreContribution;
+    reasons.push({
+        type: 'same_genre',
+        label: matchedGenres.length > 0
+            ? `Matches genres: ${matchedGenres.slice(0, 2).join(', ')}`
+            : 'No exact genre match',
+        contribution: sameGenreContribution
+    });
 
-    // 2d. Similar genre bonus (partial/related genre match)
-    // Boosts tracks from genres that are RELATED to user's favorites
-    // E.g., user likes "k-pop" → boost tracks with "korean pop", "j-pop", "pop"
-    const { SIMILAR_GENRE_BOOST } = SCORING_CONSTANTS;
+    // Step 2d: Similar Genre (partial/related genre match)
     const similarGenres: string[] = [];
-
     for (const candidateGenre of candidate.genres) {
-        // Skip if already matched exactly
         if (matchedGenres.includes(candidateGenre)) continue;
-
-        // Check for similar genres (word overlap)
         for (const userGenre of preferences.genreWeights.keys()) {
             if (genresAreSimilar(candidateGenre, userGenre)) {
                 similarGenres.push(candidateGenre);
@@ -509,52 +504,52 @@ export function scoreCandidate(
             }
         }
     }
+    // Only apply similar boost if no exact genre match
+    const similarGenreContribution = (similarGenres.length > 0 && matchedGenres.length === 0) ? SIMILAR_GENRE_BOOST : 0;
+    score += similarGenreContribution;
+    reasons.push({
+        type: 'similar_genre',
+        label: similarGenres.length > 0
+            ? `Similar to: ${similarGenres.slice(0, 2).join(', ')}`
+            : 'No similar genre match',
+        contribution: similarGenreContribution
+    });
 
-    if (similarGenres.length > 0 && matchedGenres.length === 0) {
-        // Only apply similar boost if no exact match
-        score += SIMILAR_GENRE_BOOST;
-        reasons.push({
-            type: 'similar_genre',
-            label: `Similar to: ${similarGenres.slice(0, 2).join(', ')}`,
-            contribution: SIMILAR_GENRE_BOOST
-        });
-    }
+    // Step 3: Community Rating
+    const communityContribution = communityAvgRating > 0 ? communityAvgRating * COMMUNITY_WEIGHT : 0;
+    score += communityContribution;
+    reasons.push({
+        type: 'community_rating',
+        label: communityAvgRating > 0
+            ? `Community rating: ${communityAvgRating.toFixed(1)}/5`
+            : 'No community rating',
+        contribution: Math.round(communityContribution)
+    });
 
-    // Step 3: Community rating (0-5 scale * 10)
-    if (communityAvgRating > 0) {
-        const contribution = communityAvgRating * COMMUNITY_WEIGHT;
-        score += contribution;
-        reasons.push({
-            type: 'community_rating',
-            label: `Community rating: ${communityAvgRating.toFixed(1)}/5`,
-            contribution
-        });
-    }
-
-    // Step 4: User's personal rating if they've rated this track
+    // Step 4: User's Personal Rating
     const userRating = preferences.userTrackRatings.get(candidate.id);
-    if (userRating !== undefined && userRating > 0) {
-        const contribution = userRating * USER_RATING_WEIGHT;
-        score += contribution;
-        reasons.push({
-            type: 'your_rating',
-            label: `You rated this: ${userRating}/5`,
-            contribution
-        });
-    }
+    const userRatingContribution = (userRating !== undefined && userRating > 0) ? userRating * USER_RATING_WEIGHT : 0;
+    score += userRatingContribution;
+    reasons.push({
+        type: 'your_rating',
+        label: userRating && userRating > 0
+            ? `You rated this: ${userRating}/5`
+            : 'You haven\'t rated this',
+        contribution: userRatingContribution
+    });
 
-    // Step 5: Diversity penalty (applied per artist appearance in feed)
-    if (artistAppearances > 0) {
-        const penalty = artistAppearances * DIVERSITY_PENALTY;
-        score -= penalty;
-        reasons.push({
-            type: 'diversity_check',
-            label: 'Repeated artist adjustment',
-            contribution: -penalty
-        });
-    }
+    // Step 5: Diversity Penalty
+    const diversityPenalty = artistAppearances > 0 ? artistAppearances * DIVERSITY_PENALTY : 0;
+    score -= diversityPenalty;
+    reasons.push({
+        type: 'diversity_check',
+        label: artistAppearances > 0
+            ? `Repeated artist adjustment (×${artistAppearances})`
+            : 'First appearance of artist',
+        contribution: -diversityPenalty
+    });
 
-    // Step 6: Random variance for discovery
+    // Step 6: Random Variance (Discovery Shuffle)
     const randomBonus = Math.floor(Math.random() * (RANDOM_VARIANCE * 2 + 1)) - RANDOM_VARIANCE;
     score += randomBonus;
     reasons.push({

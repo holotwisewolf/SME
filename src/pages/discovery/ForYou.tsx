@@ -292,25 +292,25 @@ const ForYou: React.FC = () => {
 
                         {/* Score Breakdown - fills remaining space */}
                         {featuredItem && (
-                            <div className="flex-1 w-full bg-white/5 rounded-xl p-4 text-left overflow-y-auto">
-                                <p className="text-gray-400 text-xs font-medium mb-3 uppercase tracking-wider">Why We Recommend This</p>
-                                <div className="space-y-2">
+                            <div className="flex-1 w-full bg-white/5 rounded-xl p-3 text-left overflow-y-auto">
+                                <p className="text-gray-400 text-[10px] font-medium mb-2 uppercase tracking-wider">Why We Recommend This</p>
+                                <div className="space-y-1">
                                     {/* Match Percentage */}
                                     <div className="flex items-center justify-between">
-                                        <span className="text-white font-semibold">Match</span>
-                                        <span className="text-lg font-bold bg-gradient-to-r from-pink-300 to-purple-400 bg-clip-text text-transparent">
+                                        <span className="text-white text-xs font-semibold">Match</span>
+                                        <span className="text-sm font-bold bg-gradient-to-r from-pink-300 to-purple-400 bg-clip-text text-transparent">
                                             {Math.round(featuredItem.matchPercentage)}%
                                         </span>
                                     </div>
 
-                                    <div className="border-t border-white/10 pt-2 space-y-1">
-                                        {/* Show all reasons, not just 4 */}
+                                    <div className="border-t border-white/10 pt-1 space-y-0.5">
+                                        {/* Show all reasons */}
                                         {featuredItem.reasons.map((reason, idx) => (
-                                            <div key={idx} className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-300 capitalize">
+                                            <div key={idx} className="flex items-center justify-between text-xs">
+                                                <span className="text-gray-300 capitalize truncate mr-2">
                                                     {reason.type.replace(/_/g, ' ')}
                                                 </span>
-                                                <span className={`font-medium ${reason.contribution >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                <span className={`font-medium shrink-0 ${reason.contribution >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                                                     {reason.contribution >= 0 ? '+' : ''}{Math.round(reason.contribution)}
                                                 </span>
                                             </div>
@@ -318,9 +318,9 @@ const ForYou: React.FC = () => {
                                     </div>
 
                                     {/* Total Score */}
-                                    <div className="border-t border-white/10 pt-2 flex items-center justify-between">
-                                        <span className="text-gray-400 text-sm">Total Score</span>
-                                        <span className="text-white font-bold">{Math.round(featuredItem.score)}</span>
+                                    <div className="border-t border-white/10 pt-1 flex items-center justify-between">
+                                        <span className="text-gray-400 text-xs">Total Score</span>
+                                        <span className="text-white text-sm font-bold">{Math.round(featuredItem.score)}</span>
                                     </div>
                                 </div>
                             </div>
