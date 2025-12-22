@@ -32,6 +32,12 @@ export interface UserPreferences {
 
     // Genre-specific ratings (genre -> user's average rating for that genre)
     genreRatings: Map<string, number>;
+
+    // NEW: Artist track counts - tracks rated above avg per artist (for artist boost)
+    artistTrackCounts: Map<string, number>;
+
+    // NEW: User's personal ratings for tracks (trackId -> rating)
+    userTrackRatings: Map<string, number>;
 }
 
 /**
@@ -61,7 +67,7 @@ export interface RecommendedItem {
  * Reason why an item was recommended
  */
 export interface RecommendationReason {
-    type: 'same_artist' | 'related_artist' | 'same_genre' | 'same_tag' | 'community_rating' | 'highly_rated_artist';
+    type: 'same_artist' | 'related_artist' | 'same_genre' | 'similar_genre' | 'same_tag' | 'community_rating' | 'highly_rated_artist';
     label: string;          // Human-readable label
     contribution: number;   // How much this reason contributed to the score
 }
@@ -88,19 +94,32 @@ export interface ScoringWeights {
 }
 
 /**
- * Default scoring weights
+ * New scoring constants for balanced recommendations
+ */
+export const SCORING_CONSTANTS = {
+    BASE_SCORE: 50,           // Equal for all match types (same_artist, related_artist, genre_match)
+    ARTIST_BOOST: 25,         // Bonus if 2+ tracks from artist rated above avg
+    DIVERSITY_PENALTY: 15,    // Penalty per repeated artist in feed
+    COMMUNITY_WEIGHT: 10,     // Multiplier for community rating (0-5 scale)
+    USER_RATING_WEIGHT: 15,   // Multiplier for user's personal rating
+    RANDOM_VARIANCE: 5,       // ±5 random points for discovery
+    SIMILAR_GENRE_BOOST: 30   // Bonus for similar/related genres (partial match)
+};
+
+/**
+ * @deprecated Use SCORING_CONSTANTS instead
  */
 export const DEFAULT_SCORING_WEIGHTS: ScoringWeights = {
-    sameArtistBase: 30,
-    relatedArtistBase: 20,
-    sameGenreBase: 15,
+    sameArtistBase: 50,
+    relatedArtistBase: 50,
+    sameGenreBase: 50,
     sameTagBase: 10,
 
-    highRatingBonus: 20,  // Add +20 if user rates this category above average
+    highRatingBonus: 25,
 
-    communityRatingMultiplier: 5,  // avgRating * 5
+    communityRatingMultiplier: 10,
 
-    alreadyFavoritedPenalty: -1000  // Effectively exclude
+    alreadyFavoritedPenalty: -1000
 };
 
 /**

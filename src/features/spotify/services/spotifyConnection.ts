@@ -194,7 +194,11 @@ export async function spotifyFetch<T = any>(
 
       if (!res.ok) {
         const errorBody = await res.json().catch(() => null);
-        console.error("Spotify error response:", errorBody);
+
+        // Don't log 404s - these are expected for invalid/removed artists
+        if (res.status !== 404) {
+          console.error("Spotify error response:", errorBody);
+        }
 
         const msg =
           errorBody?.error?.message ||

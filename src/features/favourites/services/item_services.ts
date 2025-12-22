@@ -6,19 +6,19 @@ import type { ItemType } from '../../../types/global';
  */
 export async function getItemRating(itemId: string, itemType: ItemType): Promise<{ average: number; count: number }> {
     const { data, error } = await supabase
-        .from('ratings')
-        .select('rating')
+        .from('item_stats')
+        .select('average_rating, rating_count')
         .eq('item_id', itemId)
-        .eq('item_type', itemType);
+        .eq('item_type', itemType)
+        .maybeSingle();
 
     if (error) throw error;
 
-    if (!data || data.length === 0) return { average: 0, count: 0 };
+    if (!data) return { average: 0, count: 0 };
 
-    const sum = data.reduce((acc, curr) => acc + curr.rating, 0);
     return {
-        average: sum / data.length,
-        count: data.length
+        average: data.average_rating || 0,
+        count: data.rating_count || 0
     };
 }
 

@@ -257,6 +257,22 @@ export async function getAlbumTracks(albumId: string) {
   return data;
 }
 
+/**
+ * Get albums from a specific artist
+ */
+export async function getArtistAlbums(artistId: string, limit: number = 10): Promise<any[]> {
+  try {
+    const data = await spotifyFetch(`artists/${artistId}/albums?include_groups=album,single&limit=${limit}&market=US`);
+    return data?.items || [];
+  } catch (error: any) {
+    if (error?.message?.includes('404')) {
+      return [];
+    }
+    console.warn('Error fetching artist albums:', artistId);
+    return [];
+  }
+}
+
 
 
 // ============================================
@@ -331,6 +347,7 @@ export const SpotifyService = {
   getMultipleAlbums,
   getAlbum,
   getAlbumTracks,
+  getArtistAlbums,
 
   getTrackPreview,
   generateSpotifyLink,

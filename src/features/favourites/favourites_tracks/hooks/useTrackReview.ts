@@ -4,7 +4,7 @@ import { useError } from '../../../../context/ErrorContext';
 import { useSuccess } from '../../../../context/SuccessContext';
 import { submitPersonalRating, getPersonalRating } from '../../../ratings/services/rating_services';
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../services/favourites_services';
-import { deleteItemRating } from '../../services/item_services';
+import { deleteItemRating, getItemRating } from '../../services/item_services';
 import { getItemComments, createComment } from '../../../comments/services/comment_services';
 import { getItemTags, getCurrentUserItemTags } from '../../../tags/services/tag_services';
 import type { SpotifyTrack } from '../../../spotify/type/spotify_types';
@@ -16,23 +16,7 @@ interface UseTrackReviewProps {
     onFavoriteChange?: (isFavorite: boolean) => void;
 }
 
-// Helper function to get track rating data
-async function getTrackRating(trackId: string): Promise<{ average: number; count: number }> {
-    const { data, error } = await supabase
-        .from('ratings')
-        .select('rating')
-        .eq('item_id', trackId)
-        .eq('item_type', 'track');
 
-    if (error) throw error;
-    if (!data || data.length === 0) return { average: 0, count: 0 };
-
-    const sum = data.reduce((acc, curr) => acc + curr.rating, 0);
-    return {
-        average: sum / data.length,
-        count: data.length
-    };
-}
 
 export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange }: UseTrackReviewProps) => {
     const { showError } = useError();
@@ -76,7 +60,7 @@ export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange }: U
                 getPersonalRating(user.id, track.id, 'track'),
                 getCurrentUserItemTags(track.id, 'track'),
                 getItemTags(track.id, 'track'),
-                getTrackRating(track.id),
+                getItemRating(track.id, 'track'),
                 getItemComments(track.id, 'track'),
                 checkIsFavourite(track.id, 'track')
             ]);
@@ -119,7 +103,7 @@ export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange }: U
                 showSuccess(`Rated ${newRating}/5`);
             }
 
-            const updatedRatingData = await getTrackRating(track.id);
+            const updatedRatingData = await getItemRating(track.id, 'track');
             setRatingData(updatedRatingData);
         } catch (error) {
             console.error('Error updating rating:', error);

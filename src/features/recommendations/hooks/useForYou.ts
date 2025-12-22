@@ -2,23 +2,28 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
-import { getRecommendations, getRecommendationSections } from '../services/recommendation_services';
+import { getRecommendationSections, getAlbumRecommendations } from '../services/recommendation_services';
 import type { RecommendedItem } from '../types/recommendation_types';
 
 interface UseForYouReturn {
-    // Data
+    // Track Data
     recommendations: RecommendedItem[];
     forYouSection: RecommendedItem[];
     artistBasedSection: RecommendedItem[];
     genreBasedSection: RecommendedItem[];
 
+    // Album Data
+    albumRecommendations: RecommendedItem[];
+
     // State
     isLoading: boolean;
+    isLoadingAlbums: boolean;
     error: string | null;
     isEmpty: boolean;
 
     // Actions
     refresh: () => Promise<void>;
+    loadAlbums: () => Promise<void>;
 
     // Selected item for modal
     selectedTrackId: string | null;
@@ -30,6 +35,11 @@ export const useForYou = (): UseForYouReturn => {
     const [forYouSection, setForYouSection] = useState<RecommendedItem[]>([]);
     const [artistBasedSection, setArtistBasedSection] = useState<RecommendedItem[]>([]);
     const [genreBasedSection, setGenreBasedSection] = useState<RecommendedItem[]>([]);
+
+    // Album state
+    const [albumRecommendations, setAlbumRecommendations] = useState<RecommendedItem[]>([]);
+    const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
+    const [albumsLoaded, setAlbumsLoaded] = useState(false);
 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -71,12 +81,32 @@ export const useForYou = (): UseForYouReturn => {
         }
     }, []);
 
+    // Load album recommendations (lazy loaded when user switches to albums mode)
+    const loadAlbums = useCallback(async () => {
+        if (albumsLoaded || isLoadingAlbums) return;
+
+        setIsLoadingAlbums(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const albums = await getAlbumRecommendations(user.id, 30);
+            setAlbumRecommendations(albums);
+            setAlbumsLoaded(true);
+        } catch (err) {
+            console.error('Error loading album recommendations:', err);
+        } finally {
+            setIsLoadingAlbums(false);
+        }
+    }, [albumsLoaded, isLoadingAlbums]);
+
     // Load on mount
     useEffect(() => {
         loadRecommendations();
     }, [loadRecommendations]);
 
     const refresh = useCallback(async () => {
+        setAlbumsLoaded(false); // Reset albums so they reload on next request
         await loadRecommendations();
     }, [loadRecommendations]);
 
@@ -85,10 +115,13 @@ export const useForYou = (): UseForYouReturn => {
         forYouSection,
         artistBasedSection,
         genreBasedSection,
+        albumRecommendations,
         isLoading,
+        isLoadingAlbums,
         error,
         isEmpty,
         refresh,
+        loadAlbums,
         selectedTrackId,
         setSelectedTrackId
     };
