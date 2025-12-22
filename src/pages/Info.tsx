@@ -45,8 +45,8 @@ export default function AboutPage() {
           />
           <InfoCard
             icon={<GitMerge className="w-8 h-8 text-[#FFD1D1]" />}
-            title="Graph Discovery"
-            desc="Our 'For You' page uses a graph traversal algorithm, connecting nodes (artists, genres, tags) to find similar content based on user preferences."
+            title="Smart Recommendations"
+            desc="Our 'For You' page uses a weighted scoring system that analyzes your favorite artists, genres, ratings, and tags to find personalized music matches."
           />
         </div>
 

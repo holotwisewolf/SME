@@ -6,20 +6,30 @@ import { SortableAlbumCard } from './SortableAlbumCard';
 import { useAlbumGrid } from '../hooks/useAlbumGrid';
 
 interface AlbumGridProps {
-    albums: string[]; // Array of album IDs
+    albums: string[] | any[]; // Accept IDs or EnhancedAlbum objects
     onDelete?: () => void;
     searchQuery?: string;
 }
 
 const AlbumGrid: React.FC<AlbumGridProps> = ({ albums, onDelete, searchQuery = '' }) => {
+    // If albums are objects, extract IDs for useAlbumGrid, but keep objects for rendering
+    const albumIds = React.useMemo(() => albums.map(a => typeof a === 'string' ? a : a.id), [albums]);
+
+    // Create a map for quick lookup of data if provided
+    const albumDataMap = React.useMemo(() => new Map(
+        albums
+            .filter(a => typeof a !== 'string')
+            .map(a => [a.id, a])
+    ), [albums]);
+
     const {
         activeAlbum,
-        visibleAlbums,
+        visibleAlbums, // This returns IDs since useAlbumGrid works with IDs
         sensors,
         handleRemove,
         handleDragStart,
         handleDragEnd
-    } = useAlbumGrid({ albums, onDelete });
+    } = useAlbumGrid({ albums: albumIds, onDelete });
 
     return (
         <DndContext
@@ -43,6 +53,7 @@ const AlbumGrid: React.FC<AlbumGridProps> = ({ albums, onDelete, searchQuery = '
                                     albumId={albumId}
                                     onRemove={() => handleRemove(albumId)}
                                     searchQuery={searchQuery}
+                                    initialData={albumDataMap.get(albumId)}
                                 />
                             ))}
                         </div>

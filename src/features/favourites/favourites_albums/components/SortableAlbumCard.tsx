@@ -7,12 +7,14 @@ interface SortableAlbumCardProps {
     albumId: string;
     onRemove: () => void;
     searchQuery?: string;
+    initialData?: any;
 }
 
 export const SortableAlbumCard: React.FC<SortableAlbumCardProps> = ({
     albumId,
     onRemove,
-    searchQuery = ''
+    searchQuery = '',
+    initialData
 }) => {
     const {
         attributes,
@@ -35,6 +37,7 @@ export const SortableAlbumCard: React.FC<SortableAlbumCardProps> = ({
                 albumId={albumId}
                 onRemove={onRemove}
                 searchQuery={searchQuery}
+                initialData={initialData}
             />
         </div>
     );

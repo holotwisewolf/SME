@@ -9,9 +9,10 @@ interface AlbumCardProps {
     albumId: string;
     onRemove?: () => void;
     searchQuery?: string;
+    initialData?: any;
 }
 
-const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove, searchQuery = '' }) => {
+const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove, searchQuery = '', initialData }) => {
     const {
         isFavourite,
         isExpanded, setIsExpanded,

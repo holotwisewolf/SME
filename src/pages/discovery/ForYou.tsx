@@ -1,17 +1,12 @@
 // For You Page - Personalized recommendations
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { RefreshCw, Sparkles, Music, Heart, ChevronDown } from 'lucide-react';
+import { Sparkles, Music, Heart } from 'lucide-react';
 import { useForYou } from '../../features/recommendations/hooks/useForYou';
+import { useForYouPage } from './hooks/useForYouPage';
 import ParallaxImageTrack from '../../features/recommendations/components/ParallaxImageTrack';
-import type { RecommendedItem } from '../../features/recommendations/types/recommendation_types';
-import { addToFavourites } from '../../features/favourites/services/favourites_services';
-import { getTrackDetails } from '../../features/spotify/services/spotify_services';
-import { useSuccess } from '../../context/SuccessContext';
-import { useError } from '../../context/ErrorContext';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import type { SpotifyTrack } from '../../features/spotify/type/spotify_types';
 
 // Track Modal for viewing track details
 import { TrackReviewModal } from '../../features/favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
@@ -32,89 +27,23 @@ const ForYou: React.FC = () => {
         loadAlbums
     } = useForYou();
 
-    const { showSuccess } = useSuccess();
-    const { showError } = useError();
-
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
-    const [playlistModalItem, setPlaylistModalItem] = useState<RecommendedItem | null>(null);
-    const [isLoadingTrack, setIsLoadingTrack] = useState(false);
-    const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
-    const [contentMode, setContentMode] = useState<'tracks' | 'albums'>('tracks');
-    const [showModeDropdown, setShowModeDropdown] = useState(false);
-    const [featuredItem, setFeaturedItem] = useState<RecommendedItem | null>(null);
-
-    const modeDropdownRef = React.useRef<HTMLDivElement>(null);
-
-    // Click outside to close mode dropdown
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target as Node)) {
-                setShowModeDropdown(false);
-            }
-        };
-        if (showModeDropdown) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showModeDropdown]);
-
-    const handleRefresh = async () => {
-        setIsRefreshing(true);
-        await refresh();
-        setIsRefreshing(false);
-    };
-
-    const handleItemClick = async (item: RecommendedItem) => {
-        // Set as featured item in control box
-        setFeaturedItem(item);
-
-        if (item.type === 'track') {
-            setIsLoadingTrack(true);
-            try {
-                // Fetch full track data for the modal
-                const trackData = await getTrackDetails(item.id);
-                setSelectedTrack(trackData);
-            } catch (err) {
-                console.error('Error fetching track details:', err);
-                showError('Failed to load track details');
-            } finally {
-                setIsLoadingTrack(false);
-            }
-        } else if (item.type === 'album') {
-            // Open album modal
-            setSelectedAlbumId(item.id);
-        }
-    };
-
-    const handleAddToFavourites = async (item: RecommendedItem, isFavourite: boolean) => {
-        try {
-            if (isFavourite) {
-                await addToFavourites(item.id, item.type);
-                showSuccess(`Added "${item.name}" to favorites!`);
-            } else {
-                const { removeFromFavourites } = await import('../../features/favourites/services/favourites_services');
-                await removeFromFavourites(item.id, item.type);
-                showError(`Removed "${item.name}" from favorites`);
-            }
-        } catch (err) {
-            console.error('Error updating favourites:', err);
-            showError('Failed to update favorites');
-        }
-    };
-
-    const handleAddToPlaylist = (item: RecommendedItem) => {
-        if (item.type === 'track') {
-            setPlaylistModalItem(item);
-        }
-    };
-
-    // Load albums when switching to albums mode
-    useEffect(() => {
-        if (contentMode === 'albums') {
-            loadAlbums();
-        }
-    }, [contentMode, loadAlbums]);
+    const {
+        isRefreshing,
+        selectedTrack,
+        playlistModalItem,
+        isLoadingTrack,
+        selectedAlbumId,
+        contentMode,
+        setContentMode,
+        featuredItem,
+        handleRefresh,
+        handleItemClick,
+        handleAddToFavourites,
+        handleAddToPlaylist,
+        closeTrackModal,
+        closeAlbumModal,
+        closePlaylistModal
+    } = useForYouPage({ refresh, loadAlbums });
 
     // Loading state
     if (isLoading) {
@@ -400,7 +329,7 @@ const ForYou: React.FC = () => {
             {selectedTrack && (
                 <TrackReviewModal
                     track={selectedTrack}
-                    onClose={() => setSelectedTrack(null)}
+                    onClose={closeTrackModal}
                 />
             )}
 
@@ -408,7 +337,7 @@ const ForYou: React.FC = () => {
             {selectedAlbumId && (
                 <ExpandedAlbumCard
                     albumId={selectedAlbumId}
-                    onClose={() => setSelectedAlbumId(null)}
+                    onClose={closeAlbumModal}
                 />
             )}
 
@@ -417,7 +346,7 @@ const ForYou: React.FC = () => {
                 <PlaylistSelectCard
                     trackId={playlistModalItem.id}
                     trackName={playlistModalItem.name}
-                    onClose={() => setPlaylistModalItem(null)}
+                    onClose={closePlaylistModal}
                 />
             )}
         </div>

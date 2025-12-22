@@ -5,21 +5,27 @@ import { getAlbum, getAlbumTracks } from '../../../spotify/services/spotify_serv
 export interface UseAlbumCardProps {
     albumId: string;
     onRemove?: () => void;
+    initialData?: any;
 }
 
-export const useAlbumCard = ({ albumId, onRemove }: UseAlbumCardProps) => {
+export const useAlbumCard = ({ albumId, onRemove, initialData }: UseAlbumCardProps) => {
     const [isFavourite, setIsFavourite] = useState(true);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isInlineExpanded, setIsInlineExpanded] = useState(false);
-    const [album, setAlbum] = useState<any>(null);
-    const [previewTracks, setPreviewTracks] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [album, setAlbum] = useState<any>(initialData || null);
+    const [previewTracks, setPreviewTracks] = useState<any[]>(initialData?.tracks?.items || []);
+    const [loading, setLoading] = useState(!initialData);
 
     useEffect(() => {
         checkIsFavourite(albumId, 'album').then(setIsFavourite);
     }, [albumId]);
 
     useEffect(() => {
+        if (initialData) {
+            setLoading(false);
+            return;
+        }
+
         const loadAlbumData = async () => {
             try {
                 const [albumData, tracksData] = await Promise.all([
@@ -35,7 +41,7 @@ export const useAlbumCard = ({ albumId, onRemove }: UseAlbumCardProps) => {
             }
         };
         loadAlbumData();
-    }, [albumId]);
+    }, [albumId, initialData]);
 
     const handleFavourite = async () => {
         const willBeFavourite = !isFavourite;

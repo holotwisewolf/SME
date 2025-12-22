@@ -1,10 +1,11 @@
 // ParallaxImageTrack - Draggable horizontal carousel with parallax cover effect
-// Fixed: slower drag speed, proper mouse release, cleaner navigation arrow, dropdown tabs
+// Refactored to use useParallaxTrack hook for cleaner code
 
-import React, { useRef, useCallback, useState, useEffect } from 'react';
+import React from 'react';
 import { Play, Pause, ChevronRight, ChevronDown, RefreshCw } from 'lucide-react';
 import type { RecommendedItem } from '../types/recommendation_types';
 import { useTrackPreview } from '../../spotify/hooks/useTrackPreview';
+import { useParallaxTrack } from '../hooks/useParallaxTrack';
 import FavButton from '../../../components/ui/FavButton';
 import ExpandButton from '../../../components/ui/ExpandButton';
 
@@ -32,193 +33,29 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
     tabs,
     extraHeaderContent
 }) => {
-    const trackRef = useRef<HTMLDivElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
     const { playPreview, stopPreview, currentTrackId } = useTrackPreview();
-    const [activeTabId, setActiveTabId] = useState(tabs?.[0]?.id || '');
-    const [currentPercentage, setCurrentPercentage] = useState(0);
-    const [showDropdown, setShowDropdown] = useState(false);
-    const [maxScrollPercentage, setMaxScrollPercentage] = useState(-100);
 
-    // Track drag state
-    const isDraggingRef = useRef(false);
-    const isMouseDownRef = useRef(false);
-    const dragStartXRef = useRef(0);
-    const dragStartTimeRef = useRef(0);
-
-    // Sync activeTabId when tabs change
-    useEffect(() => {
-        if (tabs && tabs.length > 0 && !tabs.find(t => t.id === activeTabId)) {
-            setActiveTabId(tabs[0].id);
-        }
-    }, [tabs, activeTabId]);
-
-    // Click outside to close dropdown
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-                setShowDropdown(false);
-            }
-        };
-        if (showDropdown) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showDropdown]);
-
-    const displayItems = tabs
-        ? tabs.find(t => t.id === activeTabId)?.items || items
-        : items;
-
-    // Calculate max scroll percentage based on actual track width
-    useEffect(() => {
-        const calculateMaxScroll = () => {
-            if (!trackRef.current || !containerRef.current) return;
-            const trackWidth = trackRef.current.scrollWidth;
-            const containerWidth = containerRef.current.clientWidth;
-            // Only allow scrolling until last card hits right edge
-            const maxScroll = Math.min(0, -((trackWidth - containerWidth) / trackWidth) * 100);
-            setMaxScrollPercentage(maxScroll);
-        };
-
-        calculateMaxScroll();
-        window.addEventListener('resize', calculateMaxScroll);
-        return () => window.removeEventListener('resize', calculateMaxScroll);
-    }, [displayItems]);
-
-    const handleOnDown = useCallback((clientX: number) => {
-        if (!trackRef.current) return;
-        isMouseDownRef.current = true;
-        trackRef.current.dataset.mouseDownAt = String(clientX);
-        isDraggingRef.current = false;
-        dragStartXRef.current = clientX;
-        dragStartTimeRef.current = Date.now();
-    }, []);
-
-    const handleOnUp = useCallback(() => {
-        if (!trackRef.current) return;
-        isMouseDownRef.current = false;
-        isDraggingRef.current = false;
-        trackRef.current.dataset.mouseDownAt = "0";
-        trackRef.current.dataset.prevPercentage = trackRef.current.dataset.percentage || "0";
-    }, []);
-
-    const handleOnMove = useCallback((clientX: number) => {
-        if (!trackRef.current || !isMouseDownRef.current) return;
-        if (trackRef.current.dataset.mouseDownAt === "0") return;
-
-        const moveDistance = Math.abs(clientX - dragStartXRef.current);
-        if (moveDistance > 10) {
-            isDraggingRef.current = true;
-        }
-
-        const mouseDelta = parseFloat(trackRef.current.dataset.mouseDownAt || "0") - clientX;
-        const maxDelta = window.innerWidth * 1.5; // Slower drag
-
-        const percentage = (mouseDelta / maxDelta) * -100;
-        const prevPercentage = parseFloat(trackRef.current.dataset.prevPercentage || "0");
-        const nextPercentageUnconstrained = prevPercentage + percentage;
-        // Use dynamic max scroll so last card stops at right edge
-        const nextPercentage = Math.max(Math.min(nextPercentageUnconstrained, 0), maxScrollPercentage);
-
-        trackRef.current.dataset.percentage = String(nextPercentage);
-        setCurrentPercentage(nextPercentage);
-
-        trackRef.current.animate({
-            transform: `translate(${nextPercentage}%, 0%)`
-        }, { duration: 1200, fill: "forwards" });
-
-        const images = trackRef.current.getElementsByClassName("parallax-image");
-        for (const image of images) {
-            (image as HTMLElement).animate({
-                objectPosition: `${100 + nextPercentage}% center`
-            }, { duration: 1200, fill: "forwards" });
-        }
-    }, [maxScrollPercentage]);
-
-    const wasClick = useCallback((): boolean => {
-        const timeDelta = Date.now() - dragStartTimeRef.current;
-        return !isDraggingRef.current && timeDelta < 200;
-    }, []);
-
-    const onMouseDown = useCallback((e: React.MouseEvent) => handleOnDown(e.clientX), [handleOnDown]);
-    const onMouseUp = useCallback(() => handleOnUp(), [handleOnUp]);
-    const onMouseMove = useCallback((e: React.MouseEvent) => handleOnMove(e.clientX), [handleOnMove]);
-    const onTouchStart = useCallback((e: React.TouchEvent) => handleOnDown(e.touches[0].clientX), [handleOnDown]);
-    const onTouchEnd = useCallback(() => handleOnUp(), [handleOnUp]);
-    const onTouchMove = useCallback((e: React.TouchEvent) => handleOnMove(e.touches[0].clientX), [handleOnMove]);
-
-    useEffect(() => {
-        const handleGlobalMouseUp = () => {
-            if (isMouseDownRef.current) {
-                handleOnUp();
-            }
-        };
-        const handleGlobalTouchEnd = () => {
-            if (isMouseDownRef.current) {
-                handleOnUp();
-            }
-        };
-        // Also check during mousemove if button is no longer pressed
-        const handleGlobalMouseMove = (e: MouseEvent) => {
-            // If no buttons are pressed but we think we're dragging, reset
-            if (e.buttons === 0 && isMouseDownRef.current) {
-                handleOnUp();
-            }
-        };
-
-        window.addEventListener('mouseup', handleGlobalMouseUp);
-        window.addEventListener('touchend', handleGlobalTouchEnd);
-        window.addEventListener('touchcancel', handleGlobalTouchEnd);
-        window.addEventListener('mousemove', handleGlobalMouseMove);
-
-        return () => {
-            window.removeEventListener('mouseup', handleGlobalMouseUp);
-            window.removeEventListener('touchend', handleGlobalTouchEnd);
-            window.removeEventListener('touchcancel', handleGlobalTouchEnd);
-            window.removeEventListener('mousemove', handleGlobalMouseMove);
-        };
-    }, [handleOnUp]);
-
-    const handleTabChange = useCallback((tabId: string) => {
-        setActiveTabId(tabId);
-        setShowDropdown(false);
-        setCurrentPercentage(0);
-        if (trackRef.current) {
-            trackRef.current.dataset.percentage = "0";
-            trackRef.current.dataset.prevPercentage = "0";
-            trackRef.current.style.transform = 'translate(0%, 0%)';
-            const images = trackRef.current.getElementsByClassName("parallax-image");
-            for (const image of images) {
-                (image as HTMLElement).style.objectPosition = '100% center';
-            }
-        }
-    }, []);
-
-    const handleNextPage = useCallback(() => {
-        if (!trackRef.current) return;
-
-        // Scroll by ~2 cards (20% instead of 50%)
-        const newPercentage = Math.max(currentPercentage - 20, maxScrollPercentage);
-        trackRef.current.dataset.percentage = String(newPercentage);
-        trackRef.current.dataset.prevPercentage = String(newPercentage);
-        setCurrentPercentage(newPercentage);
-
-        trackRef.current.animate({
-            transform: `translate(${newPercentage}%, 0%)`
-        }, { duration: 500, fill: "forwards" });
-
-        const images = trackRef.current.getElementsByClassName("parallax-image");
-        for (const image of images) {
-            (image as HTMLElement).animate({
-                objectPosition: `${100 + newPercentage}% center`
-            }, { duration: 500, fill: "forwards" });
-        }
-    }, [currentPercentage, maxScrollPercentage]);
-
-    const canGoNext = currentPercentage > maxScrollPercentage;
-    const activeTab = tabs?.find(t => t.id === activeTabId);
+    const {
+        trackRef,
+        containerRef,
+        dropdownRef,
+        activeTabId,
+        showDropdown,
+        setShowDropdown,
+        displayItems,
+        canGoNext,
+        activeTab,
+        isMouseDown,
+        onMouseDown,
+        onMouseUp,
+        onMouseMove,
+        onTouchStart,
+        onTouchEnd,
+        onTouchMove,
+        handleTabChange,
+        handleNextPage,
+        wasClick
+    } = useParallaxTrack({ items, tabs });
 
     return (
         <div className="w-full flex flex-col">
@@ -287,7 +124,7 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
                 <div
                     ref={containerRef}
                     className="relative w-full select-none overflow-x-clip overflow-y-visible"
-                    style={{ height: '56vmin', cursor: isMouseDownRef.current ? 'grabbing' : 'grab' }}
+                    style={{ height: '56vmin', cursor: isMouseDown ? 'grabbing' : 'grab' }}
                     onMouseDown={onMouseDown}
                     onMouseUp={onMouseUp}
                     onMouseMove={onMouseMove}

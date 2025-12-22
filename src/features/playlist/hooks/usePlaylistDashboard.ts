@@ -207,7 +207,8 @@ export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
                 }
 
                 if (typeof valA === 'number' && typeof valB === 'number') {
-                    return sortDirection === 'asc' ? valA - valB : valB - valA;
+                    // Smart Sort: 'asc' (Up Arrow) means Highest First for numbers (Ratings/Counts)
+                    return sortDirection === 'asc' ? valB - valA : valA - valB;
                 }
                 return 0;
             });

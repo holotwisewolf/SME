@@ -14,8 +14,15 @@ export const useAlbumGrid = ({ albums, onDelete }: UseAlbumGridProps) => {
     const [activeAlbum, setActiveAlbum] = useState<string | null>(null);
 
     // Update sorted albums when props change
+    // Update sorted albums when props change, with deep comparison check to prevent infinite loops
     useEffect(() => {
-        setSortedAlbums(albums);
+        setSortedAlbums(prev => {
+            // Simple length check first
+            if (prev.length !== albums.length) return albums;
+            // Deep check (stringified IDs)
+            if (JSON.stringify(prev) === JSON.stringify(albums)) return prev;
+            return albums;
+        });
     }, [albums]);
 
     const sensors = useSensors(
