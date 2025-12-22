@@ -17,6 +17,7 @@ export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
     const [filterState, setFilterState] = useState<FilterState>({
         ratingMode: 'global',
         minRating: 0,
+        minRatingCount: 0,
         tagMode: 'global',
         selectedTags: [],
         onlyFavorites: false
@@ -138,7 +139,7 @@ export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
         ));
     };
 
-    const hasActiveFilters = filterState.onlyFavorites || filterState.minRating > 0 || filterState.selectedTags.length > 0;
+    const hasActiveFilters = filterState.onlyFavorites || filterState.minRating > 0 || filterState.minRatingCount > 0 || filterState.selectedTags.length > 0;
 
     // --- Filtering & Sorting Logic ---
     const processPlaylists = () => {
@@ -164,6 +165,11 @@ export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
             } else {
                 processed = processed.filter(p => (p.user_rating || 0) >= filterState.minRating);
             }
+        }
+
+        // 3b. Min rating count filter (only for global mode)
+        if (filterState.minRatingCount > 0 && filterState.ratingMode === 'global') {
+            processed = processed.filter(p => (p.rating_count || 0) >= filterState.minRatingCount);
         }
 
         // 4. Tag Filter

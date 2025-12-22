@@ -37,6 +37,7 @@ export const useYourAlbums = () => {
     const [filterState, setFilterState] = useState<FilterState>({
         ratingMode: 'global',
         minRating: 0,
+        minRatingCount: 0,
         tagMode: 'global',
         selectedTags: [],
         onlyFavorites: false
@@ -167,6 +168,11 @@ export const useYourAlbums = () => {
             } else {
                 result = result.filter(a => a.user_rating >= filterState.minRating);
             }
+        }
+
+        // 2b. Min rating count filter (only for global mode)
+        if (filterState.minRatingCount > 0 && filterState.ratingMode === 'global') {
+            result = result.filter(a => a.rating_count >= filterState.minRatingCount);
         }
 
         // 3. Tag Filter

@@ -68,7 +68,7 @@ const LibraryAlbums: React.FC = () => {
                         onFilterChange={setFilterState}
                         onSortChange={setActiveSort}
                         onClearAll={() => {
-                            setFilterState({ minRating: 0, tagMode: 'global', ratingMode: 'global', selectedTags: [], onlyFavorites: false });
+                            setFilterState({ minRating: 0, minRatingCount: 0, tagMode: 'global', ratingMode: 'global', selectedTags: [], onlyFavorites: false });
                             setActiveSort('alphabetical');
                             setSortDirection('desc');
                         }}

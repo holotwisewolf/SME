@@ -45,6 +45,7 @@ export const useYourTracks = () => {
     const [filterState, setFilterState] = useState<FilterState>({
         ratingMode: 'global',
         minRating: 0,
+        minRatingCount: 0,
         tagMode: 'global',
         selectedTags: [],
         onlyFavorites: false
@@ -174,6 +175,11 @@ export const useYourTracks = () => {
             } else {
                 processed = processed.filter(t => (t.user_rating || 0) >= filterState.minRating);
             }
+        }
+
+        // 2b. Min rating count filter (only for global mode)
+        if (filterState.minRatingCount > 0 && filterState.ratingMode === 'global') {
+            processed = processed.filter(t => (t.rating_count || 0) >= filterState.minRatingCount);
         }
 
         // 3. Tag filter

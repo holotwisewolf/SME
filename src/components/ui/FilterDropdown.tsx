@@ -30,6 +30,7 @@ export type SortOptionType =
 export interface FilterState {
     ratingMode: 'global' | 'personal';
     minRating: number;
+    minRatingCount: number;  // Minimum number of ratings (e.g., 10+ people rated)
     tagMode: 'global' | 'personal';
     selectedTags: string[];
     onlyFavorites: boolean;
@@ -102,11 +103,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
                             {/* 1. Rating Filter */}
                             <div>
                                 <div className="flex justify-between items-center mb-1">
-                                    <label className="text-xs text-gray-300 font-medium flex items-center gap-1"><Star size={12} /> Min Rating</label>
-                                    {/* Display Value Only */}
-                                    <span className="text-[10px] text-[#FFD1D1] font-mono font-bold">
-                                        {currentFilter.minRating > 0 ? `${currentFilter.minRating.toFixed(currentFilter.ratingMode === 'global' ? 1 : 0)} / 5` : 'Any'}
-                                    </span>
+                                    <label className="text-xs text-gray-300 font-medium flex items-center gap-1"><Star size={12} /> Min Rating Score</label>
                                 </div>
 
                                 <ModeToggle mode={currentFilter.ratingMode} onToggle={toggleRatingMode} />
@@ -123,9 +120,26 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
                                         className="flex-1 h-1.5 bg-[#696969]/50 rounded-lg appearance-none cursor-pointer slider"
                                     />
                                 </div>
-                            </div>
 
-                            <div className="border-t border-white/5"></div>
+                                {/* Min Rating Count - Only for Global mode */}
+                                {currentFilter.ratingMode === 'global' && (
+                                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5">
+                                        <span className="text-[10px] text-gray-400">Min # of Ratings</span>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="text"
+                                                value={currentFilter.minRatingCount > 0 ? currentFilter.minRatingCount : ''}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    onFilterChange({ ...currentFilter, minRatingCount: Math.max(0, val) });
+                                                }}
+                                                placeholder="Any"
+                                                className="w-12 text-center text-[10px] text-[#FFD1D1] font-mono font-bold bg-transparent border border-white/20 rounded px-1 py-0.5 focus:outline-none focus:border-[#FFD1D1] placeholder:text-gray-500"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* 2. Tag Filter */}
                             <div>

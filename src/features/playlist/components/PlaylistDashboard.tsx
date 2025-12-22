@@ -65,7 +65,7 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
             currentSort={activeSort}
             onFilterChange={setFilterState}
             onSortChange={setActiveSort}
-            onClearAll={() => { setFilterState({ minRating: 0, tagMode: 'global', ratingMode: 'global', selectedTags: [], onlyFavorites: false }); setActiveSort('created_at'); setSortDirection('desc'); }}
+            onClearAll={() => { setFilterState({ minRating: 0, minRatingCount: 0, tagMode: 'global', ratingMode: 'global', selectedTags: [], onlyFavorites: false }); setActiveSort('created_at'); setSortDirection('desc'); }}
             hiddenSorts={[
               'global_rated_at',
               'global_tagged_at'
