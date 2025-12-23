@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight, Lock, Star, Heart, Music } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
@@ -8,6 +7,11 @@ import DefUserAvatar from '../../../components/ui/DefUserAvatar';
 import { getPublicProfile, getUserRecentFavorites } from '../services/user_profile_services';
 import { supabase } from '../../../lib/supabaseClient';
 import { spotifyFetch } from '../../spotify/services/spotifyConnection';
+
+// --- Imports for Modals ---
+import { ExpandedPlaylistCard } from '../../playlist/components/expanded_card/ExpandedPlaylistCard';
+import { TrackReviewModal } from '../../favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
+import { ExpandedAlbumCard } from '../../favourites/favourites_albums/components/expanded_card/ExpandedAlbumCard';
 
 interface UserPreviewModalProps {
     userId: string;
@@ -18,27 +22,28 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({ userId, onClose }) 
     const navigate = useNavigate();
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-
+    
     const [ratingStats, setRatingStats] = useState({ avg: '0.0', count: 0 });
     const [recentFavorites, setRecentFavorites] = useState<any[]>([]);
 
-    // --- Sub-Component: ---
+    // --- Modal States ---
+    const [selectedTrack, setSelectedTrack] = useState<any>(null);
+    const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+    const [selectedPlaylist, setSelectedPlaylist] = useState<any>(null);
+
+    // --- Sub-Component: 缩略图处理 ---
     const FavoriteThumbnail = ({ item }: { item: any }) => {
         const [imgError, setImgError] = useState(false);
-
-
         if (item.imageUrl && !imgError) {
             return (
-                <img
-                    src={item.imageUrl}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110"
-                    onError={() => setImgError(true)}
+                <img 
+                    src={item.imageUrl} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110" 
+                    onError={() => setImgError(true)} 
                     alt="Cover"
                 />
             );
         }
-
-
         return (
             <div className="w-full h-full flex items-center justify-center bg-[#2a2a2a]">
                 <Music size={20} className="text-white/20" />
@@ -46,41 +51,58 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({ userId, onClose }) 
         );
     };
 
+    // --- Data Enrichment: 获取完整的对象数据以便打开 Modal ---
     const enrichFavorites = async (items: any[]) => {
         if (!items || items.length === 0) return [];
-
+        
         const trackIds = items.filter(i => i.item_type === 'track').map(i => i.item_id);
         const albumIds = items.filter(i => i.item_type === 'album').map(i => i.item_id);
         const playlistIds = items.filter(i => i.item_type === 'playlist').map(i => i.item_id);
 
-        let imgMap = new Map<string, string>();
+        let dataMap = new Map<string, any>();
 
         try {
             const promises = [];
+            
+            // 1. Fetch Tracks (Full Object needed for TrackReviewModal)
             if (trackIds.length > 0) {
-                promises.push(spotifyFetch(`/tracks?ids=${trackIds.join(',')}`).then(d =>
-                    d.tracks.forEach((t: any) => t && imgMap.set(t.id, t.album?.images?.[0]?.url))
+                promises.push(spotifyFetch(`/tracks?ids=${trackIds.join(',')}`).then(d => 
+                    d.tracks.forEach((t: any) => {
+                        if(t) dataMap.set(t.id, { ...t, imageUrl: t.album?.images?.[0]?.url });
+                    })
                 ));
             }
+            
+            // 2. Fetch Albums (Just need Image usually, but store data just in case)
             if (albumIds.length > 0) {
-                promises.push(spotifyFetch(`/albums?ids=${albumIds.join(',')}`).then(d =>
-                    d.albums.forEach((a: any) => a && imgMap.set(a.id, a.images?.[0]?.url))
+                promises.push(spotifyFetch(`/albums?ids=${albumIds.join(',')}`).then(d => 
+                    d.albums.forEach((a: any) => {
+                        if(a) dataMap.set(a.id, { ...a, imageUrl: a.images?.[0]?.url });
+                    })
                 ));
             }
+            
+            // 3. Fetch Playlists (Full Object needed for ExpandedPlaylistCard)
             if (playlistIds.length > 0) {
-
-                playlistIds.forEach(id => {
-                    const { data } = supabase.storage.from('playlists').getPublicUrl(id);
-                    if (data) imgMap.set(id, data.publicUrl);
-                });
+                promises.push(supabase.from('playlists').select('*').in('id', playlistIds).then(({ data }) => {
+                    data?.forEach(p => {
+                        const { data: publicUrl } = supabase.storage.from('playlists').getPublicUrl(p.id);
+                        dataMap.set(p.id, { ...p, imageUrl: publicUrl.publicUrl });
+                    });
+                }));
             }
+            
             await Promise.all(promises);
-        } catch (e) { console.error("Error fetching images", e); }
+        } catch (e) { console.error("Error fetching details", e); }
 
-        return items.map(item => ({
-            ...item,
-            imageUrl: imgMap.get(item.item_id)
-        }));
+        return items.map(item => {
+            const details = dataMap.get(item.item_id);
+            return {
+                ...item,
+                details: details, // Store full object here
+                imageUrl: details?.imageUrl
+            };
+        });
     };
 
     useEffect(() => {
@@ -95,7 +117,7 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({ userId, onClose }) 
                         .from('ratings')
                         .select('rating')
                         .eq('user_id', userId);
-
+                    
                     if (ratings && ratings.length > 0) {
                         const total = ratings.reduce((acc, curr) => acc + curr.rating, 0);
                         setRatingStats({
@@ -104,7 +126,8 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({ userId, onClose }) 
                         });
                     }
 
-                    const favs = await getUserRecentFavorites(userId, 3);
+                    // Fetch 4 items as requested
+                    const favs = await getUserRecentFavorites(userId, 4);
                     const enrichedFavs = await enrichFavorites(favs || []);
                     setRecentFavorites(enrichedFavs);
                 }
@@ -122,20 +145,33 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({ userId, onClose }) 
         navigate(`/profile/${userId}`);
     };
 
+    // --- Click Handler for Favorites ---
+    const handleFavoriteClick = (item: any) => {
+        if (!item.details && item.item_type !== 'album') return; // Album only needs ID
+
+        if (item.item_type === 'track') {
+            setSelectedTrack(item.details);
+        } else if (item.item_type === 'album') {
+            setSelectedAlbumId(item.item_id);
+        } else if (item.item_type === 'playlist') {
+            setSelectedPlaylist(item.details);
+        }
+    };
+
     if (!userId) return null;
 
     const isPrivate = profile?.is_private_profile;
 
-    return createPortal(
+    return (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
-            <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+                onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-md" 
             />
 
-            <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
+            <motion.div 
+                initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+                animate={{ scale: 1, opacity: 1, y: 0 }} 
                 className="relative w-full max-w-sm bg-[#181818] border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col items-center p-8 text-center group"
             >
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-[#FFD1D1]/5 blur-[60px] rounded-full pointer-events-none" />
@@ -166,8 +202,8 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({ userId, onClose }) 
                         <div className="w-full mb-6">
                             <div className={`
                                 w-full py-3 px-5 rounded-2xl border flex items-center justify-center gap-4 backdrop-blur-sm transition-all
-                                ${isPrivate
-                                    ? 'bg-[#FFD1D1]/5 border-[#FFD1D1]/10 text-[#FFD1D1]/80'
+                                ${isPrivate 
+                                    ? 'bg-[#FFD1D1]/5 border-[#FFD1D1]/10 text-[#FFD1D1]/80' 
                                     : 'bg-white/5 border-white/5 text-white'
                                 }
                             `}>
@@ -197,18 +233,18 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({ userId, onClose }) 
                                     <Heart size={10} className="text-[#FFD1D1]" fill="#FFD1D1" />
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-white">Recent Favorites</span>
                                 </div>
-
+                                
                                 {recentFavorites.length > 0 ? (
                                     <div className="flex justify-center gap-3">
                                         {recentFavorites.map((item, idx) => (
-                                            <div key={`${item.item_id}-${idx}`} className="w-14 h-14 rounded-lg overflow-hidden border border-white/10 bg-black/20 relative group/item">
-
-                                                {/* handle image */}
+                                            <div 
+                                                key={`${item.item_id}-${idx}`} 
+                                                onClick={() => handleFavoriteClick(item)}
+                                                className="w-14 h-14 rounded-lg overflow-hidden border border-white/10 bg-black/20 relative group/item cursor-pointer hover:border-[#FFD1D1]/50 transition-colors"
+                                            >
                                                 <FavoriteThumbnail item={item} />
-
-                                                {/* Tooltip */}
                                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center">
-                                                    <Heart size={12} fill="white" className="text-white" />
+                                                    <Heart size={12} fill="white" className="text-white"/>
                                                 </div>
                                             </div>
                                         ))}
@@ -219,7 +255,7 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({ userId, onClose }) 
                             </div>
                         )}
 
-                        <button
+                        <button 
                             onClick={handleViewFullProfile}
                             className="w-full bg-white text-black hover:bg-[#FFD1D1] font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg group/btn"
                         >
@@ -231,8 +267,35 @@ const UserPreviewModal: React.FC<UserPreviewModalProps> = ({ userId, onClose }) 
                     <div className="py-10 text-white/50">User not found</div>
                 )}
             </motion.div>
-        </div>,
-        document.body
+
+            {/* --- Modals Render Section --- */}
+            <AnimatePresence>
+                {selectedTrack && (
+                    <TrackReviewModal 
+                        track={selectedTrack} 
+                        onClose={() => setSelectedTrack(null)} 
+                    />
+                )}
+                
+                {selectedAlbumId && (
+                    <ExpandedAlbumCard 
+                        albumId={selectedAlbumId} 
+                        onClose={() => setSelectedAlbumId(null)} 
+                    />
+                )}
+
+                {selectedPlaylist && (
+                    <ExpandedPlaylistCard 
+                        playlist={selectedPlaylist} 
+                        onClose={() => setSelectedPlaylist(null)}
+                        // Prevent editing for preview
+                        onTitleChange={() => {}} 
+                        onColorChange={() => {}}
+                        onDeletePlaylist={() => {}}
+                    />
+                )}
+            </AnimatePresence>
+        </div>
     );
 };
 

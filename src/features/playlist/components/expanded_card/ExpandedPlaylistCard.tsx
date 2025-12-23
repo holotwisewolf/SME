@@ -76,7 +76,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props)
 
     if (loading) {
         return createPortal(
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={props.onClose}>
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={props.onClose}>
                 <div className="flex items-center justify-center w-full max-w-5xl h-[500px] bg-[#1e1e1e] rounded-2xl shadow-2xl border border-white/5 mx-auto" onClick={(e) => e.stopPropagation()}>
                     <LoadingSpinner className="w-12 h-12 text-[white]" />
                 </div>
@@ -86,7 +86,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props)
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={props.onClose}>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={props.onClose}>
             <div
                 className="flex flex-col md:flex-row bg-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl mx-auto border border-white/5 relative h-[515px]"
                 onClick={(e) => e.stopPropagation()}
