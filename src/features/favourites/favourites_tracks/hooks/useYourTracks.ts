@@ -28,6 +28,10 @@ export interface EnhancedTrack extends SpotifyTrack {
     user_rating?: number;
     tags?: string[];
     user_tags?: string[];
+    // Timestamps for sorting
+    user_rated_at?: string;
+    user_commented_at?: string;
+    user_tagged_at?: string;
 }
 
 export const useYourTracks = () => {
@@ -36,7 +40,7 @@ export const useYourTracks = () => {
     const [loading, setLoading] = useState(true);
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [activeSort, setActiveSort] = useState<SortOptionType>('created_at');
     const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -85,26 +89,42 @@ export const useYourTracks = () => {
                 console.log('[YourTracks] Fetched item_stats for', batch.length, 'tracks:', stats.length, 'stats found');
                 const statsMap = new Map(stats.map(s => [s.item_id, s]));
 
+                // Batch fetch user timestamps (efficient - 3 queries total, not N+1)
+                const [userRatingsRes, userCommentsRes, userTagsRes] = await Promise.all([
+                    user ? supabase.from('ratings').select('item_id, rating, created_at, updated_at').eq('item_type', 'track').eq('user_id', user.id).in('item_id', batch) : { data: [] },
+                    user ? supabase.from('comments').select('item_id, created_at').eq('item_type', 'track').eq('user_id', user.id).in('item_id', batch) : { data: [] },
+                    user ? supabase.from('item_tags').select('item_id, created_at').eq('item_type', 'track').eq('user_id', user.id).in('item_id', batch) : { data: [] }
+                ]);
+
+                // Build maps for efficient lookup
+                const userRatingsMap = new Map((userRatingsRes.data || []).map(r => [r.item_id, r]));
+                const userCommentsMap = new Map<string, string>();
+                (userCommentsRes.data || []).forEach(c => {
+                    const existing = userCommentsMap.get(c.item_id);
+                    if (!existing || new Date(c.created_at) > new Date(existing)) {
+                        userCommentsMap.set(c.item_id, c.created_at);
+                    }
+                });
+                const userTagsMap = new Map<string, string>();
+                (userTagsRes.data || []).forEach(t => {
+                    const existing = userTagsMap.get(t.item_id);
+                    if (!existing || new Date(t.created_at) > new Date(existing)) {
+                        userTagsMap.set(t.item_id, t.created_at);
+                    }
+                });
+
                 const enhancedTracks: EnhancedTrack[] = await Promise.all(
                     data.tracks.map(async (track: SpotifyTrack) => {
                         const itemStats = statsMap.get(track.id);
+                        const userRating = userRatingsMap.get(track.id);
 
-                        const [userRating, globalTags, userTags] = await Promise.all([
-                            user ? getUserItemRating(track.id, 'track').catch((e) => { console.warn('[YourTracks] getUserItemRating failed for', track.id, e); return null; }) : null,
-                            getItemTags(track.id, 'track').catch((e) => { console.warn('[YourTracks] getItemTags failed for', track.id, e); return []; }),
-                            user ? getCurrentUserItemTags(track.id, 'track').catch((e) => { console.warn('[YourTracks] getCurrentUserItemTags failed for', track.id, e); return []; }) : []
+                        const [globalTags, userTags] = await Promise.all([
+                            getItemTags(track.id, 'track').catch(() => []),
+                            user ? getCurrentUserItemTags(track.id, 'track').catch(() => []) : []
                         ]);
 
-                        // Debug log for first few tracks
-                        if (data.tracks.indexOf(track) < 3) {
-                            console.log('[YourTracks] Track', track.name, ':', {
-                                rating_avg: itemStats?.average_rating ?? 0,
-                                user_rating: userRating || 0,
-                                globalTags: globalTags.map(t => t.name),
-                                userTags: userTags.map(t => t.name),
-                                comment_count: itemStats?.comment_count ?? 0
-                            });
-                        }
+                        // Get latest timestamp for rating (created_at or updated_at)
+                        const ratedAt = userRating ? (userRating.updated_at && new Date(userRating.updated_at) > new Date(userRating.created_at) ? userRating.updated_at : userRating.created_at) : undefined;
 
                         return {
                             ...track,
@@ -112,9 +132,12 @@ export const useYourTracks = () => {
                             rating_avg: itemStats?.average_rating ?? 0,
                             rating_count: itemStats?.rating_count ?? 0,
                             comment_count: itemStats?.comment_count ?? 0,
-                            user_rating: userRating || 0,
+                            user_rating: userRating?.rating || 0,
                             tags: globalTags.map(t => t.name),
-                            user_tags: userTags.map(t => t.name)
+                            user_tags: userTags.map(t => t.name),
+                            user_rated_at: ratedAt,
+                            user_commented_at: userCommentsMap.get(track.id),
+                            user_tagged_at: userTagsMap.get(track.id)
                         };
                     })
                 );
@@ -209,16 +232,57 @@ export const useYourTracks = () => {
                         valB = b.added_at ? new Date(b.added_at).getTime() : 0;
                         break;
                     case 'global_rating_avg': valA = a.rating_avg || 0; valB = b.rating_avg || 0; break;
-                    case 'global_rating_count': valA = a.rating_count || 0; valB = b.rating_count || 0; break;
+                    case 'global_rating_count': {
+                        // Primary: rating count, Secondary: if same count, higher rating first
+                        const countA = a.rating_count || 0;
+                        const countB = b.rating_count || 0;
+                        if (countA !== countB) {
+                            valA = countA; valB = countB;
+                        } else {
+                            valA = a.rating_avg || 0;
+                            valB = b.rating_avg || 0;
+                        }
+                        break;
+                    }
                     case 'personal_rating': valA = a.user_rating || 0; valB = b.user_rating || 0; break;
                     case 'global_tag_count': valA = a.tags?.length || 0; valB = b.tags?.length || 0; break;
                     case 'personal_tag_count': valA = a.user_tags?.length || 0; valB = b.user_tags?.length || 0; break;
                     case 'comment_count': valA = a.comment_count || 0; valB = b.comment_count || 0; break;
-                    case 'commented_at':
+
+                    // Timestamps - push items without timestamps to the end, sort those alphabetically
+                    case 'personal_rated_at': {
+                        const hasA = !!a.user_rated_at;
+                        const hasB = !!b.user_rated_at;
+                        if (!hasA && !hasB) return a.name.localeCompare(b.name);
+                        if (!hasA) return 1;
+                        if (!hasB) return -1;
+                        valA = new Date(a.user_rated_at!).getTime();
+                        valB = new Date(b.user_rated_at!).getTime();
+                        break;
+                    }
+                    case 'commented_at': {
+                        const hasA = !!a.user_commented_at;
+                        const hasB = !!b.user_commented_at;
+                        if (!hasA && !hasB) return a.name.localeCompare(b.name);
+                        if (!hasA) return 1;
+                        if (!hasB) return -1;
+                        valA = new Date(a.user_commented_at!).getTime();
+                        valB = new Date(b.user_commented_at!).getTime();
+                        break;
+                    }
+                    case 'personal_tagged_at': {
+                        const hasA = !!a.user_tagged_at;
+                        const hasB = !!b.user_tagged_at;
+                        if (!hasA && !hasB) return a.name.localeCompare(b.name);
+                        if (!hasA) return 1;
+                        if (!hasB) return -1;
+                        valA = new Date(a.user_tagged_at!).getTime();
+                        valB = new Date(b.user_tagged_at!).getTime();
+                        break;
+                    }
+                    // Global timestamps not fetched yet, just return 0
                     case 'global_rated_at':
-                    case 'personal_rated_at':
                     case 'global_tagged_at':
-                    case 'personal_tagged_at':
                         valA = 0; valB = 0; break;
                     default: return 0;
                 }

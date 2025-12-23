@@ -29,7 +29,7 @@ export const useYourAlbums = () => {
     const [albums, setAlbums] = useState<EnhancedAlbum[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [activeSort, setActiveSort] = useState<SortOptionType>('created_at');
 
     // Filter state
@@ -199,30 +199,59 @@ export const useYourAlbums = () => {
                     valB = new Date(b.added_at || 0).getTime();
                     break;
 
-                case 'global_rating_avg': valA = a.rating_avg; valB = b.rating_avg; break;
-                case 'global_rating_count': valA = a.rating_count; valB = b.rating_count; break;
-                case 'personal_rating': valA = a.user_rating; valB = b.user_rating; break;
-                case 'comment_count': valA = a.comment_count; valB = b.comment_count; break;
+                case 'global_rating_avg': valA = a.rating_avg || 0; valB = b.rating_avg || 0; break;
+                case 'global_rating_count': {
+                    // Primary: rating count, Secondary: if same count, higher rating first
+                    const countA = a.rating_count || 0;
+                    const countB = b.rating_count || 0;
+                    if (countA !== countB) {
+                        valA = countA; valB = countB;
+                    } else {
+                        valA = a.rating_avg || 0;
+                        valB = b.rating_avg || 0;
+                    }
+                    break;
+                }
+                case 'personal_rating': valA = a.user_rating || 0; valB = b.user_rating || 0; break;
+                case 'comment_count': valA = a.comment_count || 0; valB = b.comment_count || 0; break;
 
-                // Track count (from SpotifyAlbum)
+                // Track count (from SpotifyAlbum) - default to 0 if undefined
                 case 'track_count':
-                    valA = a.total_tracks;
-                    valB = b.total_tracks;
+                    valA = a.total_tracks ?? 0;
+                    valB = b.total_tracks ?? 0;
                     break;
 
-                // Timestamps
-                case 'personal_rated_at':
-                    valA = new Date(a.user_rated_at || 0).getTime();
-                    valB = new Date(b.user_rated_at || 0).getTime();
+                // Timestamps - push items without timestamps to the end, sort those alphabetically
+                case 'personal_rated_at': {
+                    const hasA = !!a.user_rated_at;
+                    const hasB = !!b.user_rated_at;
+                    if (!hasA && !hasB) return a.name.localeCompare(b.name); // Secondary sort alphabetically
+                    if (!hasA) return 1; // Push A to end
+                    if (!hasB) return -1; // Push B to end
+                    valA = new Date(a.user_rated_at!).getTime();
+                    valB = new Date(b.user_rated_at!).getTime();
                     break;
-                case 'commented_at':
-                    valA = new Date(a.user_commented_at || 0).getTime();
-                    valB = new Date(b.user_commented_at || 0).getTime();
+                }
+                case 'commented_at': {
+                    const hasA = !!a.user_commented_at;
+                    const hasB = !!b.user_commented_at;
+                    if (!hasA && !hasB) return a.name.localeCompare(b.name);
+                    if (!hasA) return 1;
+                    if (!hasB) return -1;
+                    valA = new Date(a.user_commented_at!).getTime();
+                    valB = new Date(b.user_commented_at!).getTime();
                     break;
-                case 'personal_tagged_at':
-                    valA = new Date(a.user_tagged_at || 0).getTime();
-                    valB = new Date(b.user_tagged_at || 0).getTime();
+                }
+                case 'personal_tagged_at': {
+                    const hasA = !!a.user_tagged_at;
+                    const hasB = !!b.user_tagged_at;
+                    if (!hasA && !hasB) return a.name.localeCompare(b.name);
+                    if (!hasA) return 1;
+                    if (!hasB) return -1;
+                    valA = new Date(a.user_tagged_at!).getTime();
+                    valB = new Date(b.user_tagged_at!).getTime();
                     break;
+                }
 
                 default:
                     // Fallback - no sorting
@@ -242,6 +271,10 @@ export const useYourAlbums = () => {
         return result;
     }, [albums, searchQuery, filterState, activeSort, sortDirection]);
 
+    // For LibraryAlbums.tsx compatibility
+    const hasActiveFilters = filterState.minRating > 0 || filterState.selectedTags.length > 0;
+    const processedAlbumIds = useMemo(() => processedAlbums.map(a => a.id), [processedAlbums]);
+
     return {
         albums: processedAlbums,
         loading,
@@ -251,6 +284,9 @@ export const useYourAlbums = () => {
         activeSort, setActiveSort,
         isFilterOpen, setIsFilterOpen,
         filterState, setFilterState,
-        filterButtonRef
+        filterButtonRef,
+        // Additional exports for LibraryAlbums.tsx
+        hasActiveFilters,
+        processedAlbumIds
     };
 };

@@ -7,7 +7,7 @@ import DescendingButton from '../../components/ui/DescendingButton';
 import FilterButton from '../../components/ui/FilterButton';
 import SearchField from '../../components/ui/SearchField';
 import FilterDropdown from '../../components/ui/FilterDropdown';
-import { useLibraryAlbums } from './hooks/useLibraryAlbums';
+import { useYourAlbums } from '../../features/favourites/favourites_albums/hooks/useYourAlbums';
 
 const LibraryAlbums: React.FC = () => {
     const {
@@ -21,7 +21,7 @@ const LibraryAlbums: React.FC = () => {
         loadAlbums,
         hasActiveFilters,
         processedAlbumIds
-    } = useLibraryAlbums();
+    } = useYourAlbums();
 
     if (loading) {
         return (

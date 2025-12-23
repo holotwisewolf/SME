@@ -76,12 +76,16 @@ export async function getEnhancedPlaylists(userId: string): Promise<{ playlists:
 
     const playlistIds = basePlaylists.map(p => p.id).filter(Boolean) as string[];
 
-    // Fetch user-specific data (user ratings, user tags) AND global tags - view doesn't include these
-    const [userRatingsRes, userTagsRes, globalTagsRes] = await Promise.all([
+    // Fetch user-specific data (user ratings, user tags) AND global tags/timestamps - view doesn't include these
+    const [userRatingsRes, userTagsRes, globalTagsRes, globalCommentsRes, globalRatingsRes] = await Promise.all([
         supabase.from('ratings').select('item_id, rating, created_at, updated_at').eq('item_type', 'playlist').eq('user_id', userId).in('item_id', playlistIds),
         supabase.from('item_tags').select('item_id, created_at, tags(name)').eq('item_type', 'playlist').eq('user_id', userId).in('item_id', playlistIds),
-        // Fetch ALL tags for these playlists (global tags for filtering)
-        supabase.from('item_tags').select('item_id, tags(name)').eq('item_type', 'playlist').in('item_id', playlistIds),
+        // Fetch ALL tags for these playlists (global tags for filtering) with timestamps
+        supabase.from('item_tags').select('item_id, created_at, tags(name)').eq('item_type', 'playlist').in('item_id', playlistIds),
+        // Fetch latest comment timestamps per playlist (global)
+        supabase.from('comments').select('item_id, created_at').eq('item_type', 'playlist').in('item_id', playlistIds),
+        // Fetch latest rating timestamps per playlist (global)
+        supabase.from('ratings').select('item_id, created_at, updated_at').eq('item_type', 'playlist').in('item_id', playlistIds),
     ]);
 
     const playlists: EnhancedPlaylist[] = basePlaylists.map(p => {
@@ -94,6 +98,26 @@ export async function getEnhancedPlaylists(userId: string): Promise<{ playlists:
         const globalTags = globalTagsRes.data?.filter(t => t.item_id === p.id) || [];
         // @ts-ignore
         const globalTagNames = Array.from(new Set(globalTags.map(t => t.tags?.name).filter(Boolean)));
+
+        // Get latest global comment timestamp for this playlist
+        const playlistComments = globalCommentsRes.data?.filter(c => c.item_id === p.id) || [];
+        const latestCommentAt = playlistComments.length > 0
+            ? playlistComments.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, playlistComments[0].created_at)
+            : undefined;
+
+        // Get latest global rating timestamp for this playlist
+        const playlistRatings = globalRatingsRes.data?.filter(r => r.item_id === p.id) || [];
+        const latestRatedAt = playlistRatings.length > 0
+            ? playlistRatings.reduce((latest, curr) => {
+                const currTime = curr.updated_at && new Date(curr.updated_at) > new Date(curr.created_at) ? curr.updated_at : curr.created_at;
+                return new Date(currTime) > new Date(latest) ? currTime : latest;
+            }, playlistRatings[0].created_at)
+            : undefined;
+
+        // Get latest global tag timestamp for this playlist
+        const latestTaggedAt = globalTags.length > 0
+            ? globalTags.reduce((latest, curr) => new Date(curr.created_at) > new Date(latest) ? curr.created_at : latest, globalTags[0].created_at)
+            : undefined;
 
         return {
             // Base playlist data (from view) - provide defaults for nullable fields
@@ -115,6 +139,10 @@ export async function getEnhancedPlaylists(userId: string): Promise<{ playlists:
             tag_count: p.tag_count ?? 0,
             // Global tags (all users' tags for this playlist)
             tags: globalTagNames as string[],
+            // Global timestamps (for Recently Commented/Rated/Tagged sorts)
+            commented_at: latestCommentAt,
+            rated_at: latestRatedAt,
+            tagged_at: latestTaggedAt,
             // User-specific data
             user_rating: userRating?.rating ?? 0,
             user_rated_at: userRating ? getLatestTime(userRating) : undefined,

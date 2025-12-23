@@ -27,7 +27,7 @@ export default function AboutPage() {
           </h1>
           <p className="text-xl text-white/80 max-w-3xl mx-auto leading-relaxed font-medium">
             A robust discovery platform designed to bridge the gap between music streaming and community interaction.
-            Featuring advanced <span className="text-[#FFD1D1] font-bold">tagging</span>, <span className="text-[#FFD1D1] font-bold">global ratings</span>, and a custom <span className="text-[#FFD1D1] font-bold">graph-based recommendation engine</span>.
+            Featuring advanced <span className="text-[#FFD1D1] font-bold">tagging</span>, <span className="text-[#FFD1D1] font-bold">global ratings</span>, and a <span className="text-[#FFD1D1] font-bold">personalized recommendation engine</span>.
           </p>
         </section>
 

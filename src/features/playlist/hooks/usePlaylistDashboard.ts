@@ -12,7 +12,7 @@ export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
     const isLibrary = source === "library";
 
     const [activeSort, setActiveSort] = useState<SortOptionType>('created_at');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const [filterState, setFilterState] = useState<FilterState>({
         ratingMode: 'global',
@@ -199,16 +199,75 @@ export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
                         break;
 
                     case 'comment_count': valA = a.comment_count || 0; valB = b.comment_count || 0; break;
-                    case 'commented_at': valA = new Date(a.commented_at || 0).getTime(); valB = new Date(b.commented_at || 0).getTime(); break;
+                    case 'track_count': valA = a.track_count || 0; valB = b.track_count || 0; break;
+
+                    // Timestamps - push items without timestamps to the end, sort those alphabetically
+                    case 'commented_at': {
+                        const hasA = !!a.commented_at;
+                        const hasB = !!b.commented_at;
+                        if (!hasA && !hasB) return a.title.localeCompare(b.title);
+                        if (!hasA) return 1;
+                        if (!hasB) return -1;
+                        valA = new Date(a.commented_at!).getTime();
+                        valB = new Date(b.commented_at!).getTime();
+                        break;
+                    }
                     case 'global_rating_avg': valA = a.rating_avg || 0; valB = b.rating_avg || 0; break;
-                    case 'global_rating_count': valA = a.rating_count || 0; valB = b.rating_count || 0; break;
-                    case 'global_rated_at': valA = new Date(a.rated_at || 0).getTime(); valB = new Date(b.rated_at || 0).getTime(); break;
+                    case 'global_rating_count': {
+                        // Primary: rating count, Secondary: if same count, higher rating first
+                        const countA = a.rating_count || 0;
+                        const countB = b.rating_count || 0;
+                        if (countA !== countB) {
+                            valA = countA; valB = countB;
+                        } else {
+                            valA = a.rating_avg || 0;
+                            valB = b.rating_avg || 0;
+                        }
+                        break;
+                    }
+                    case 'global_rated_at': {
+                        const hasA = !!a.rated_at;
+                        const hasB = !!b.rated_at;
+                        if (!hasA && !hasB) return a.title.localeCompare(b.title);
+                        if (!hasA) return 1;
+                        if (!hasB) return -1;
+                        valA = new Date(a.rated_at!).getTime();
+                        valB = new Date(b.rated_at!).getTime();
+                        break;
+                    }
                     case 'global_tag_count': valA = a.tag_count || 0; valB = b.tag_count || 0; break;
-                    case 'global_tagged_at': valA = new Date(a.tagged_at || 0).getTime(); valB = new Date(b.tagged_at || 0).getTime(); break;
+                    case 'global_tagged_at': {
+                        const hasA = !!a.tagged_at;
+                        const hasB = !!b.tagged_at;
+                        if (!hasA && !hasB) return a.title.localeCompare(b.title);
+                        if (!hasA) return 1;
+                        if (!hasB) return -1;
+                        valA = new Date(a.tagged_at!).getTime();
+                        valB = new Date(b.tagged_at!).getTime();
+                        break;
+                    }
                     case 'personal_rating': valA = a.user_rating || 0; valB = b.user_rating || 0; break;
-                    case 'personal_rated_at': valA = new Date(a.user_rated_at || 0).getTime(); valB = new Date(b.user_rated_at || 0).getTime(); break;
+                    case 'personal_rated_at': {
+                        const hasA = !!a.user_rated_at;
+                        const hasB = !!b.user_rated_at;
+                        if (!hasA && !hasB) return a.title.localeCompare(b.title);
+                        if (!hasA) return 1;
+                        if (!hasB) return -1;
+                        valA = new Date(a.user_rated_at!).getTime();
+                        valB = new Date(b.user_rated_at!).getTime();
+                        break;
+                    }
                     case 'personal_tag_count': valA = a.user_tag_count || 0; valB = b.user_tag_count || 0; break;
-                    case 'personal_tagged_at': valA = new Date(a.user_tagged_at || 0).getTime(); valB = new Date(b.user_tagged_at || 0).getTime(); break;
+                    case 'personal_tagged_at': {
+                        const hasA = !!a.user_tagged_at;
+                        const hasB = !!b.user_tagged_at;
+                        if (!hasA && !hasB) return a.title.localeCompare(b.title);
+                        if (!hasA) return 1;
+                        if (!hasB) return -1;
+                        valA = new Date(a.user_tagged_at!).getTime();
+                        valB = new Date(b.user_tagged_at!).getTime();
+                        break;
+                    }
                     default: return 0;
                 }
 
