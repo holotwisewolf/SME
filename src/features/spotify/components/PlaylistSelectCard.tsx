@@ -9,13 +9,15 @@ interface PlaylistSelectCardProps {
     trackIds?: string[];
     trackName: string;
     onClose: () => void;
+    onPlaylistCreated?: () => void;  // Callback when playlist is created
 }
 
 export function PlaylistSelectCard({
     trackId,
     trackIds,
     trackName,
-    onClose
+    onClose,
+    onPlaylistCreated
 }: PlaylistSelectCardProps) {
     const [playlists, setPlaylists] = useState<Tables<'playlists'>[]>([]);
     const [newPlaylistName, setNewPlaylistName] = useState('New Playlist');
@@ -67,6 +69,14 @@ export function PlaylistSelectCard({
             }
 
             showSuccess(`Created playlist "${newPlaylist.title}"`);
+
+            // Refresh the modal's own playlist list
+            await loadPlaylists();
+
+            // Notify parent components (Dashboard, etc.) to refresh
+            onPlaylistCreated?.();
+            window.dispatchEvent(new Event('playlist-updated'));
+
             // onClose(); // Keep open as requested
         } catch (error) {
             console.error('Error creating playlist:', error);

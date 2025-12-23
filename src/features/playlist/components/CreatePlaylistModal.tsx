@@ -38,6 +38,10 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ onClos
                 description,
                 is_public: isPublic
             });
+
+            // Notify other components (Dashboard, Library, etc.) to refresh
+            window.dispatchEvent(new Event('playlist-updated'));
+
             onCreated();
             onClose();
         } catch (err) {

@@ -147,9 +147,16 @@ export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
             })
             .subscribe();
 
+        // Listen for manual playlist-updated events (from modals, etc.)
+        const handlePlaylistUpdate = () => {
+            loadData(true); // Silent refresh
+        };
+        window.addEventListener('playlist-updated', handlePlaylistUpdate);
+
         return () => {
             authSub.unsubscribe();
             supabase.removeChannel(channel);
+            window.removeEventListener('playlist-updated', handlePlaylistUpdate);
             if (loadDataDebounceRef.current) {
                 clearTimeout(loadDataDebounceRef.current);
             }
