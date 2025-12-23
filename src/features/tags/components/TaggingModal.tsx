@@ -129,6 +129,10 @@ const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemNa
             placeholder="New tag name..."
             value={newTagName}
             onChange={(e) => setNewTagName(e.target.value)}
+            draggable={false}
+            onDragStart={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
             className="flex-1 bg-[#1a1a1a] text-white px-3 py-2 rounded outline-none border border-[#444] focus:border-[#BAFFB5]"
           />
           <button onClick={handleCreate} className="bg-[#BAFFB5] text-black px-4 py-2 rounded font-bold">Add</button>

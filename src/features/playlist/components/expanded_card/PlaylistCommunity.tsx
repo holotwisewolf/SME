@@ -61,6 +61,10 @@ export const PlaylistCommunity: React.FC<PlaylistCommunityProps> = ({
                     placeholder="Type your comment..."
                     className="flex-1 bg-[#2a2a2a] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[white]/60 text-sm"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
                 />
                 <button
                     onClick={handleAddComment}
