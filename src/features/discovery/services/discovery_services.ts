@@ -598,6 +598,11 @@ export async function getRecentActivity(limit = 10, page = 1): Promise<any[]> {
                 }
             }
 
+            // Filter out tagging activities with empty/invalid tags
+            if (item.activity_type === 'tagging' && !item.tag_name) {
+                return null;
+            }
+
             // Extract content from metadata for comments
             const content = item.metadata && typeof item.metadata === 'object'
                 ? (item.metadata as any).content

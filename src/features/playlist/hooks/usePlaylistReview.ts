@@ -157,9 +157,10 @@ export const usePlaylistReview = ({
         setTags(newTags);
         if (onTagsUpdate) onTagsUpdate(newTags);
         try {
-            const existingTags = await searchTags(tagToRemove);
-            const tagToDelete = existingTags.find(t => t.name === tagToRemove);
-            if (tagToDelete) await removeTagFromItem(playlist.id, 'playlist', tagToDelete.id);
+            // Use shared service that handles name->id lookup and removal
+            const { removeItemTag } = await import('../../favourites/services/item_services');
+            await removeItemTag(playlist.id, 'playlist', tagToRemove);
+
             showSuccess(`Tag #${tagToRemove} removed`);
         } catch (error) {
             console.error('Error removing tag:', error);
