@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import PasswordInput from "../../../components/ui/PasswordInput";
 import Checkbox from "../../../components/ui/CheckboxIcon";
@@ -25,16 +25,28 @@ const UserSettings = () => {
         navigate,
     } = useUserSettings();
 
+    // Track if mouse started on backdrop (for drag-safe close)
+    const [canClose, setCanClose] = useState(false);
+
     return (
         <motion.div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[200] px-4 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={(e) => {
+            // DRAG-SAFE backdrop close logic
+            onMouseDown={(e) => {
                 if (e.target === e.currentTarget) {
+                    setCanClose(true);
+                } else {
+                    setCanClose(false);
+                }
+            }}
+            onMouseUp={(e) => {
+                if (canClose && e.target === e.currentTarget) {
                     navigate(-1);
                 }
+                setCanClose(false);
             }}
         >
             {/* Background Glow */}

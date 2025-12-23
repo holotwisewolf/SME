@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import TextInput from "../../../components/ui/TextInput";
 import DefUserAvatar from "../../../components/ui/DefUserAvatar";
@@ -27,16 +27,28 @@ const UserAccount = () => {
         navigate,
     } = useUserAccount();
 
+    // Track if mouse started on backdrop (for drag-safe close)
+    const [canClose, setCanClose] = useState(false);
+
     return (
         <motion.div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[200] px-4 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={(e) => {
+            // DRAG-SAFE backdrop close logic
+            onMouseDown={(e) => {
                 if (e.target === e.currentTarget) {
+                    setCanClose(true);
+                } else {
+                    setCanClose(false);
+                }
+            }}
+            onMouseUp={(e) => {
+                if (canClose && e.target === e.currentTarget) {
                     navigate(-1);
                 }
+                setCanClose(false);
             }}
         >
             {/* Background Glow */}
