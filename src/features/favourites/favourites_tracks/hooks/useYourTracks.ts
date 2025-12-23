@@ -34,27 +34,64 @@ export interface EnhancedTrack extends SpotifyTrack {
     user_tagged_at?: string;
 }
 
+// Storage keys for persistence
+const STORAGE_KEYS = {
+    sortDirection: 'tracks_sortDirection',
+    activeSort: 'tracks_activeSort',
+    filterState: 'tracks_filterState'
+};
+
 export const useYourTracks = () => {
     const { showError } = useError();
     const [tracks, setTracks] = useState<EnhancedTrack[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-    const [activeSort, setActiveSort] = useState<SortOptionType>('created_at');
     const [activeId, setActiveId] = useState<string | null>(null);
 
-    // Filter state
+    // Load persisted values from localStorage
+    const [sortDirection, setSortDirectionState] = useState<'asc' | 'desc'>(() => {
+        const saved = localStorage.getItem(STORAGE_KEYS.sortDirection);
+        return (saved === 'asc' || saved === 'desc') ? saved : 'asc';
+    });
+    const [activeSort, setActiveSortState] = useState<SortOptionType>(() => {
+        const saved = localStorage.getItem(STORAGE_KEYS.activeSort);
+        return (saved as SortOptionType) || 'created_at';
+    });
+
+    // Filter state with persistence
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [filterState, setFilterState] = useState<FilterState>({
-        ratingMode: 'global',
-        minRating: 0,
-        minRatingCount: 0,
-        tagMode: 'global',
-        selectedTags: [],
-        onlyFavorites: false
+    const [filterState, setFilterStateInternal] = useState<FilterState>(() => {
+        const saved = localStorage.getItem(STORAGE_KEYS.filterState);
+        if (saved) {
+            try { return JSON.parse(saved); } catch { /* ignore */ }
+        }
+        return {
+            ratingMode: 'global',
+            minRating: 0,
+            minRatingCount: 0,
+            tagMode: 'global',
+            selectedTags: [],
+            onlyFavorites: false
+        };
     });
     const filterButtonRef = useRef<HTMLDivElement>(null);
+
+    // Persist sort direction on change
+    const setSortDirection = (dir: 'asc' | 'desc') => {
+        setSortDirectionState(dir);
+        localStorage.setItem(STORAGE_KEYS.sortDirection, dir);
+    };
+    // Persist active sort on change
+    const setActiveSort = (sort: SortOptionType) => {
+        setActiveSortState(sort);
+        localStorage.setItem(STORAGE_KEYS.activeSort, sort);
+    };
+    // Persist filter state on change
+    const setFilterState = (state: FilterState) => {
+        setFilterStateInternal(state);
+        localStorage.setItem(STORAGE_KEYS.filterState, JSON.stringify(state));
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor, {

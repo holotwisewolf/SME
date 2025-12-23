@@ -8,20 +8,57 @@ export interface UsePlaylistDashboardProps {
     source: "library" | "favourites";
 }
 
+// Storage keys for persistence
+const STORAGE_KEYS = {
+    sortDirection: 'playlists_sortDirection',
+    activeSort: 'playlists_activeSort',
+    filterState: 'playlists_filterState'
+};
+
 export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
     const isLibrary = source === "library";
 
-    const [activeSort, setActiveSort] = useState<SortOptionType>('created_at');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
-    const [filterState, setFilterState] = useState<FilterState>({
-        ratingMode: 'global',
-        minRating: 0,
-        minRatingCount: 0,
-        tagMode: 'global',
-        selectedTags: [],
-        onlyFavorites: false
+    // Load persisted values from localStorage
+    const [activeSort, setActiveSortState] = useState<SortOptionType>(() => {
+        const saved = localStorage.getItem(STORAGE_KEYS.activeSort);
+        return (saved as SortOptionType) || 'created_at';
     });
+    const [sortDirection, setSortDirectionState] = useState<'asc' | 'desc'>(() => {
+        const saved = localStorage.getItem(STORAGE_KEYS.sortDirection);
+        return (saved === 'asc' || saved === 'desc') ? saved : 'asc';
+    });
+
+    // Filter state with persistence
+    const [filterState, setFilterStateInternal] = useState<FilterState>(() => {
+        const saved = localStorage.getItem(STORAGE_KEYS.filterState);
+        if (saved) {
+            try { return JSON.parse(saved); } catch { /* ignore */ }
+        }
+        return {
+            ratingMode: 'global',
+            minRating: 0,
+            minRatingCount: 0,
+            tagMode: 'global',
+            selectedTags: [],
+            onlyFavorites: false
+        };
+    });
+
+    // Persist sort direction on change
+    const setSortDirection = (dir: 'asc' | 'desc') => {
+        setSortDirectionState(dir);
+        localStorage.setItem(STORAGE_KEYS.sortDirection, dir);
+    };
+    // Persist active sort on change
+    const setActiveSort = (sort: SortOptionType) => {
+        setActiveSortState(sort);
+        localStorage.setItem(STORAGE_KEYS.activeSort, sort);
+    };
+    // Persist filter state on change
+    const setFilterState = (state: FilterState) => {
+        setFilterStateInternal(state);
+        localStorage.setItem(STORAGE_KEYS.filterState, JSON.stringify(state));
+    };
 
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
