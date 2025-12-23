@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useTrendingData } from '../../../features/trending/hooks/useTrendingData';
-import { useItemSelection } from '../../../features/trending/hooks/useItemSelection';
-import type { TrendingFilters } from '../../../features/trending/types/trending';
+import { useDiscoveryData } from '../../../features/discovery/hooks/useDiscoveryData';
+import { useItemSelection } from '../../../features/discovery/hooks/useItemSelection';
+import type { DiscoveryFilters } from '../../../features/discovery/types/discovery';
 
 type TabType = 'tracks' | 'albums' | 'playlists';
 const DASHBOARD_TAB_KEY = 'dashboard_active_tab';
@@ -16,7 +16,7 @@ export const useDashboardPage = () => {
         return 'playlists';
     });
 
-    const [filters, setFilters] = useState<TrendingFilters>({
+    const [filters, setFilters] = useState<DiscoveryFilters>({
         timeRange: 'week',
         sortBy: 'trending',
     });
@@ -30,7 +30,7 @@ export const useDashboardPage = () => {
     }, [activeTab]);
 
     // Custom hooks handle complexity
-    const { items, loading, topThree, remaining } = useTrendingData(activeTab, filters, 20, refreshKey);
+    const { items, loading, topThree, remaining } = useDiscoveryData(activeTab, filters, 20, refreshKey);
     const { selectedPlaylist, selectedTrack, selectedAlbum, handleItemClick, clearSelection } = useItemSelection();
 
     const handleRefresh = useCallback(() => {

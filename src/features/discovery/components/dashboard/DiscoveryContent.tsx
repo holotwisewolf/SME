@@ -1,21 +1,21 @@
-// TrendingContent - Main content area displaying top 3 and rankings
+// DiscoveryContent - Main content area displaying top 3 and rankings
 
 import React, { type RefObject } from 'react';
 import HeroCard from './HeroCard';
 import FeaturedBanner from './FeaturedBanner';
-import TrendingRow from './TrendingRow';
+import DiscoveryRow from './DiscoveryRow';
 import ScrollIndicator from './ScrollIndicator';
-import type { TrendingItem } from '../../types/trending';
+import type { DiscoveryItem } from '../../types/discovery';
 
 type TabType = 'tracks' | 'albums' | 'playlists';
 
-interface TrendingContentProps {
+interface DiscoveryContentProps {
     activeTab: TabType;
-    topThree: TrendingItem[];
-    remaining: TrendingItem[];
-    onItemClick: (item: TrendingItem) => void;
+    topThree: DiscoveryItem[];
+    remaining: DiscoveryItem[];
+    onItemClick: (item: DiscoveryItem) => void;
     scrollContainerRef: RefObject<HTMLDivElement | null>;
-    allTrendingRef: RefObject<HTMLHeadingElement | null>;
+    allDiscoveryRef: RefObject<HTMLHeadingElement | null>;
     onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
     showScrollIndicator: boolean;
     isHoveringScrollIndicator: boolean;
@@ -23,13 +23,13 @@ interface TrendingContentProps {
     onScrollIndicatorClick: () => void;
 }
 
-const TrendingContent: React.FC<TrendingContentProps> = ({
+const DiscoveryContent: React.FC<DiscoveryContentProps> = ({
     activeTab,
     topThree,
     remaining,
     onItemClick,
     scrollContainerRef,
-    allTrendingRef,
+    allDiscoveryRef,
     onScroll,
     showScrollIndicator,
     isHoveringScrollIndicator,
@@ -81,12 +81,12 @@ const TrendingContent: React.FC<TrendingContentProps> = ({
                 {/* Remaining Items - Rows */}
                 {remaining.length > 0 && (
                     <div>
-                        <h2 ref={allTrendingRef} className="text-lg font-bold text-[#D1D1D1] mb-4">
+                        <h2 ref={allDiscoveryRef} className="text-lg font-bold text-[#D1D1D1] mb-4">
                             Rankings
                         </h2>
                         <div className="space-y-2">
                             {remaining.map((item, index) => (
-                                <TrendingRow
+                                <DiscoveryRow
                                     key={item.id}
                                     item={item}
                                     rank={index + 4}
@@ -101,4 +101,4 @@ const TrendingContent: React.FC<TrendingContentProps> = ({
     );
 };
 
-export default TrendingContent;
+export default DiscoveryContent;

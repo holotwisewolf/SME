@@ -1,28 +1,28 @@
 // DashboardView - Main dashboard view with filters, tabs, and trending content
 
 import React, { useRef } from 'react';
-import TrendingFilters from './TrendingFilters';
+import DiscoveryFilters from './DiscoveryFilters';
 import DiscoverySidebar from './DiscoverySidebar';
 import TabNavigation from './TabNavigation';
 import SortDropdown from './SortDropdown';
-import TrendingContent from './TrendingContent';
+import DiscoveryContent from './DiscoveryContent';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import EmptyState from '../../../../components/ui/EmptyState';
 import { useScrollIndicator } from '../../hooks/useScrollIndicator';
-import type { TrendingItem, TrendingFilters as TrendingFiltersType } from '../../types/trending';
+import type { DiscoveryItem, DiscoveryFilters as DiscoveryFiltersType } from '../../types/discovery';
 
 type TabType = 'tracks' | 'albums' | 'playlists';
 
 interface DashboardViewProps {
     activeTab: TabType;
     onTabChange: (tab: TabType) => void;
-    filters: TrendingFiltersType;
-    onFiltersChange: (filters: TrendingFiltersType) => void;
-    items: TrendingItem[];
+    filters: DiscoveryFiltersType;
+    onFiltersChange: (filters: DiscoveryFiltersType) => void;
+    items: DiscoveryItem[];
     loading: boolean;
-    topThree: TrendingItem[];
-    remaining: TrendingItem[];
-    onItemClick: (item: TrendingItem) => void;
+    topThree: DiscoveryItem[];
+    remaining: DiscoveryItem[];
+    onItemClick: (item: DiscoveryItem) => void;
     refreshKey?: number;
 }
 
@@ -39,7 +39,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     refreshKey = 0,
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const allTrendingRef = useRef<HTMLHeadingElement>(null);
+    const allDiscoveryRef = useRef<HTMLHeadingElement>(null);
 
     const {
         showIndicator,
@@ -47,7 +47,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         setIsHovering,
         handleScroll,
         scrollToRankings,
-    } = useScrollIndicator(scrollContainerRef, allTrendingRef, remaining.length > 0);
+    } = useScrollIndicator(scrollContainerRef, allDiscoveryRef, remaining.length > 0);
 
     const emptyStateActions = [
         {
@@ -67,7 +67,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     return (
         <div className="flex gap-6 flex-1 min-h-0">
             {/* Left Sidebar - Filters */}
-            <TrendingFilters filters={filters} onFiltersChange={onFiltersChange} />
+            <DiscoveryFilters filters={filters} onFiltersChange={onFiltersChange} />
 
             {/* Center Content */}
             <div className="flex-1 flex flex-col min-w-0 bg-[#292929] border border-[#D1D1D1]/10 rounded-xl overflow-hidden">
@@ -91,13 +91,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             variant="simple"
                         />
                     ) : (
-                        <TrendingContent
+                        <DiscoveryContent
                             activeTab={activeTab}
                             topThree={topThree}
                             remaining={remaining}
                             onItemClick={onItemClick}
                             scrollContainerRef={scrollContainerRef}
-                            allTrendingRef={allTrendingRef}
+                            allDiscoveryRef={allDiscoveryRef}
                             onScroll={handleScroll}
                             showScrollIndicator={showIndicator}
                             isHoveringScrollIndicator={isHovering}

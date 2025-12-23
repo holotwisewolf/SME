@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     const clientSecret = Deno.env.get("SPOTIFY_CLIENT_SECRET");
 
     if (!clientId || !clientSecret) {
+      console.error("Missing SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET env vars");
       return new Response(JSON.stringify({ error: "Missing Spotify credentials" }), {
         status: 500,
         headers: CORS_HEADERS,
@@ -45,6 +46,7 @@ Deno.serve(async (req) => {
     // Request token
     const basic = btoa(`${clientId}:${clientSecret}`);
 
+    console.log("Requesting new Spotify token...");
     const spotifyRes = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
       headers: {
@@ -54,7 +56,24 @@ Deno.serve(async (req) => {
       body: "grant_type=client_credentials",
     });
 
+    if (!spotifyRes.ok) {
+      const errorText = await spotifyRes.text();
+      console.error(`Spotify API Error [${spotifyRes.status}]: ${errorText}`);
+      return new Response(JSON.stringify({ error: `Spotify API failed`, details: errorText }), {
+        status: 500,
+        headers: CORS_HEADERS,
+      });
+    }
+
     const data = await spotifyRes.json();
+
+    if (!data.access_token || !data.expires_in) {
+      console.error("Invalid Spotify Token Response:", JSON.stringify(data));
+      return new Response(JSON.stringify({ error: "Invalid response from Spotify" }), {
+        status: 500,
+        headers: CORS_HEADERS,
+      });
+    }
 
     // Cache
     cachedToken = data;
@@ -66,6 +85,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (err) {
+    console.error("Spotify Token Function Error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: CORS_HEADERS,

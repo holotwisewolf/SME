@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTrendingTags, getRecentActivity, getCommunityQuickStats } from '../services/trending_services';
+import { getDiscoveryTags, getRecentActivity, getCommunityQuickStats } from '../services/discovery_services';
 import { supabase } from '../../../lib/supabaseClient';
-import type { TrendingFilters } from '../types/trending';
+import type { DiscoveryFilters } from '../types/discovery';
 
 interface UseDiscoverySidebarProps {
-    filters?: TrendingFilters;
-    onFiltersChange?: (filters: TrendingFilters) => void;
+    filters?: DiscoveryFilters;
+    onFiltersChange?: (filters: DiscoveryFilters) => void;
     refreshKey?: number;
 }
 
 export const useDiscoverySidebar = ({ filters, onFiltersChange, refreshKey = 0 }: UseDiscoverySidebarProps) => {
-    const [trendingTags, setTrendingTags] = useState<any[]>([]);
+    const [discoveryTags, setDiscoveryTags] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalItems: 0, totalMembers: 0, currentActiveUsers: 0, thisWeek: 0 });
     const [loading, setLoading] = useState(true);
@@ -24,12 +24,12 @@ export const useDiscoverySidebar = ({ filters, onFiltersChange, refreshKey = 0 }
         setLoading(true);
         try {
             const [tags, activity, quickStats] = await Promise.all([
-                getTrendingTags('week', 10),
+                getDiscoveryTags('week', 10),
                 getRecentActivity(5),
                 getCommunityQuickStats()
             ]);
 
-            setTrendingTags(tags);
+            setDiscoveryTags(tags);
             setRecentActivity(activity);
             setStats(quickStats);
         } catch (error) {
@@ -97,7 +97,7 @@ export const useDiscoverySidebar = ({ filters, onFiltersChange, refreshKey = 0 }
     };
 
     return {
-        trendingTags,
+        discoveryTags,
         recentActivity,
         stats,
         loading,

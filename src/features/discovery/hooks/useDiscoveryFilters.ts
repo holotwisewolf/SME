@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import type { TrendingFilters as TrendingFiltersType, TimeRange } from '../types/trending';
+import type { DiscoveryFilters as DiscoveryFiltersType, TimeRange } from '../types/discovery';
 import { useError } from '../../../context/ErrorContext';
 import { useSuccess } from '../../../context/SuccessContext';
 import { getPreMadeTags } from '../../tags/services/tag_services';
 import type { Tag } from '../../tags/type/tag_types';
 
-export const useTrendingFilters = (
-    filters: TrendingFiltersType,
-    onFiltersChange: (filters: TrendingFiltersType) => void
+export const useDiscoveryFilters = (
+    filters: DiscoveryFiltersType,
+    onFiltersChange: (filters: DiscoveryFiltersType) => void
 ) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();

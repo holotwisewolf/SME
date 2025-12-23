@@ -1,17 +1,17 @@
-// TrendingRow - Compact row component for items 4+
+// DiscoveryRow - Compact row component for items 4+
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { TrendingItem } from '../../types/trending';
+import type { DiscoveryItem } from '../../types/discovery';
 import { Star, MessageCircle, Heart, Tag, Music } from 'lucide-react';
 
-interface TrendingRowProps {
-    item: TrendingItem;
+interface DiscoveryRowProps {
+    item: DiscoveryItem;
     rank: number;
     onClick?: () => void;
 }
 
-const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
+const DiscoveryRow: React.FC<DiscoveryRowProps> = ({ item, rank, onClick }) => {
     const [imgError, setImgError] = React.useState(false);
 
     return (
@@ -90,4 +90,4 @@ const TrendingRow: React.FC<TrendingRowProps> = ({ item, rank, onClick }) => {
     );
 };
 
-export default TrendingRow;
+export default DiscoveryRow;

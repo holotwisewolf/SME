@@ -12,7 +12,7 @@ interface UseScrollIndicatorReturn {
 
 export function useScrollIndicator(
     scrollContainerRef: RefObject<HTMLDivElement | null>,
-    allTrendingRef: RefObject<HTMLHeadingElement | null>,
+    allDiscoveryRef: RefObject<HTMLHeadingElement | null>,
     hasContent: boolean
 ): UseScrollIndicatorReturn {
     const [showIndicator, setShowIndicator] = useState(true);
@@ -33,7 +33,7 @@ export function useScrollIndicator(
     };
 
     const scrollToRankings = () => {
-        allTrendingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        allDiscoveryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     return {

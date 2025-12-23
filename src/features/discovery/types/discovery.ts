@@ -15,7 +15,7 @@ export type SortBy =
     | 'newly-tagged'        // Most recent tag additions
     | 'recently-created';   // Most recently created items
 
-export interface TrendingFilters {
+export interface DiscoveryFilters {
     timeRange: TimeRange;
     sortBy: SortBy;
     tags?: string[];           // Filter by tag IDs
@@ -26,7 +26,7 @@ export interface TrendingFilters {
     searchQuery?: string;      // Filter by name/title
 }
 
-export interface TrendingItem {
+export interface DiscoveryItem {
     id: string;                // item_id (Spotify ID or playlist ID)
     type: ItemType;            // 'track' | 'album' | 'playlist'
     name: string;
@@ -47,7 +47,7 @@ export interface CommunityStats {
     totalComments: number;
     totalTags: number;
     totalUsers: number;
-    topRatedItems: TrendingItem[];
+    topRatedItems: DiscoveryItem[];
     mostActiveUsers: {
         userId: string;
         username: string;

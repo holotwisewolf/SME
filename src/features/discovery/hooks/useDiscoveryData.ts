@@ -1,45 +1,45 @@
-// useTrendingData - Custom hook for fetching and managing trending items data
+// useDiscoveryData - Custom hook for fetching and managing discovery items data
 
 import { useState, useEffect } from 'react';
-import { getTrendingTracks, getTrendingAlbums, getTrendingPlaylists } from '../services/trending_services';
-import type { TrendingItem, TrendingFilters } from '../types/trending';
+import { getDiscoveryTracks, getDiscoveryAlbums, getDiscoveryPlaylists } from '../services/discovery_services';
+import type { DiscoveryItem, DiscoveryFilters } from '../types/discovery';
 import { useError } from '../../../context/ErrorContext';
 import { parseSpotifyError } from '../../spotify/services/spotifyConnection';
 
 type TabType = 'tracks' | 'albums' | 'playlists';
 
-interface UseTrendingDataReturn {
-    items: TrendingItem[];
+interface UseDiscoveryDataReturn {
+    items: DiscoveryItem[];
     loading: boolean;
-    topThree: TrendingItem[];
-    remaining: TrendingItem[];
+    topThree: DiscoveryItem[];
+    remaining: DiscoveryItem[];
     refetch: () => Promise<void>;
 }
 
-export function useTrendingData(
+export function useDiscoveryData(
     activeTab: TabType,
-    filters: TrendingFilters,
+    filters: DiscoveryFilters,
     limit: number = 20,
     refreshKey: number = 0
-): UseTrendingDataReturn {
+): UseDiscoveryDataReturn {
     const { showError } = useError();
-    const [items, setItems] = useState<TrendingItem[]>([]);
+    const [items, setItems] = useState<DiscoveryItem[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchTrendingItems = async () => {
+    const fetchDiscoveryItems = async () => {
         setLoading(true);
         try {
-            let fetchedItems: TrendingItem[] = [];
+            let fetchedItems: DiscoveryItem[] = [];
 
             switch (activeTab) {
                 case 'tracks':
-                    fetchedItems = await getTrendingTracks(filters, limit);
+                    fetchedItems = await getDiscoveryTracks(filters, limit);
                     break;
                 case 'albums':
-                    fetchedItems = await getTrendingAlbums(filters, limit);
+                    fetchedItems = await getDiscoveryAlbums(filters, limit);
                     break;
                 case 'playlists':
-                    fetchedItems = await getTrendingPlaylists(filters, limit);
+                    fetchedItems = await getDiscoveryPlaylists(filters, limit);
                     break;
             }
 
@@ -56,7 +56,7 @@ export function useTrendingData(
 
     // Fetch data when tab, filters, or refreshKey change
     useEffect(() => {
-        fetchTrendingItems();
+        fetchDiscoveryItems();
     }, [activeTab, filters, refreshKey]);
 
     // Split items into top 3 and rest
@@ -68,6 +68,6 @@ export function useTrendingData(
         loading,
         topThree,
         remaining,
-        refetch: fetchTrendingItems,
+        refetch: fetchDiscoveryItems,
     };
 }

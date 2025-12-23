@@ -1,16 +1,16 @@
-// TrendingCard - Display individual trending items
+// DiscoveryCard - Display individual discovery items
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { TrendingItem } from '../../types/trending';
+import type { DiscoveryItem } from '../../types/discovery';
 import { Star, MessageCircle, Tag, Heart } from 'lucide-react';
 
-interface TrendingCardProps {
-    item: TrendingItem;
+interface DiscoveryCardProps {
+    item: DiscoveryItem;
     rank: number;
 }
 
-const TrendingCard: React.FC<TrendingCardProps> = ({ item, rank }) => {
+const DiscoveryCard: React.FC<DiscoveryCardProps> = ({ item, rank }) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -80,4 +80,4 @@ const TrendingCard: React.FC<TrendingCardProps> = ({ item, rank }) => {
     );
 };
 
-export default TrendingCard;
+export default DiscoveryCard;

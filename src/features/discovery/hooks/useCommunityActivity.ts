@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../lib/supabaseClient';
-import { getRecentActivity } from '../services/trending_services';
+import { getRecentActivity } from '../services/discovery_services';
 import { getSession } from '../../auth/services/auth_services';
 import { useError } from '../../../context/ErrorContext';
 import {

@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { TrendingItem } from '../../types/trending';
+import type { DiscoveryItem } from '../../types/discovery';
 import { Star, MessageCircle, Heart, Tag } from 'lucide-react';
 
 interface HeroCardProps {
-    item: TrendingItem;
+    item: DiscoveryItem;
     rank: number;
     onClick?: () => void;
 }

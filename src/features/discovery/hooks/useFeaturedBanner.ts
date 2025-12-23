@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import type { TrendingItem } from '../types/trending';
+import type { DiscoveryItem } from '../types/discovery';
 import { fetchPlaylistTracksWithDetails } from '../../playlist/services/playlist_services';
 import { getAlbumTracks } from '../../spotify/services/spotify_services';
 import { supabase } from '../../../lib/supabaseClient';
 
 export interface UseFeaturedBannerProps {
-    topThree: TrendingItem[];
+    topThree: DiscoveryItem[];
 }
 
-export const useFeaturedBanner = (topThree: TrendingItem[]) => {
+export const useFeaturedBanner = (topThree: DiscoveryItem[]) => {
     // --- State ---
     const [currentIndex, setCurrentIndex] = useState(0);
     const [tracks, setTracks] = useState<any[]>([]);

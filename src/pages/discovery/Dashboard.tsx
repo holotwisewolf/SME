@@ -1,9 +1,9 @@
 // Dashboard Page - Main community discovery dashboard
 
 import React from 'react';
-import DashboardHeader from '../../features/trending/components/dashboard/DashboardHeader';
-import DashboardView from '../../features/trending/components/dashboard/DashboardView';
-import ItemModals from '../../features/trending/components/dashboard/ItemModals';
+import DashboardHeader from '../../features/discovery/components/dashboard/DashboardHeader';
+import DashboardView from '../../features/discovery/components/dashboard/DashboardView';
+import ItemModals from '../../features/discovery/components/dashboard/ItemModals';
 import { useDashboardPage } from './hooks/useDashboardPage';
 
 const Dashboard: React.FC = () => {

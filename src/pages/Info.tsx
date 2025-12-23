@@ -76,7 +76,7 @@ export default function AboutPage() {
                 <FeatureItem icon={<Zap size={18} />} text="Real-time updates via Supabase Subscriptions" />
                 <FeatureItem icon={<ShieldCheck size={18} />} text="Secure Auth & Row Level Security (RLS)" />
                 <FeatureItem icon={<Share2 size={18} />} text="Edge Functions for Playlist Export & OAuth" />
-                <FeatureItem icon={<Users size={18} />} text="Community-driven Trending Algorithms" />
+                <FeatureItem icon={<Users size={18} />} text="Community-driven Discovery Algorithms" />
               </ul>
             </div>
           </div>

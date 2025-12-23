@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Music, Heart, MessageCircle, Tag } from 'lucide-react';
-import type { TrendingItem } from '../../types/trending';
+import type { DiscoveryItem } from '../../types/discovery';
 import { useFeaturedBanner } from '../../hooks/useFeaturedBanner';
 
 interface FeaturedBannerProps {
-    topThree: TrendingItem[];
-    onItemClick: (item: TrendingItem) => void;
-    topItem?: TrendingItem;
+    topThree: DiscoveryItem[];
+    onItemClick: (item: DiscoveryItem) => void;
+    topItem?: DiscoveryItem;
 }
 
 const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }) => {

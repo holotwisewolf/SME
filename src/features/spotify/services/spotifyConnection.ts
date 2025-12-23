@@ -166,6 +166,9 @@ function releaseSlot() {
   setTimeout(processQueue, REQUEST_DELAY_MS);
 }
 
+// Token fetch deduplication
+let pendingTokenPromise: Promise<string> | null = null;
+
 /**
  * Retrieve Spotify Token from Edge Function
  * Includes caching + safety fallback
@@ -176,26 +179,40 @@ export async function getSpotifyToken(): Promise<string> {
     return cachedToken;
   }
 
-  const { data, error } = await supabase.functions.invoke<{
-    access_token?: string;
-    expires_in?: number;
-  }>("spotify-token");
-
-  if (error) {
-    console.error("Supabase Edge error:", error);
-    throw new Error(`Failed to get Spotify token: ${error.message}`);
+  // Deduplicate inflight requests
+  if (pendingTokenPromise) {
+    return pendingTokenPromise;
   }
 
-  if (!data?.access_token) {
-    console.error("Invalid token payload:", data);
-    throw new Error("Spotify token not returned from Edge Function");
-  }
+  const executeTokenFetch = async (): Promise<string> => {
+    try {
+      const { data, error } = await supabase.functions.invoke<{
+        access_token?: string;
+        expires_in?: number;
+      }>("spotify-token");
 
-  // Cache for reuse
-  cachedToken = data.access_token;
-  tokenExpiry = Date.now() + (data.expires_in || 3600) * 1000;
+      if (error) {
+        console.error("Supabase Edge error:", error);
+        throw new Error(`Failed to get Spotify token: ${error.message}`);
+      }
 
-  return cachedToken;
+      if (!data?.access_token) {
+        console.error("Invalid token payload:", data);
+        throw new Error("Spotify token not returned from Edge Function");
+      }
+
+      // Cache for reuse
+      cachedToken = data.access_token;
+      tokenExpiry = Date.now() + (data.expires_in || 3600) * 1000;
+
+      return cachedToken as string;
+    } finally {
+      pendingTokenPromise = null;
+    }
+  };
+
+  pendingTokenPromise = executeTokenFetch();
+  return pendingTokenPromise;
 }
 
 /**

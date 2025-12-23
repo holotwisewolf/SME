@@ -1,17 +1,17 @@
 import React from 'react';
 import { TrendingUp, Clock, Activity, ExternalLink } from 'lucide-react';
-import type { TrendingFilters } from '../../types/trending';
+import type { DiscoveryFilters } from '../../types/discovery';
 import { useDiscoverySidebar } from '../../hooks/useDiscoverySidebar';
 
 interface DiscoverySidebarProps {
-    filters?: TrendingFilters;
-    onFiltersChange?: (filters: TrendingFilters) => void;
+    filters?: DiscoveryFilters;
+    onFiltersChange?: (filters: DiscoveryFilters) => void;
     refreshKey?: number;
 }
 
 const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersChange, refreshKey = 0 }) => {
     const {
-        trendingTags,
+        discoveryTags,
         recentActivity,
         stats,
         loading,
@@ -22,22 +22,22 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
 
     return (
         <div className="w-80 flex-shrink-0 space-y-4 sticky top-20 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pr-2">
-            {/* Trending Tags */}
+            {/* Discovery Tags */}
             <div className="bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <TrendingUp className="w-4 h-4 text-[#FFD1D1]" />
-                    <h3 className="text-sm font-bold text-[#D1D1D1]">Trending Tags</h3>
+                    <h3 className="text-sm font-bold text-[#D1D1D1]">Discovery Tags</h3>
                 </div>
 
                 {loading ? (
                     <div className="flex items-center justify-center h-16">
                         <div className="w-4 h-4 border-2 border-[#FFD1D1] border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                ) : trendingTags.length > 0 ? (
+                ) : discoveryTags.length > 0 ? (
                     <>
                         <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
                             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                                {trendingTags.map((tag) => {
+                                {discoveryTags.map((tag) => {
                                     const isActive = filters?.tags?.includes(tag.name) || false;
                                     return (
                                         <button
@@ -60,7 +60,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                         </p>
                     </>
                 ) : (
-                    <p className="text-xs text-[#D1D1D1]/50">No trending tags yet</p>
+                    <p className="text-xs text-[#D1D1D1]/50">No discovery tags yet</p>
                 )}
             </div>
 
@@ -144,7 +144,7 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                     <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
-                                <span className="text-xs text-[#D1D1D1]/60">Trending Items</span>
+                                <span className="text-xs text-[#D1D1D1]/60">Discovery Items</span>
                                 <span className="text-sm font-bold text-[#FFD1D1]">{stats.totalItems.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center">

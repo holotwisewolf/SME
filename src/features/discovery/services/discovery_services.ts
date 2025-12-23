@@ -1,7 +1,7 @@
 // Trending services - fetch and filter trending content
 
 import { supabase } from '../../../lib/supabaseClient';
-import type { TrendingFilters, TrendingItem, CommunityStats, TimeRange, SortBy } from '../types/trending';
+import type { DiscoveryFilters, DiscoveryItem, CommunityStats, TimeRange, SortBy } from '../types/discovery';
 import type { ItemType } from '../../../types/global';
 import { getMultipleTracks, getMultipleAlbums } from '../../spotify/services/spotify_services';
 import { coordinateBatchFetch } from '../../spotify/services/spotifyConnection';
@@ -65,41 +65,41 @@ function getSortClause(sortBy: SortBy): { column: string; ascending: boolean } {
 /**
  * Fetch trending tracks with filters
  */
-export async function getTrendingTracks(
-    filters: TrendingFilters,
+export async function getDiscoveryTracks(
+    filters: DiscoveryFilters,
     limit = 50
-): Promise<TrendingItem[]> {
-    return getTrendingItems('track', filters, limit);
+): Promise<DiscoveryItem[]> {
+    return getDiscoveryItems('track', filters, limit);
 }
 
 /**
  * Fetch trending albums with filters
  */
-export async function getTrendingAlbums(
-    filters: TrendingFilters,
+export async function getDiscoveryAlbums(
+    filters: DiscoveryFilters,
     limit = 50
-): Promise<TrendingItem[]> {
-    return getTrendingItems('album', filters, limit);
+): Promise<DiscoveryItem[]> {
+    return getDiscoveryItems('album', filters, limit);
 }
 
 /**
  * Fetch trending playlists with filters
  */
-export async function getTrendingPlaylists(
-    filters: TrendingFilters,
+export async function getDiscoveryPlaylists(
+    filters: DiscoveryFilters,
     limit = 50
-): Promise<TrendingItem[]> {
-    return getTrendingItems('playlist', filters, limit);
+): Promise<DiscoveryItem[]> {
+    return getDiscoveryItems('playlist', filters, limit);
 }
 
 /**
  * Generic function to fetch trending items
  */
-async function getTrendingItems(
+async function getDiscoveryItems(
     itemType: ItemType,
-    filters: TrendingFilters,
+    filters: DiscoveryFilters,
     limit: number
-): Promise<TrendingItem[]> {
+): Promise<DiscoveryItem[]> {
     try {
         // Start with base query from item_stats
         let query = supabase
@@ -153,8 +153,8 @@ async function getTrendingItems(
             filteredData = await filterByTags(data, filters.tags);
         }
 
-        // Map to TrendingItem format
-        let trendingItems: TrendingItem[] = filteredData.map(item => ({
+        // Map to DiscoveryItem format
+        let trendingItems: DiscoveryItem[] = filteredData.map(item => ({
             id: item.item_id,
             type: item.item_type as ItemType,
             name: '', // Will be populated from Spotify API or playlists table
@@ -261,7 +261,7 @@ async function filterByTags(items: any[], tagNames: string[]): Promise<any[]> {
 /**
  * Enrich trending items with metadata from Spotify API or playlists table
  */
-async function enrichWithMetadata(items: TrendingItem[]): Promise<TrendingItem[]> {
+async function enrichWithMetadata(items: DiscoveryItem[]): Promise<DiscoveryItem[]> {
     // Separate items by type
     const playlists = items.filter(item => item.type === 'playlist');
     const tracks = items.filter(item => item.type === 'track');
@@ -401,7 +401,7 @@ export async function getCommunityStats(): Promise<CommunityStats> {
             .order('average_rating', { ascending: false })
             .limit(10);
 
-        const topRatedItems: TrendingItem[] = (topItems || []).map(item => ({
+        const topRatedItems: DiscoveryItem[] = (topItems || []).map(item => ({
             id: item.item_id,
             type: item.item_type as ItemType,
             name: '',
@@ -454,7 +454,7 @@ export async function getCommunityStats(): Promise<CommunityStats> {
 /**
  * Get trending tags (most used tags in time period)
  */
-export async function getTrendingTags(timeRange: TimeRange, limit = 10): Promise<any[]> {
+export async function getDiscoveryTags(timeRange: TimeRange, limit = 10): Promise<any[]> {
     const timeThreshold = getTimeThreshold(timeRange);
 
     let query = supabase

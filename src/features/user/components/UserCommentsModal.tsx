@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, MessageSquareOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import ActivityCard from '../../trending/components/ActivityCard';
+import ActivityCard from '../../discovery/components/ActivityCard';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import { getUserComments } from '../services/user_profile_services';
 import { spotifyFetch } from '../../../features/spotify/services/spotifyConnection';

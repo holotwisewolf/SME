@@ -1,15 +1,15 @@
 import React from 'react';
-import type { TrendingFilters as TrendingFiltersType, TimeRange } from '../../types/trending';
+import type { DiscoveryFilters as DiscoveryFiltersType, TimeRange } from '../../types/discovery';
 import { MoreOptionsIcon } from '../../../../components/ui/MoreOptionsIcon';
-import { useTrendingFilters } from '../../hooks/useTrendingFilters';
+import { useDiscoveryFilters } from '../../hooks/useDiscoveryFilters';
 import { StyledDropdown } from '../../../../components/ui/StyledDropdown';
 
-interface TrendingFiltersProps {
-    filters: TrendingFiltersType;
-    onFiltersChange: (filters: TrendingFiltersType) => void;
+interface DiscoveryFiltersProps {
+    filters: DiscoveryFiltersType;
+    onFiltersChange: (filters: DiscoveryFiltersType) => void;
 }
 
-const TrendingFilters: React.FC<TrendingFiltersProps> = ({ filters, onFiltersChange }) => {
+const DiscoveryFilters: React.FC<DiscoveryFiltersProps> = ({ filters, onFiltersChange }) => {
     const {
         tagInput, setTagInput,
         selectedTags,
@@ -21,7 +21,7 @@ const TrendingFilters: React.FC<TrendingFiltersProps> = ({ filters, onFiltersCha
         handleKeyPress,
         handleMinRatingCountChange,
         handleResetFilters
-    } = useTrendingFilters(filters, onFiltersChange);
+    } = useDiscoveryFilters(filters, onFiltersChange);
 
     return (
         <div className="w-64 flex-shrink-0 bg-[#292929] border border-[#D1D1D1]/10 rounded-xl p-5 flex flex-col h-full shadow-lg">
@@ -236,4 +236,4 @@ const TrendingFilters: React.FC<TrendingFiltersProps> = ({ filters, onFiltersCha
     );
 };
 
-export default TrendingFilters;
+export default DiscoveryFilters;

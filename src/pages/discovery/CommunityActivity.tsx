@@ -1,6 +1,6 @@
 import React from 'react';
 import { Activity, RefreshCw } from 'lucide-react';
-import ActivityCard from '../../features/trending/components/ActivityCard';
+import ActivityCard from '../../features/discovery/components/ActivityCard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { ExpandedPlaylistCard } from '../../features/playlist/components/expanded_card/ExpandedPlaylistCard';
 
@@ -10,7 +10,7 @@ import { ArtistDetailModal } from '../../features/spotify/components/ArtistDetai
 import { ExpandedAlbumCard } from '../../features/favourites/favourites_albums/components/expanded_card/ExpandedAlbumCard';
 
 // Import Hook
-import { useCommunityActivity, type ActivityType } from '../../features/trending/hooks/useCommunityActivity';
+import { useCommunityActivity, type ActivityType } from '../../features/discovery/hooks/useCommunityActivity';
 
 const CommunityActivity: React.FC = () => {
     const {

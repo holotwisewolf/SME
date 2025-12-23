@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { getTrackDetails } from '../../spotify/services/spotify_services';
-import type { TrendingItem } from '../types/trending';
+import type { DiscoveryItem } from '../types/discovery';
 import type { SpotifyTrack } from '../../spotify/type/spotify_types';
 
 interface UseItemSelectionReturn {
     selectedPlaylist: any | null;
     selectedTrack: SpotifyTrack | null;
     selectedAlbum: string | null;
-    handleItemClick: (item: TrendingItem) => Promise<void>;
+    handleItemClick: (item: DiscoveryItem) => Promise<void>;
     clearSelection: () => void;
 }
 
@@ -19,7 +19,7 @@ export function useItemSelection(): UseItemSelectionReturn {
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
     const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
 
-    const handleItemClick = async (item: TrendingItem) => {
+    const handleItemClick = async (item: DiscoveryItem) => {
         if (item.type === 'playlist') {
             try {
                 // Fetch full playlist data

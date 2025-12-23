@@ -1,7 +1,7 @@
 // SortDropdown - Dropdown for sorting trending items
 
 import React from 'react';
-import type { SortBy } from '../../types/trending';
+import type { SortBy } from '../../types/discovery';
 import { StyledDropdown } from '../../../../components/ui/StyledDropdown';
 
 interface SortDropdownProps {
