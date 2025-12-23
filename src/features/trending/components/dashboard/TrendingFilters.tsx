@@ -1,8 +1,8 @@
 import React from 'react';
-import type { TrendingFilters as TrendingFiltersType, TimeRange } from '../types/trending';
-import { MoreOptionsIcon } from '../../../components/ui/MoreOptionsIcon';
-import { useTrendingFilters } from '../hooks/useTrendingFilters';
-import { StyledDropdown } from '../../../components/ui/StyledDropdown';
+import type { TrendingFilters as TrendingFiltersType, TimeRange } from '../../types/trending';
+import { MoreOptionsIcon } from '../../../../components/ui/MoreOptionsIcon';
+import { useTrendingFilters } from '../../hooks/useTrendingFilters';
+import { StyledDropdown } from '../../../../components/ui/StyledDropdown';
 
 interface TrendingFiltersProps {
     filters: TrendingFiltersType;

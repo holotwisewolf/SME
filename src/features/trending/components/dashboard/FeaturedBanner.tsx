@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Music, Heart, MessageCircle, Tag } from 'lucide-react';
-import type { TrendingItem } from '../types/trending';
-import { useFeaturedBanner } from '../hooks/useFeaturedBanner';
+import type { TrendingItem } from '../../types/trending';
+import { useFeaturedBanner } from '../../hooks/useFeaturedBanner';
 
 interface FeaturedBannerProps {
     topThree: TrendingItem[];

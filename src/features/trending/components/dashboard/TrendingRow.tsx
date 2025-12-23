@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { TrendingItem } from '../types/trending';
+import type { TrendingItem } from '../../types/trending';
 import { Star, MessageCircle, Heart, Tag, Music } from 'lucide-react';
 
 interface TrendingRowProps {

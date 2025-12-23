@@ -1,8 +1,8 @@
 // DashboardView - Main dashboard view with filters, tabs, and trending content
 
 import React, { useRef } from 'react';
-import TrendingFilters from '../TrendingFilters';
-import DiscoverySidebar from '../DiscoverySidebar';
+import TrendingFilters from './TrendingFilters';
+import DiscoverySidebar from './DiscoverySidebar';
 import TabNavigation from './TabNavigation';
 import SortDropdown from './SortDropdown';
 import TrendingContent from './TrendingContent';

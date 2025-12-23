@@ -1,7 +1,7 @@
 import React from 'react';
 import { TrendingUp, Clock, Activity, ExternalLink } from 'lucide-react';
-import type { TrendingFilters } from '../types/trending';
-import { useDiscoverySidebar } from '../hooks/useDiscoverySidebar';
+import type { TrendingFilters } from '../../types/trending';
+import { useDiscoverySidebar } from '../../hooks/useDiscoverySidebar';
 
 interface DiscoverySidebarProps {
     filters?: TrendingFilters;
