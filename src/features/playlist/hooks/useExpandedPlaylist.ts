@@ -37,6 +37,7 @@ interface UseExpandedPlaylistProps {
     onColorChange?: (newColor: string) => void;
     currentColor?: string | null;
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
+    onUpdate?: () => void;
 }
 
 export const useExpandedPlaylist = ({
@@ -47,7 +48,8 @@ export const useExpandedPlaylist = ({
     onDeletePlaylist,
     onColorChange,
     currentColor,
-    onPlaylistUpdate
+    onPlaylistUpdate,
+    onUpdate
 }: UseExpandedPlaylistProps) => {
     // --- Context Hooks ---
     const { showError } = useError();
@@ -209,6 +211,7 @@ export const useExpandedPlaylist = ({
                 user_rated_at: now
             });
         }
+        if (onUpdate) onUpdate();
     };
 
     const handleRemoveTrack = async (trackId: string) => {
@@ -419,6 +422,7 @@ export const useExpandedPlaylist = ({
             setIsFavourite(false);
             showError('Failed to add to favourites');
         }
+        if (onUpdate) onUpdate();
     };
 
     const handleTagsSync = (newUserTags: string[]) => {
@@ -436,6 +440,7 @@ export const useExpandedPlaylist = ({
                 user_tagged_at: now
             });
         }
+        if (onUpdate) onUpdate();
     };
 
     return {
@@ -482,6 +487,7 @@ export const useExpandedPlaylist = ({
         handleDeletePlaylist,
         handleToggleFavourite,
         handleTagsSync,
-        signInWithSpotify
+        signInWithSpotify,
+        onUpdate
     };
 };

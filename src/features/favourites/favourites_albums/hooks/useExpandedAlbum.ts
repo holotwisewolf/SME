@@ -13,9 +13,11 @@ interface UseExpandedAlbumProps {
     albumId: string;
     onClose?: () => void;
     onRemove?: () => void;
+    onUpdate?: () => void;
 }
 
-export const useExpandedAlbum = ({ albumId, onClose, onRemove }: UseExpandedAlbumProps) => {
+
+export const useExpandedAlbum = ({ albumId, onClose, onRemove, onUpdate }: UseExpandedAlbumProps) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
 
@@ -113,6 +115,7 @@ export const useExpandedAlbum = ({ albumId, onClose, onRemove }: UseExpandedAlbu
         ]);
         setRatingData(ratingRes);
         setUserRating(userRatingRes);
+        if (onUpdate) onUpdate();
     };
 
     const handleAddComment = async () => {
@@ -124,6 +127,7 @@ export const useExpandedAlbum = ({ albumId, onClose, onRemove }: UseExpandedAlbu
             setNewComment('');
             const commentsData = await getItemComments(albumId, 'album');
             setComments(commentsData);
+            if (onUpdate) onUpdate();
         } catch (error: any) {
             console.error('Error adding comment:', error);
             if (error?.message?.includes('row-level security') || error?.code === 'PGRST301') {
@@ -143,10 +147,12 @@ export const useExpandedAlbum = ({ albumId, onClose, onRemove }: UseExpandedAlbu
             if (willBeFavourite) {
                 await addToFavourites(albumId, 'album');
                 showSuccess('Album added to favourites');
+                if (onUpdate) onUpdate();
             } else {
                 await removeFromFavourites(albumId, 'album');
                 showSuccess('Album removed from favourites');
                 if (onRemove) onRemove();
+                if (onUpdate) onUpdate();
             }
         } catch (error) {
             console.error('Error toggling favourite:', error);

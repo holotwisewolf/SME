@@ -22,6 +22,7 @@ interface ExpandedPlaylistCardProps {
     onColorChange?: (newColor: string) => void;
     currentColor?: string | null;
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
+    onUpdate?: () => void;
 }
 
 export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props) => {
@@ -70,7 +71,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props)
         handleToggleFavourite,
         handleTagsSync,
         signInWithSpotify
-    } = useExpandedPlaylist(props);
+    } = useExpandedPlaylist({ ...props, onUpdate: props.onUpdate });
 
     if (loading) {
         return createPortal(
@@ -164,7 +165,10 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props)
                                 setTags={setUserTags}
                                 isEditingEnabled={true}
                                 userName={currentUserName}
-                                onDescriptionChange={isOwner ? (newDescription) => { props.playlist.description = newDescription; } : undefined}
+                                onDescriptionChange={isOwner ? (newDescription) => {
+                                    props.playlist.description = newDescription;
+                                    if (props.onUpdate) props.onUpdate();
+                                } : undefined}
                                 onTagsUpdate={handleTagsSync}
                                 onRatingUpdate={handleRatingUpdate}
                             />

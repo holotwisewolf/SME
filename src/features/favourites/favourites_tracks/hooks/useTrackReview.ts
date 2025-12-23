@@ -14,11 +14,10 @@ interface UseTrackReviewProps {
     onClose: () => void;
     onRemove?: () => void;
     onFavoriteChange?: (isFavorite: boolean) => void;
+    onUpdate?: () => void;
 }
 
-
-
-export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange }: UseTrackReviewProps) => {
+export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange, onUpdate }: UseTrackReviewProps) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
 
@@ -105,6 +104,7 @@ export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange }: U
 
             const updatedRatingData = await getItemRating(track.id, 'track');
             setRatingData(updatedRatingData);
+            if (onUpdate) onUpdate();
         } catch (error) {
             console.error('Error updating rating:', error);
             showError('Failed to update rating. Please try again.');
@@ -157,6 +157,7 @@ export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange }: U
 
                 setNewTag('');
                 showSuccess(`Tag #${sanitizedTag} added`);
+                if (onUpdate) onUpdate();
             } catch (error) {
                 console.error('Error adding tag:', error);
                 showError('Failed to add tag');
@@ -172,6 +173,7 @@ export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange }: U
             const { removeItemTag } = await import('../../services/item_services');
             await removeItemTag(track.id, 'track', tagToRemove);
             showSuccess(`Tag #${tagToRemove} removed`);
+            if (onUpdate) onUpdate();
         } catch (error) {
             console.error('Error removing tag:', error);
             setPersonalTags(prevTags);
@@ -225,6 +227,7 @@ export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange }: U
             if (onFavoriteChange) {
                 onFavoriteChange(willBeFavourite);
             }
+            if (onUpdate) onUpdate();
         } catch (error) {
             console.error('Error toggling favourite:', error);
             setIsFavourite(!willBeFavourite);

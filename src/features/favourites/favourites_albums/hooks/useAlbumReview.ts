@@ -12,6 +12,7 @@ export interface UseAlbumReviewProps {
     tags: string[];
     setTags: (tags: string[]) => void;
     onRatingUpdate: () => void;
+    onUpdate?: () => void;
 }
 
 export const useAlbumReview = ({
@@ -19,7 +20,8 @@ export const useAlbumReview = ({
     userRating,
     tags,
     setTags,
-    onRatingUpdate
+    onRatingUpdate,
+    onUpdate
 }: UseAlbumReviewProps) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
@@ -67,6 +69,7 @@ export const useAlbumReview = ({
             }
             setIsTagMenuOpen(false);
             showSuccess(`Tag #${tag.name} added`);
+            if (onUpdate) onUpdate();
         } catch (error) {
             console.error('Error adding tag:', error);
             showError('Failed to add tag');
@@ -138,6 +141,7 @@ export const useAlbumReview = ({
                 setNewTag('');
                 setIsTagMenuOpen(false);
                 showSuccess(`Tag #${sanitizedTag} added`);
+                if (onUpdate) onUpdate();
             } catch (error) {
                 console.error('Error adding tag:', error);
                 showError('Failed to add tag');
@@ -145,8 +149,23 @@ export const useAlbumReview = ({
         }
     };
 
-    const removeTag = (tagToRemove: string) => {
+    const removeTag = async (tagToRemove: string) => {
+        // Optimistic update
         setTags(tags.filter(tag => tag !== tagToRemove));
+
+        try {
+            // Import dynamically just like addItemTag to avoid circular deps if needed
+            const { removeItemTag } = await import('../../services/item_services');
+
+            await removeItemTag(albumId, 'album', tagToRemove);
+
+            if (onUpdate) onUpdate();
+        } catch (e) {
+            console.error('Error removing tag:', e);
+            showError('Failed to remove tag');
+            // Revert optimistic update
+            setTags([...tags, tagToRemove]);
+        }
     };
 
     return {

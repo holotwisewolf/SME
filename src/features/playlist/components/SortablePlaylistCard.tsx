@@ -12,11 +12,12 @@ interface SortablePlaylistCardProps {
     lastUpdated?: number;
     isLiked?: boolean;
     onToggleFavorite?: (id: string, isFav: boolean) => void;
-    onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void; 
+    onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
+    onUpdate?: () => void;
 }
 
 export const SortablePlaylistCard: React.FC<SortablePlaylistCardProps> = ({
-    playlist, onDelete, lastUpdated, isLiked, onToggleFavorite, onPlaylistUpdate 
+    playlist, onDelete, lastUpdated, isLiked, onToggleFavorite, onPlaylistUpdate, onUpdate
 }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: playlist.id });
 
@@ -34,7 +35,8 @@ export const SortablePlaylistCard: React.FC<SortablePlaylistCardProps> = ({
                 lastUpdated={lastUpdated}
                 initialIsLiked={isLiked}
                 onToggleFavorite={onToggleFavorite}
-                onPlaylistUpdate={onPlaylistUpdate} 
+                onPlaylistUpdate={onPlaylistUpdate}
+                onUpdate={onUpdate}
             />
         </div>
     );

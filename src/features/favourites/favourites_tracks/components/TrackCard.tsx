@@ -17,6 +17,7 @@ interface TrackCardProps {
     // isFavourite is passed as initial state
     isFavourite?: boolean;
     onToggleFavourite?: (e: React.MouseEvent) => void;
+    onUpdate?: () => void;
     onClick: () => void;
 }
 

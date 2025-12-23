@@ -8,10 +8,11 @@ import { useAlbumGrid } from '../hooks/useAlbumGrid';
 interface AlbumGridProps {
     albums: string[] | any[]; // Accept IDs or EnhancedAlbum objects
     onDelete?: () => void;
+    onUpdate?: () => void;
     searchQuery?: string;
 }
 
-const AlbumGrid: React.FC<AlbumGridProps> = ({ albums, onDelete, searchQuery = '' }) => {
+const AlbumGrid: React.FC<AlbumGridProps> = ({ albums, onDelete, onUpdate, searchQuery = '' }) => {
     // If albums are objects, extract IDs for useAlbumGrid, but keep objects for rendering
     const albumIds = React.useMemo(() => albums.map(a => typeof a === 'string' ? a : a.id), [albums]);
 
@@ -52,6 +53,8 @@ const AlbumGrid: React.FC<AlbumGridProps> = ({ albums, onDelete, searchQuery = '
                                     key={albumId}
                                     albumId={albumId}
                                     onRemove={() => handleRemove(albumId)}
+                                    // Use specific onUpdate prop if available, or fall back to onDelete (which is loadAlbums in parent)
+                                    onUpdate={onUpdate || onDelete}
                                     searchQuery={searchQuery}
                                     initialData={albumDataMap.get(albumId)}
                                 />

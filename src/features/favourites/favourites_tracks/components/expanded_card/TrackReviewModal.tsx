@@ -15,6 +15,7 @@ interface TrackReviewModalProps {
     onClose: () => void;
     onRemove?: () => void;
     onFavoriteChange?: (isFavorite: boolean) => void;
+    onUpdate?: () => void;
 }
 
 export const TrackReviewModal: React.FC<TrackReviewModalProps> = (props) => {
@@ -43,7 +44,7 @@ export const TrackReviewModal: React.FC<TrackReviewModalProps> = (props) => {
         handleAddComment,
         handleCopyLink,
         handleToggleFavourite,
-    } = useTrackReview(props);
+    } = useTrackReview({ ...props, onUpdate: props.onUpdate });
 
     if (loading) return null; // Or a loading spinner if preferred, but usually modal should just appear
 

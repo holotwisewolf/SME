@@ -37,8 +37,13 @@ const YourTracks: React.FC = () => {
         handleDragEnd,
         hasActiveFilters,
         processedTracks,
-        activeTrack
+        activeTrack,
+        loadTracks
     } = useYourTracks();
+
+    const handleRefresh = () => {
+        loadTracks(true);
+    };
 
     return (
         <div className="flex flex-col h-full px-6 relative pb-32">
@@ -155,6 +160,7 @@ const YourTracks: React.FC = () => {
                                             // Remove from list if unfavourited
                                             setTracks(prev => prev.filter(t => t && t.id !== track.id));
                                         }}
+                                        onUpdate={handleRefresh}
                                     />
                                 ))}
                             </div>
@@ -184,6 +190,7 @@ const YourTracks: React.FC = () => {
                         onRemove={() => {
                             setTracks(prev => prev.filter(t => t && t.id !== selectedTrack.id));
                         }}
+                        onUpdate={handleRefresh}
                     />
                 )}
             </AnimatePresence>

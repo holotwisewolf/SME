@@ -14,6 +14,7 @@ interface ExpandedAlbumCardProps {
     albumId: string;
     onClose?: () => void;
     onRemove?: () => void;
+    onUpdate?: () => void;
 }
 
 export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = (props) => {
@@ -42,7 +43,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = (props) => {
         handleToggleFavourite,
         handleRemoveFromFavourites,
         handleImportToPlaylist,
-    } = useExpandedAlbum(props);
+    } = useExpandedAlbum({ ...props, onUpdate: props.onUpdate });
 
     if (loading || !album) {
         return (
@@ -138,6 +139,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = (props) => {
                                 tags={personalTags}
                                 setTags={setPersonalTags}
                                 onRatingUpdate={handleRatingUpdate}
+                                onUpdate={props.onUpdate}
                                 userName={userName}
                             />
                         )}

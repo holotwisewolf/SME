@@ -39,6 +39,8 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
     handlePlaylistUpdate,
   } = usePlaylistDashboard({ source });
 
+  const handleRefresh = () => loadData(true);
+
   return (
     <div className="flex flex-col h-full px-6 relative pb-32">
       {/* Header */}
@@ -89,14 +91,22 @@ const PlaylistDashboard: React.FC<PlaylistDashboardProps> = ({ source }) => {
       {loading ? (
         <div className="flex justify-center items-center h-64"><LoadingSpinner className="w-10 h-10 text-[white]" /></div>
       ) : (
-        <PlaylistGrid playlists={playlists} onDelete={loadData} onReorder={handlePlaylistReorder} favoriteIds={favoriteIds} onToggleFavorite={handleFavoriteToggle} onPlaylistUpdate={handlePlaylistUpdate} />
+        <PlaylistGrid
+          playlists={playlists}
+          onDelete={loadData}
+          onReorder={handlePlaylistReorder}
+          favoriteIds={favoriteIds}
+          onToggleFavorite={handleFavoriteToggle}
+          onPlaylistUpdate={handlePlaylistUpdate}
+          onUpdate={handleRefresh}
+        />
       )}
       {isLibrary && (
         <div className="fixed bottom-8 right-8 z-50">
           <button type="button" onClick={() => setShowCreateModal(true)} className="bg-[#1a1a1a] text-[#BAFFB5] text-sm font-medium rounded-full px-12 py-4 shadow-lg hover:bg-[#252525] transition">Create Playlist</button>
         </div>
       )}
-      {showCreateModal && <CreatePlaylistModal onClose={() => setShowCreateModal(false)} onCreated={loadData} />}
+      {showCreateModal && <CreatePlaylistModal onClose={() => setShowCreateModal(false)} onCreated={() => loadData(false)} />}
     </div>
   );
 };

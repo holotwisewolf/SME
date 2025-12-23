@@ -9,6 +9,7 @@ interface AlbumReviewProps {
     tags: string[];
     setTags: (tags: string[]) => void;
     onRatingUpdate: () => void;
+    onUpdate?: () => void;
     userName?: string;
 }
 
@@ -19,6 +20,7 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
     tags,
     setTags,
     onRatingUpdate,
+    onUpdate,
     userName = 'You'
 }) => {
     const {
@@ -34,7 +36,8 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
         userRating,
         tags,
         setTags,
-        onRatingUpdate
+        onRatingUpdate,
+        onUpdate
     });
 
     return (

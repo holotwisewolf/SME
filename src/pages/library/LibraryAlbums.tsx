@@ -116,7 +116,13 @@ const LibraryAlbums: React.FC = () => {
                     </LayoutGroup>
                 </div>
             </div>
-            <AlbumGrid albums={processedAlbumIds} onDelete={loadAlbums} searchQuery={searchQuery} />
+            {/* onUpdate: Trigger silent refresh (no loading spinner) when user rates/tags */}
+            <AlbumGrid
+                albums={processedAlbumIds}
+                onDelete={() => loadAlbums(false)}
+                onUpdate={() => loadAlbums(true)}
+                searchQuery={searchQuery}
+            />
         </div>
     );
 };

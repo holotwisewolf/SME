@@ -17,10 +17,11 @@ interface PlaylistCardProps {
     initialIsLiked?: boolean;
     onToggleFavorite?: (id: string, isFav: boolean) => void;
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
+    onUpdate?: () => void;
 }
 
 const PlaylistCard: React.FC<PlaylistCardProps> = ({
-    playlist, onDelete, lastUpdated, initialIsLiked, onToggleFavorite, onPlaylistUpdate
+    playlist, onDelete, lastUpdated, initialIsLiked, onToggleFavorite, onPlaylistUpdate, onUpdate
 }) => {
     const {
         isFavourite,
@@ -213,6 +214,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                     onColorChange={setColor}
                     currentColor={color}
                     onPlaylistUpdate={onPlaylistUpdate}
+                    onUpdate={onUpdate}
                 />
             )}
         </>

@@ -8,6 +8,7 @@ interface SortableTrackCardProps {
     track: SpotifyTrack;
     isFavourite?: boolean;
     onToggleFavourite?: (e: React.MouseEvent) => void;
+    onUpdate?: () => void;
     onClick: () => void;
 }
 

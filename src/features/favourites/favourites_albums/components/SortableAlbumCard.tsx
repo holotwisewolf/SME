@@ -6,6 +6,7 @@ import AlbumCard from './AlbumCard';
 interface SortableAlbumCardProps {
     albumId: string;
     onRemove: () => void;
+    onUpdate?: () => void;
     searchQuery?: string;
     initialData?: any;
 }
@@ -13,6 +14,7 @@ interface SortableAlbumCardProps {
 export const SortableAlbumCard: React.FC<SortableAlbumCardProps> = ({
     albumId,
     onRemove,
+    onUpdate,
     searchQuery = '',
     initialData
 }) => {
@@ -36,6 +38,7 @@ export const SortableAlbumCard: React.FC<SortableAlbumCardProps> = ({
             <AlbumCard
                 albumId={albumId}
                 onRemove={onRemove}
+                onUpdate={onUpdate}
                 searchQuery={searchQuery}
                 initialData={initialData}
             />

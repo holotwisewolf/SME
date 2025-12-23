@@ -108,8 +108,8 @@ export const useYourTracks = () => {
         loadTracks();
     }, []);
 
-    const loadTracks = async () => {
-        setLoading(true);
+    const loadTracks = async (silent: boolean = false) => {
+        if (!silent) setLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const favTracks = await getFavouriteTracks();
@@ -191,7 +191,7 @@ export const useYourTracks = () => {
             const msg = parseSpotifyError(error, 'Failed to load tracks');
             showError(msg);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -353,6 +353,7 @@ export const useYourTracks = () => {
         handleDragEnd,
         hasActiveFilters,
         processedTracks,
-        activeTrack
+        activeTrack,
+        loadTracks // Exported for silent refresh
     };
 };

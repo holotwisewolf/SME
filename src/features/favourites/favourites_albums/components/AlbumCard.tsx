@@ -8,11 +8,12 @@ import { useAlbumCard } from '../hooks/useAlbumCard';
 interface AlbumCardProps {
     albumId: string;
     onRemove?: () => void;
+    onUpdate?: () => void;
     searchQuery?: string;
     initialData?: any;
 }
 
-const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove, searchQuery = '', initialData }) => {
+const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove, onUpdate, searchQuery = '', initialData }) => {
     const {
         isFavourite,
         isExpanded, setIsExpanded,
@@ -178,6 +179,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ albumId, onRemove, searchQuery = 
                         setIsExpanded(false);
                         onRemove?.();
                     }}
+                    onUpdate={onUpdate}
                 />
             )}
         </>

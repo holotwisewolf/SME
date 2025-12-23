@@ -70,14 +70,14 @@ export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
     const filterButtonRef = useRef<HTMLDivElement>(null);
 
     // --- 1. Initial Load (Bulk) ---
-    const loadData = async () => {
+    const loadData = async (silent: boolean = false) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) {
             setLoading(false);
             return;
         }
 
-        setLoading(true);
+        if (!silent) setLoading(true);
         try {
             const { playlists: enhancedData, favoriteIds: ids } = await getEnhancedPlaylists(session.user.id);
 
@@ -87,7 +87,7 @@ export const usePlaylistDashboard = ({ source }: UsePlaylistDashboardProps) => {
         } catch (error) {
             console.error('Error loading data:', error);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 

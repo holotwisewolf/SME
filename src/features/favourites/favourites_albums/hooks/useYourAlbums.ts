@@ -81,8 +81,8 @@ export const useYourAlbums = () => {
         localStorage.setItem(STORAGE_KEYS.filterState, JSON.stringify(state));
     };
 
-    const loadAlbums = async () => {
-        setLoading(true);
+    const loadAlbums = async (silent: boolean = false) => {
+        if (!silent) setLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const favAlbums = await getFavouriteAlbums();

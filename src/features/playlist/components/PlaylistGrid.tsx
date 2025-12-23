@@ -15,10 +15,11 @@ interface PlaylistGridProps {
     favoriteIds?: Set<string>;
     onToggleFavorite?: (id: string, isFav: boolean) => void;
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
+    onUpdate?: () => void;
 }
 
 const PlaylistGrid: React.FC<PlaylistGridProps> = ({
-    playlists, onDelete, onReorder, favoriteIds, onToggleFavorite, onPlaylistUpdate
+    playlists, onDelete, onReorder, favoriteIds, onToggleFavorite, onPlaylistUpdate, onUpdate
 }) => {
     const {
         activeTrack,
@@ -49,7 +50,8 @@ const PlaylistGrid: React.FC<PlaylistGridProps> = ({
                                     lastUpdated={playlistUpdates[playlist.id]}
                                     isLiked={favoriteIds?.has(playlist.id)}
                                     onToggleFavorite={onToggleFavorite}
-                                    onPlaylistUpdate={onPlaylistUpdate} // [Sync Fix] Pass prop
+                                    onPlaylistUpdate={onPlaylistUpdate}
+                                    onUpdate={onUpdate}
                                 />
                             ))}
                         </div>
