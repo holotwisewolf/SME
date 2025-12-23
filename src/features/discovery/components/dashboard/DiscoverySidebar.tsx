@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TrendingUp, Clock, Activity, ExternalLink } from 'lucide-react';
 import type { DiscoveryFilters } from '../../types/discovery';
 import { useDiscoverySidebar } from '../../hooks/useDiscoverySidebar';
+import UserPreviewModal from '../../../user/components/UserPreviewModal'; 
 
 interface DiscoverySidebarProps {
     filters?: DiscoveryFilters;
@@ -19,6 +20,9 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
         getRelativeTime,
         handleTagClick
     } = useDiscoverySidebar({ filters, onFiltersChange, refreshKey });
+
+    // 3. 新增状态：控制 Mini Profile 显示
+    const [previewUserId, setPreviewUserId] = useState<string | null>(null);
 
     return (
         <div className="w-80 flex-shrink-0 space-y-4 sticky top-20 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pr-2">
@@ -91,10 +95,11 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                                 {recentActivity.map((activity) => (
                                     <div key={activity.id} className="text-sm border-b border-[#D1D1D1]/5 pb-2 last:border-0 last:pb-0">
                                         <p className="text-[#D1D1D1]/70 leading-relaxed">
+                                            {/* 4. 修改点击事件：触发 setPreviewUserId */}
                                             <button
                                                 onClick={() => {
                                                     const userId = typeof activity.user === 'object' ? activity.user.id : activity.user_id;
-                                                    if (userId) navigate(`/profile/${userId}`);
+                                                    if (userId) setPreviewUserId(userId); // Changed logic here
                                                 }}
                                                 className="text-[#FFD1D1] text-xs font-medium hover:underline cursor-pointer"
                                             >
@@ -163,6 +168,14 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                     </div>
                 )}
             </div>
+
+            {/* 5. 渲染 Modal */}
+            {previewUserId && (
+                <UserPreviewModal
+                    userId={previewUserId}
+                    onClose={() => setPreviewUserId(null)}
+                />
+            )}
 
             <style>{`
         .custom-scrollbar::-webkit-scrollbar {

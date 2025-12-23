@@ -28,6 +28,9 @@ export const useCommunityActivity = () => {
     const [selectedArtist, setSelectedArtist] = useState<ArtistFullDetail | null>(null);
     const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Tables<'playlists'> | null>(null);
+    
+    // [NEW] State for User Preview Modal (Mini Profile)
+    const [previewUserId, setPreviewUserId] = useState<string | null>(null);
 
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
@@ -123,10 +126,16 @@ export const useCommunityActivity = () => {
 
     // --- CLICK HANDLERS ---
 
+    // [MODIFIED] Instead of navigating, we set the preview ID
     const handleUserClick = (userId: string) => {
         if (userId) {
-            navigate(`/profile/${userId}`);
+            setPreviewUserId(userId);
         }
+    };
+
+    // [NEW] Helper to close the preview
+    const handleCloseUserPreview = () => {
+        setPreviewUserId(null);
     };
 
     const handleTrackClick = async (trackId: string) => {
@@ -232,10 +241,15 @@ export const useCommunityActivity = () => {
         loading,
         filterType, setFilterType,
         refreshing,
+        
+        // Modal States & Handlers
         selectedTrack, setSelectedTrack,
         selectedArtist, setSelectedArtist,
         selectedAlbumId, setSelectedAlbumId,
         selectedPlaylist, setSelectedPlaylist,
+        previewUserId, // [NEW] Return this
+        handleCloseUserPreview, // [NEW] Return this
+        
         isLoadingDetails,
         handleRefresh,
         handleUserClick,

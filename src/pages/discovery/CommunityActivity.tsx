@@ -8,6 +8,7 @@ import { ExpandedPlaylistCard } from '../../features/playlist/components/expande
 import { TrackReviewModal } from '../../features/favourites/favourites_tracks/components/expanded_card/TrackReviewModal';
 import { ArtistDetailModal } from '../../features/spotify/components/ArtistDetailModal';
 import { ExpandedAlbumCard } from '../../features/favourites/favourites_albums/components/expanded_card/ExpandedAlbumCard';
+import UserPreviewModal from '../../features/user/components/UserPreviewModal'; 
 
 // Import Hook
 import { useCommunityActivity, type ActivityType } from '../../features/discovery/hooks/useCommunityActivity';
@@ -22,6 +23,8 @@ const CommunityActivity: React.FC = () => {
         selectedArtist,
         selectedAlbumId, setSelectedAlbumId,
         selectedPlaylist, setSelectedPlaylist,
+        previewUserId, 
+        handleCloseUserPreview, 
         isLoadingDetails,
         handleRefresh,
         handleUserClick,
@@ -115,6 +118,16 @@ const CommunityActivity: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* --- Modals Section --- */}
+
+            {/* [NEW] User Preview Modal */}
+            {previewUserId && (
+                <UserPreviewModal 
+                    userId={previewUserId} 
+                    onClose={handleCloseUserPreview} 
+                />
+            )}
 
             {selectedTrack && (
                 <TrackReviewModal

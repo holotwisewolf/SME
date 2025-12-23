@@ -1,15 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DefUserAvatar from '../../../components/ui/DefUserAvatar';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
-import ActivityCard from '../../discovery/components/ActivityCard';
+import ActivityCard from '../../discovery/components/ActivityCard'; 
 import UserCommentsModal from '../components/UserCommentsModal';
 import UserItemsModal from '../components/UserItemsModal';
-import ItemModals from '../../discovery/components/dashboard/ItemModals';
-import { Play, Star, Lock, Music, ChevronDown } from 'lucide-react';
+import ItemModals from '../../discovery/components/dashboard/ItemModals'; 
+import { Play, Star, Lock, Music, ChevronDown, ListFilter, Calendar } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { useState } from 'react';
 
 const UserProfile = () => {
     const { userId } = useParams();
@@ -39,20 +38,33 @@ const UserProfile = () => {
         handleItemClick
     } = useUserProfile(userId);
 
+    // --- New Local States for Filters ---
+    const [playlistSort, setPlaylistSort] = useState<'newest' | 'oldest' | 'a-z'>('newest');
+    const [isPlaylistSortOpen, setIsPlaylistSortOpen] = useState(false);
+
+    const [commentFilter, setCommentFilter] = useState<'all' | '7days' | '30days'>('all');
+    const [isCommentFilterOpen, setIsCommentFilterOpen] = useState(false);
+
+    // Refs for clicking outside to close dropdowns
     const favDropdownRef = useRef<HTMLDivElement>(null);
     const ratingDropdownRef = useRef<HTMLDivElement>(null);
     const ratingInfoRef = useRef<HTMLDivElement>(null);
+    const playlistSortRef = useRef<HTMLDivElement>(null);
+    const commentFilterRef = useRef<HTMLDivElement>(null);
 
     // Close dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (favDropdownRef.current && !favDropdownRef.current.contains(event.target as Node)) setIsFavDropdownOpen(false);
-            if (ratingDropdownRef.current && !ratingDropdownRef.current.contains(event.target as Node)) setIsDropdownOpen(false);
-            if (ratingInfoRef.current && !ratingInfoRef.current.contains(event.target as Node)) setShowRatingInfo(false);
+            const target = event.target as Node;
+            if (favDropdownRef.current && !favDropdownRef.current.contains(target)) setIsFavDropdownOpen(false);
+            if (ratingDropdownRef.current && !ratingDropdownRef.current.contains(target)) setIsDropdownOpen(false);
+            if (ratingInfoRef.current && !ratingInfoRef.current.contains(target)) setShowRatingInfo(false);
+            if (playlistSortRef.current && !playlistSortRef.current.contains(target)) setIsPlaylistSortOpen(false);
+            if (commentFilterRef.current && !commentFilterRef.current.contains(target)) setIsCommentFilterOpen(false);
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [setIsFavDropdownOpen, setIsDropdownOpen, setShowRatingInfo]);
+    }, [setIsFavDropdownOpen, setIsDropdownOpen, setShowRatingInfo, setIsPlaylistSortOpen, setIsCommentFilterOpen]);
 
     const isLocked = profile?.is_private_profile && !isOwnProfile;
 
@@ -77,6 +89,46 @@ const UserProfile = () => {
             </div>
         );
     };
+
+    // --- Filter & Sort Logic ---
+
+    // 1. Process Playlists (Sorting)
+    const getSortedPlaylists = () => {
+        if (!playlists) return [];
+        const sorted = [...playlists];
+        switch (playlistSort) {
+            case 'newest':
+                return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            case 'oldest':
+                return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+            case 'a-z':
+                return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            default:
+                return sorted;
+        }
+    };
+
+    // 2. Process Comments (Time Filtering)
+    const getFilteredComments = () => {
+        if (!recentComments) return [];
+        if (commentFilter === 'all') return recentComments;
+
+        const now = new Date();
+        return recentComments.filter(c => {
+            const commentDate = new Date(c.created_at);
+            const diffTime = Math.abs(now.getTime() - commentDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (commentFilter === '7days') return diffDays <= 7;
+            if (commentFilter === '30days') return diffDays <= 30;
+            return true;
+        });
+    };
+
+    const displayPlaylists = getSortedPlaylists();
+    const displayComments = getFilteredComments();
+
+    // ----------------------------
 
     if (loading) return <div className="h-full flex items-center justify-center bg-[#696969]"><LoadingSpinner /></div>;
     if (!profile) return <div className="p-8 text-white bg-[#696969]">User not found.</div>;
@@ -144,15 +196,54 @@ const UserProfile = () => {
                     <div className="max-w-4xl mx-auto px-6 py-10 space-y-16">
                         {activeTab === 'music' ? (
                             <>
+                                {/* Created Playlists Section with Sorting */}
                                 <section>
                                     <div className="flex justify-between items-end mb-4 px-1 text-white">
-                                        <h2 className="text-xl font-bold uppercase tracking-tight">Created Playlists</h2>
-                                        {playlists.length > 5 && <button onClick={() => setViewAllModal({ title: 'Created Playlists', items: playlists })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}
+                                        <div className="flex items-center gap-6">
+                                            <h2 className="text-xl font-bold uppercase tracking-tight">Created Playlists</h2>
+                                            
+                                            {/* Playlist Sort Dropdown */}
+                                            <div className="relative" ref={playlistSortRef}>
+                                                <button 
+                                                    onClick={() => setIsPlaylistSortOpen(!isPlaylistSortOpen)} 
+                                                    className="bg-black/40 border border-white/5 rounded-full px-4 py-1.5 text-[10px] font-bold text-white/80 hover:bg-black/60 transition-all flex items-center gap-2 uppercase shadow-lg min-w-[110px]"
+                                                >
+                                                    <ListFilter size={12} className="text-[#FFD1D1]" />
+                                                    <span className="flex-1 text-left truncate">
+                                                        {playlistSort === 'a-z' ? 'Name (A-Z)' : playlistSort + ' First'}
+                                                    </span>
+                                                    <ChevronDown size={12} className={`ml-auto transition-transform ${isPlaylistSortOpen ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                <AnimatePresence>
+                                                    {isPlaylistSortOpen && (
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} 
+                                                            className="absolute top-full mt-2 left-0 z-[100] bg-[#1f1f1f] border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[140px]"
+                                                        >
+                                                            {[
+                                                                { val: 'newest', label: 'Newest First' }, 
+                                                                { val: 'oldest', label: 'Oldest First' }, 
+                                                                { val: 'a-z', label: 'Name (A-Z)' }
+                                                            ].map((opt) => (
+                                                                <button 
+                                                                    key={opt.val} 
+                                                                    onClick={() => { setPlaylistSort(opt.val as any); setIsPlaylistSortOpen(false); }} 
+                                                                    className={`w-full text-left px-4 py-2.5 text-[10px] font-bold uppercase hover:bg-[#FFD1D1] hover:text-black transition-colors ${playlistSort === opt.val ? 'bg-[#FFD1D1]/10 text-[#FFD1D1]' : 'text-white/60'}`}
+                                                                >
+                                                                    {opt.label}
+                                                                </button>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
+                                        {displayPlaylists.length > 5 && <button onClick={() => setViewAllModal({ title: 'Created Playlists', items: displayPlaylists })} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">View All</button>}
                                     </div>
                                     <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm min-h-[200px] flex items-center justify-center">
-                                        {playlists.length > 0 ? (
+                                        {displayPlaylists.length > 0 ? (
                                             <div className="grid grid-cols-2 md:grid-cols-5 gap-6 w-full">
-                                                {playlists.slice(0, 5).map(p => (
+                                                {displayPlaylists.slice(0, 5).map(p => (
                                                     <div key={p.id} onClick={() => handleItemClick(p)} className="group cursor-pointer">
                                                         <UniversalThumbnail item={p} />
                                                         <h3 className="text-[12px] font-bold text-white/90 truncate group-hover:text-[#FFD1D1] transition-colors">{p.name}</h3>
@@ -162,6 +253,7 @@ const UserProfile = () => {
                                         ) : <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No playlists created</div>}
                                     </div>
                                 </section>
+
                                 <section>
                                     <div className="flex justify-between items-end mb-4 px-1">
                                         <div className="flex items-center gap-8 text-white">
@@ -233,15 +325,55 @@ const UserProfile = () => {
                                         ) : <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No ratings yet</div>}
                                     </div>
                                 </section>
+                                
+                                {/* Recent Comments Section with Filter */}
                                 <section>
                                     <div className="flex justify-between items-center mb-4 text-white">
-                                        <h2 className="text-xl font-bold uppercase tracking-tight">Recent Comments</h2>
+                                        <div className="flex items-center gap-6">
+                                            <h2 className="text-xl font-bold uppercase tracking-tight">Recent Comments</h2>
+                                            
+                                            {/* Comment Filter Dropdown */}
+                                            <div className="relative" ref={commentFilterRef}>
+                                                <button 
+                                                    onClick={() => setIsCommentFilterOpen(!isCommentFilterOpen)} 
+                                                    className="bg-black/40 border border-white/5 rounded-full px-4 py-1.5 text-[10px] font-bold text-white/80 hover:bg-black/60 transition-all flex items-center gap-2 uppercase shadow-lg min-w-[110px]"
+                                                >
+                                                    <Calendar size={12} className="text-[#FFD1D1]" />
+                                                    <span className="flex-1 text-left truncate">
+                                                        {commentFilter === 'all' ? 'All Time' : commentFilter === '7days' ? 'Last 7 Days' : 'Last 30 Days'}
+                                                    </span>
+                                                    <ChevronDown size={12} className={`ml-auto transition-transform ${isCommentFilterOpen ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                <AnimatePresence>
+                                                    {isCommentFilterOpen && (
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} 
+                                                            className="absolute top-full mt-2 left-0 z-[100] bg-[#1f1f1f] border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[140px]"
+                                                        >
+                                                            {[
+                                                                { val: 'all', label: 'All Time' }, 
+                                                                { val: '7days', label: 'Last 7 Days' }, 
+                                                                { val: '30days', label: 'Last 30 Days' }
+                                                            ].map((opt) => (
+                                                                <button 
+                                                                    key={opt.val} 
+                                                                    onClick={() => { setCommentFilter(opt.val as any); setIsCommentFilterOpen(false); }} 
+                                                                    className={`w-full text-left px-4 py-2.5 text-[10px] font-bold uppercase hover:bg-[#FFD1D1] hover:text-black transition-colors ${commentFilter === opt.val ? 'bg-[#FFD1D1]/10 text-[#FFD1D1]' : 'text-white/60'}`}
+                                                                >
+                                                                    {opt.label}
+                                                                </button>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
                                         <button onClick={() => setShowCommentsModal(true)} className="text-xs font-black text-white/30 hover:text-[#FFD1D1] uppercase">Full History</button>
                                     </div>
                                     <div className="bg-black/15 rounded-3xl border border-white/5 p-6 backdrop-blur-sm shadow-inner min-h-[150px] flex items-center justify-center">
-                                        {recentComments.length > 0 ? (
+                                        {displayComments.length > 0 ? (
                                             <div className="space-y-4 w-full">
-                                                {recentComments.slice(0, 3).map((c, i) => <ActivityCard key={c.id} activity={c} index={i} onUserClick={handleUserClick} />)}
+                                                {displayComments.slice(0, 3).map((c, i) => <ActivityCard key={c.id} activity={c} index={i} onUserClick={handleUserClick} />)}
                                             </div>
                                         ) : <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No comments found</div>}
                                     </div>
