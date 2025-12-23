@@ -187,7 +187,29 @@ export const useParallaxTrack = ({ items, tabs }: UseParallaxTrackProps) => {
         }
     }, [currentPercentage, maxScrollPercentage]);
 
+    // Previous page handler
+    const handlePrevPage = useCallback(() => {
+        if (!trackRef.current) return;
+
+        const newPercentage = Math.min(currentPercentage + 20, 0);
+        trackRef.current.dataset.percentage = String(newPercentage);
+        trackRef.current.dataset.prevPercentage = String(newPercentage);
+        setCurrentPercentage(newPercentage);
+
+        trackRef.current.animate({
+            transform: `translate(${newPercentage}%, 0%)`
+        }, { duration: 500, fill: "forwards" });
+
+        const images = trackRef.current.getElementsByClassName("parallax-image");
+        for (const image of images) {
+            (image as HTMLElement).animate({
+                objectPosition: `${100 + newPercentage}% center`
+            }, { duration: 500, fill: "forwards" });
+        }
+    }, [currentPercentage]);
+
     const canGoNext = currentPercentage > maxScrollPercentage;
+    const canGoPrev = currentPercentage < 0;
     const activeTab = tabs?.find(t => t.id === activeTabId);
 
     return {
@@ -202,6 +224,7 @@ export const useParallaxTrack = ({ items, tabs }: UseParallaxTrackProps) => {
         setShowDropdown,
         displayItems,
         canGoNext,
+        canGoPrev,
         activeTab,
         isMouseDown: isMouseDownRef.current,
 
@@ -214,6 +237,7 @@ export const useParallaxTrack = ({ items, tabs }: UseParallaxTrackProps) => {
         onTouchMove,
         handleTabChange,
         handleNextPage,
+        handlePrevPage,
         wasClick
     };
 };

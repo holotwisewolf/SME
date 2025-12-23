@@ -189,6 +189,19 @@ async function getTrendingItems(
             });
         }
 
+        // Sort by most-ratings with secondary sort by average rating
+        // e.g., 10 ratings with 5.0 stars ranks higher than 10 ratings with 3.0 stars
+        if (filters.sortBy === 'most-ratings') {
+            trendingItems = trendingItems.sort((a, b) => {
+                // Primary: more ratings wins
+                if (b.ratingCount !== a.ratingCount) {
+                    return b.ratingCount - a.ratingCount;
+                }
+                // Secondary: higher rating wins (tie-breaker)
+                return b.avgRating - a.avgRating;
+            });
+        }
+
         // Enrich with metadata (name, artist, image)
         let enrichedItems = await enrichWithMetadata(trendingItems);
 

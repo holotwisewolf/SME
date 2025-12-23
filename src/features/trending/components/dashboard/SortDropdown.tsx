@@ -6,9 +6,10 @@ import type { SortBy } from '../../types/trending';
 interface SortDropdownProps {
     sortBy: SortBy;
     onSortChange: (sortBy: SortBy) => void;
+    activeTab?: 'tracks' | 'albums' | 'playlists';
 }
 
-const SortDropdown: React.FC<SortDropdownProps> = ({ sortBy, onSortChange }) => {
+const SortDropdown: React.FC<SortDropdownProps> = ({ sortBy, onSortChange, activeTab = 'playlists' }) => {
     return (
         <div className="flex items-center gap-2">
             <span className="text-sm text-[#D1D1D1]/60">Sort by:</span>
@@ -29,7 +30,9 @@ const SortDropdown: React.FC<SortDropdownProps> = ({ sortBy, onSortChange }) => 
                     <option value="most-favorited">Most Favorited</option>
                     <option value="most-activity">Recent Activity</option>
                     <option value="newly-tagged">Newly Tagged</option>
-                    <option value="recently-created">Recently Created</option>
+                    {activeTab === 'playlists' && (
+                        <option value="recently-created">Recently Created</option>
+                    )}
                 </select>
 
                 {/* 4. Custom Arrow SVG - Positioned absolutely */}

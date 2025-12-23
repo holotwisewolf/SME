@@ -2,7 +2,7 @@
 // Refactored to use useParallaxTrack hook for cleaner code
 
 import React from 'react';
-import { Play, Pause, ChevronRight, ChevronDown, RefreshCw } from 'lucide-react';
+import { Play, Pause, ChevronRight, ChevronLeft, ChevronDown, RefreshCw } from 'lucide-react';
 import type { RecommendedItem } from '../types/recommendation_types';
 import { useTrackPreview } from '../../spotify/hooks/useTrackPreview';
 import { useParallaxTrack } from '../hooks/useParallaxTrack';
@@ -44,6 +44,7 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
         setShowDropdown,
         displayItems,
         canGoNext,
+        canGoPrev,
         activeTab,
         isMouseDown,
         onMouseDown,
@@ -54,6 +55,7 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
         onTouchMove,
         handleTabChange,
         handleNextPage,
+        handlePrevPage,
         wasClick
     } = useParallaxTrack({ items, tabs });
 
@@ -162,6 +164,20 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
                             />
                         ))}
                     </div>
+
+                    {/* Left Arrow Navigation */}
+                    {canGoPrev && (
+                        <button
+                            onClick={handlePrevPage}
+                            className="absolute left-0 top-0 h-full w-20 z-20 group flex items-center justify-start pl-4"
+                        >
+                            {/* Vertical glow effect */}
+                            <div className="absolute left-0 top-0 h-full w-32 bg-gradient-to-r from-white/30 via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                            {/* Arrow icon */}
+                            <ChevronLeft className="w-10 h-10 text-white/60 group-hover:text-white transition-all duration-300 relative z-10" strokeWidth={2} />
+                        </button>
+                    )}
 
                     {/* Right Arrow Navigation */}
                     {canGoNext && (

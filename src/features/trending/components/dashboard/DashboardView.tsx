@@ -74,7 +74,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 {/* Tab Navigation - Fixed Header */}
                 <div className="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-4">
                     <TabNavigation activeTab={activeTab} onTabChange={onTabChange} variant="dashboard" />
-                    <SortDropdown sortBy={filters.sortBy} onSortChange={(sortBy) => onFiltersChange({ ...filters, sortBy })} />
+                    <SortDropdown sortBy={filters.sortBy} onSortChange={(sortBy) => onFiltersChange({ ...filters, sortBy })} activeTab={activeTab} />
                 </div>
 
                 {/* Content Area */}

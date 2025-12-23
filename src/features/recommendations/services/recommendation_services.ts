@@ -5,7 +5,8 @@ import {
     getMultipleTracks,
     getMultipleAlbums,
     getArtistDetails,
-    getArtistAlbums
+    getArtistAlbums,
+    searchTracks
 } from '../../spotify/services/spotify_services';
 import { spotifyFetch } from '../../spotify/services/spotifyConnection';
 import type {
@@ -425,6 +426,50 @@ export async function buildCandidatePool(
         }
     }
 
+    // 2. Genre Discovery Fallback: If minimal related artists found, search for top genres directly
+    if (relatedArtistCount < 5) {
+        console.log('[For You Debug] Low related artists count (' + relatedArtistCount + '), performing genre search fallback...');
+
+        // Get top 3 genres by weight
+        const topGenres = [...preferences.genreWeights.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([genre]) => genre);
+
+        for (const genre of topGenres) {
+            try {
+                // Search for random tracks in this genre
+                // Add random offset 0-50 to get variety
+                const offset = Math.floor(Math.random() * 50);
+                const searchResults = await searchTracks(`genre:"${genre}"`, 5, offset);
+
+                for (const track of searchResults.items) {
+                    if (seenIds.has(track.id) || existingFavoriteIds.has(track.id)) continue;
+                    seenIds.add(track.id);
+
+                    // Get artist details for genres
+                    // Note: In search results we might not have full artist details immediately
+                    // We'll rely on the track's artist name and fill genres from the search query
+
+                    candidates.push({
+                        id: track.id,
+                        type: 'track',
+                        name: track.name,
+                        artistId: track.artists[0]?.id,
+                        artistName: track.artists[0]?.name || 'Unknown',
+                        imageUrl: track.album?.images?.[0]?.url || '',
+                        // We assign the matched genre to this track so scoring picks it up
+                        genres: [genre],
+                        previewUrl: track.preview_url,
+                        sourceType: 'genre_discovery'
+                    });
+                }
+            } catch (err) {
+                console.warn(`Genre fallback search failed for ${genre}:`, err);
+            }
+        }
+    }
+
     console.log('[For You Debug] Candidate pool built:', {
         totalCandidates: candidates.length,
         relatedArtistsFound: relatedArtistCount,
@@ -682,10 +727,15 @@ export async function getRecommendationSections(userId: string): Promise<{
     const otherItems: RecommendedItem[] = [];
 
     for (const item of allRecommendations) {
-        const primaryReason = item.reasons[0]?.type;
-        if (primaryReason === 'same_artist' || primaryReason === 'related_artist') {
+        // Find the reason with highest contribution (most impactful match)
+        const bestReason = item.reasons.reduce((best, current) =>
+            (current.contribution > best.contribution) ? current : best
+            , item.reasons[0]);
+
+        const bestType = bestReason?.type;
+        if (bestType === 'same_artist' || bestType === 'related_artist' || bestType === 'highly_rated_artist') {
             artistItems.push(item);
-        } else if (primaryReason === 'same_genre' || primaryReason === 'similar_genre') {
+        } else if (bestType === 'same_genre' || bestType === 'similar_genre') {
             genreItems.push(item);
         } else {
             otherItems.push(item);
@@ -714,6 +764,22 @@ export async function getRecommendationSections(userId: string): Promise<{
     });
 
     const genreDiscovery = genreItemsSorted.slice(0, 12);
+
+    // DEBUG: Log categorization results
+    console.log('[Genre Discovery Debug] Categorization results:', {
+        totalRecommendations: allRecommendations.length,
+        artistItems: artistItems.length,
+        genreItems: genreItems.length,
+        otherItems: otherItems.length,
+        genreDiscoveryFinal: genreDiscovery.length,
+        sampleReasons: allRecommendations.slice(0, 3).map(item => ({
+            name: item.name,
+            bestReason: item.reasons.reduce((best, current) =>
+                (current.contribution > best.contribution) ? current : best
+                , item.reasons[0]),
+            allReasons: item.reasons.map(r => ({ type: r.type, contribution: r.contribution }))
+        }))
+    });
 
     return { forYou, basedOnArtists, genreDiscovery };
 }
