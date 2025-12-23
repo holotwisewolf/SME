@@ -7,6 +7,7 @@ import PlaylistTest from '../components/PlaylistTest';
 // 👇 2. UPDATE THIS PATH to where you saved your "CommentDebugger.tsx"
 import CommentDebugger from '../components/comment_debugger';
 import CommentManager from '../components/CommentManager';
+import TagManager from '../components/TagManager';
 
 const TestingGround: React.FC = () => {
     const [session, setSession] = useState<any>(null);
@@ -121,6 +122,7 @@ const TestingGround: React.FC = () => {
                     <CommentDebugger />
                     <div className="mt-8 border-t border-gray-700 pt-6">
                         <CommentManager />
+                        <TagManager />
                     </div>
                 </div>
 
