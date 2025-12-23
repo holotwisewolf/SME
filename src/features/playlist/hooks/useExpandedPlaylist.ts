@@ -116,12 +116,19 @@ export const useExpandedPlaylist = ({
             .eq('id', playlist.id)
             .single();
 
-        setImageUrl(updatedPlaylist?.playlistimg_url || null);
-        if (!updatedPlaylist?.playlistimg_url) {
+        const newUrl = updatedPlaylist?.playlistimg_url || null;
+        setImageUrl(newUrl);
+
+        if (!newUrl) {
             setImgError(true);
         } else {
             setImgError(false);
         }
+
+        if (onPlaylistUpdate) {
+            onPlaylistUpdate(playlist.id, { playlistimg_url: newUrl });
+        }
+        if (onUpdate) onUpdate();
     };
 
     // Load data

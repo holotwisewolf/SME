@@ -23,6 +23,15 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ onClos
         setLoading(true);
         setError(null);
 
+        // [NEW] Check auth before proceeding
+        const { data: { user } } = await import('../../../lib/supabaseClient').then(m => m.supabase.auth.getUser());
+        if (!user) {
+            setLoading(false);
+            // This error handles the "anon" case
+            setError('You must be logged in to create a playlist.');
+            return;
+        }
+
         try {
             await createPlaylist({
                 name,
