@@ -26,6 +26,7 @@ export const usePlaylistCard = ({
     const [imgError, setImgError] = useState(false);
     const [title, setTitle] = useState(playlist.title);
     const [color, setColor] = useState(playlist.color);
+    const [imgUrl, setImgUrl] = useState((playlist as any).playlistimg_url);
     const [previewTracks, setPreviewTracks] = useState<any[]>([]);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -64,7 +65,9 @@ export const usePlaylistCard = ({
     useEffect(() => {
         setTitle(playlist.title);
         setColor(playlist.color);
-    }, [playlist.title, playlist.color]);
+        setImgUrl((playlist as any).playlistimg_url);
+        setImgError(false); // Reset error when URL changes
+    }, [playlist.title, playlist.color, (playlist as any).playlistimg_url]);
 
     useEffect(() => {
         const delay = Math.random() * 2000;
@@ -107,6 +110,7 @@ export const usePlaylistCard = ({
         imgError, setImgError,
         title, setTitle,
         color, setColor,
+        imgUrl, setImgUrl,
         previewTracks,
 
         // DnD

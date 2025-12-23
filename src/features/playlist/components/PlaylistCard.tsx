@@ -31,6 +31,7 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
         imgError, setImgError,
         title, setTitle,
         color, setColor,
+        imgUrl,
         previewTracks,
         setNodeRef,
         isOver,
@@ -70,11 +71,9 @@ const PlaylistCard: React.FC<PlaylistCardProps> = ({
                 <div className="space-y-3 flex-1 flex flex-col min-h-0">
                     {/* Playlist Image */}
                     <div className="bg-[#292929] rounded-2xl h-32 w-full shrink-0 overflow-hidden relative">
-                        {/*FIX: Check playlist.playlistimg_url directly */}
-                        {!imgError && playlist.playlistimg_url ? (
+                        {!imgError && imgUrl ? (
                             <img
-                                //FIX: Use the DB column
-                                src={playlist.playlistimg_url}
+                                src={imgUrl}
                                 alt={title}
                                 className="w-full h-full object-cover"
                                 onError={() => setImgError(true)}

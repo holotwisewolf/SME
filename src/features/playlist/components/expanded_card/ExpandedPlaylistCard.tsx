@@ -163,9 +163,9 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props)
                                 userRating={userRating}
                                 tags={userTags}
                                 setTags={setUserTags}
-                                isEditingEnabled={true}
+                                isEditingEnabled={isEditingEnabled}
                                 userName={currentUserName}
-                                onDescriptionChange={isOwner ? (newDescription) => {
+                                onDescriptionChange={(isOwner && isEditingEnabled) ? (newDescription) => {
                                     props.playlist.description = newDescription;
                                     if (props.onUpdate) props.onUpdate();
                                 } : undefined}

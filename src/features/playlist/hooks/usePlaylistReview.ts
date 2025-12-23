@@ -101,6 +101,12 @@ export const usePlaylistReview = ({
                 return;
             }
 
+            // Character limit validation
+            if (sanitizedTag.length > 20) {
+                showError('Tag must be 20 characters or less');
+                return;
+            }
+
             // Check if sanitized tag already exists
             if (tags.includes(sanitizedTag)) {
                 showError('Tag already added');

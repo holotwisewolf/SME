@@ -92,9 +92,9 @@ export const useUserProfile = (userId: string | undefined) => {
         return enriched.filter(item => item.name && item.name !== "Unknown Title");
     };
 
-    const loadProfileData = useCallback(async () => {
+    const loadProfileData = useCallback(async (silent: boolean = false) => {
         if (!userId) return;
-        setLoading(true);
+        if (!silent) setLoading(true);
         try {
             const profileData = await getPublicProfile(userId);
             setProfile(profileData);
@@ -162,6 +162,8 @@ export const useUserProfile = (userId: string | undefined) => {
         else if (item.type === 'playlist') setSelectedPlaylist(item.rawData);
     }, []);
 
+    const handleRefresh = useCallback(() => loadProfileData(true), [loadProfileData]);
+
     return {
         // State
         profile,
@@ -186,6 +188,8 @@ export const useUserProfile = (userId: string | undefined) => {
         isOwnProfile,
 
         // Handlers
-        handleItemClick
+        handleItemClick,
+        handleRefresh,
+        loadProfileData
     };
 };

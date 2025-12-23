@@ -84,13 +84,27 @@ export const useUserSettings = () => {
 
         try {
             let devStatus = isDeveloper;
+
+            // Use RPC function to verify and set dev role
             if (isDeveloper && !initialState.isDeveloper && inviteCode) {
-                const isValid = await AuthService.validateInviteCode(inviteCode);
-                if (!isValid) {
+                const { supabase } = await import('../../../lib/supabaseClient');
+                const { data, error } = await (supabase.rpc as any)('verify_and_set_dev_role', { dev_code: inviteCode });
+
+                if (error) {
+                    console.error('RPC error:', error);
+                    alert("Failed to verify code.");
+                    setLoading(false);
+                    return;
+                }
+
+                if (!data?.success) {
                     alert("Invalid invite code.");
                     setLoading(false);
                     return;
                 }
+
+                // Refresh session to get new JWT with updated app_metadata
+                await supabase.auth.refreshSession();
                 devStatus = true;
             } else if (isDeveloper && !initialState.isDeveloper && !inviteCode) {
                 alert("Please enter an invite code.");
@@ -112,10 +126,12 @@ export const useUserSettings = () => {
                 updated_at: new Date().toISOString(),
             });
 
-            // Sync role to Auth User Metadata (CRITICAL for RLS)
-            await AuthService.updateAuthMetadata({
-                app_role: devStatus ? 'dev' : 'user'
-            });
+            // Sync role to Auth User Metadata (CRITICAL for RLS) - skip if dev was just set via RPC
+            if (!(isDeveloper && !initialState.isDeveloper && inviteCode)) {
+                await AuthService.updateAuthMetadata({
+                    app_role: devStatus ? 'dev' : 'user'
+                });
+            }
 
             setInitialState({
                 isPublicRating,

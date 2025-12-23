@@ -53,13 +53,20 @@ export const useParallaxTrack = ({ items, tabs }: UseParallaxTrackProps) => {
             if (!trackRef.current || !containerRef.current) return;
             const trackWidth = trackRef.current.scrollWidth;
             const containerWidth = containerRef.current.clientWidth;
+            // If content is smaller than container, maxScroll is 0 (cannot scroll)
             const maxScroll = Math.min(0, -((trackWidth - containerWidth) / trackWidth) * 100);
             setMaxScrollPercentage(maxScroll);
         };
 
         calculateMaxScroll();
+        // Recalculate after a short delay to ensure images/layout have stabilized
+        const timeoutId = setTimeout(calculateMaxScroll, 100);
+
         window.addEventListener('resize', calculateMaxScroll);
-        return () => window.removeEventListener('resize', calculateMaxScroll);
+        return () => {
+            window.removeEventListener('resize', calculateMaxScroll);
+            clearTimeout(timeoutId);
+        };
     }, [displayItems]);
 
     // Drag handlers
@@ -155,6 +162,8 @@ export const useParallaxTrack = ({ items, tabs }: UseParallaxTrackProps) => {
         setActiveTabId(tabId);
         setShowDropdown(false);
         setCurrentPercentage(0);
+        // Reset to allow arrows to recalculate properly after items change
+        setMaxScrollPercentage(-100);
         if (trackRef.current) {
             trackRef.current.dataset.percentage = "0";
             trackRef.current.dataset.prevPercentage = "0";

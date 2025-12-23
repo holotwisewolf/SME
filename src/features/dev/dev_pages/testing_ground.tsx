@@ -8,6 +8,7 @@ import PlaylistTest from '../components/PlaylistTest';
 import CommentDebugger from '../components/comment_debugger';
 import CommentManager from '../components/CommentManager';
 import TagManager from '../components/TagManager';
+import UserManager from '../components/UserManager';
 
 const TestingGround: React.FC = () => {
     const [session, setSession] = useState<any>(null);
@@ -124,6 +125,19 @@ const TestingGround: React.FC = () => {
                         <CommentManager />
                         <TagManager />
                     </div>
+                </div>
+
+                {/* 3. USER MANAGER (Danger Zone) */}
+                <div className="border border-red-800 p-6 rounded-xl bg-[#1a1a1a]">
+                    <div className="flex items-center gap-3 mb-4 border-b border-red-700 pb-2">
+                        <div className="bg-red-900 text-red-300 text-xs font-bold px-2 py-1 rounded">DANGER</div>
+                        <h2 className="text-xl font-bold text-red-400">3. User Manager</h2>
+                    </div>
+                    <p className="text-gray-400 text-sm mb-6">
+                        Lookup and delete users by username or UUID. <strong className="text-red-400">Use with caution!</strong>
+                    </p>
+
+                    <UserManager />
                 </div>
 
             </div>

@@ -134,6 +134,8 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
                 /* Parallax Track Container */
                 <div
                     ref={containerRef}
+                    // Force re-mount on tab switch to clean up scroll state/DOM
+                    key={activeTabId}
                     className="relative w-full select-none overflow-x-clip overflow-y-visible"
                     style={{ height: '56vmin', cursor: isMouseDown ? 'grabbing' : 'grab' }}
                     onMouseDown={onMouseDown}

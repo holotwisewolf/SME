@@ -335,17 +335,24 @@ export const useExpandedPlaylist = ({
 
         try {
             const connected = await isSpotifyConnected();
-            const tokenValid = connected ? await checkSpotifyTokenValid() : false;
-
-            if (!connected || !tokenValid) {
-                setShowSpotifyReconnect(true);
+            if (!connected) {
+                showError('Please connect your Spotify account first.');
                 return;
             }
 
+            const tokenValid = await checkSpotifyTokenValid();
+            if (!tokenValid) {
+                const refreshed = await refreshSpotifyToken();
+                if (!refreshed) {
+                    setShowSpotifyReconnect(true);
+                    return;
+                }
+            }
+
             await executeSpotifyExport();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error exporting to Spotify:', error);
-            showError('Failed to export playlist to Spotify');
+            showError(error.message || 'Failed to export playlist to Spotify');
         }
     };
 

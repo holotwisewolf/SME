@@ -64,9 +64,10 @@ function validateImageFile(file: File): { valid: boolean; error?: string } {
 
 function formatUploadError(error: any): string {
     if (error?.message?.includes('Payload too large') || error?.statusCode === 413) {
-        return 'File too large. Please use a smaller image';
+        return 'File too large. Please use a smaller image (max 5MB).';
     }
-    return 'Failed to upload image';
+    // Return the actual error message if available, otherwise default
+    return error?.message || 'Failed to upload image';
 }
 
 // ============================================

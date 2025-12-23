@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DefUserAvatar from '../../../components/ui/DefUserAvatar';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
-import ActivityCard from '../../discovery/components/ActivityCard'; 
+import ActivityCard from '../../discovery/components/ActivityCard';
 import UserCommentsModal from '../components/UserCommentsModal';
 import UserItemsModal from '../components/UserItemsModal';
-import ItemModals from '../../discovery/components/dashboard/ItemModals'; 
+import ItemModals from '../../discovery/components/dashboard/ItemModals';
 import { Play, Star, Lock, Music, ChevronDown, ListFilter, Calendar } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { UniversalThumbnail } from '../components/UniversalThumbnail';
 
 const UserProfile = () => {
     const { userId } = useParams();
@@ -66,29 +67,8 @@ const UserProfile = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [setIsFavDropdownOpen, setIsDropdownOpen, setShowRatingInfo, setIsPlaylistSortOpen, setIsCommentFilterOpen]);
 
+    // ----------------------------
     const isLocked = profile?.is_private_profile && !isOwnProfile;
-
-    const UniversalThumbnail = ({ item }: { item: any }) => {
-        const [imgError, setImgError] = useState(false);
-        return (
-            <div className="aspect-square bg-black/30 rounded-2xl overflow-hidden relative mb-3 shadow-xl border border-white/5 group-hover:scale-105 transition-all duration-300">
-                {item.imageUrl && !imgError ? (
-                    <img src={item.imageUrl} className="w-full h-full object-cover" onError={() => setImgError(true)} />
-                ) : item.color ? (
-                    <div className="w-full h-full opacity-60" style={{ backgroundColor: item.color }} />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white/10"><Music size={40} /></div>
-                )}
-                {item.rating && (
-                    <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-black text-[#FFD1D1] flex items-center gap-1 shadow-lg z-10 border border-white/10">
-                        <Star size={10} fill="#FFD1D1" className="text-[#FFD1D1]" />
-                        {item.rating}
-                    </div>
-                )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"><Play fill="white" size={24} /></div>
-            </div>
-        );
-    };
 
     // --- Filter & Sort Logic ---
 
@@ -201,11 +181,11 @@ const UserProfile = () => {
                                     <div className="flex justify-between items-end mb-4 px-1 text-white">
                                         <div className="flex items-center gap-6">
                                             <h2 className="text-xl font-bold uppercase tracking-tight">Created Playlists</h2>
-                                            
+
                                             {/* Playlist Sort Dropdown */}
                                             <div className="relative" ref={playlistSortRef}>
-                                                <button 
-                                                    onClick={() => setIsPlaylistSortOpen(!isPlaylistSortOpen)} 
+                                                <button
+                                                    onClick={() => setIsPlaylistSortOpen(!isPlaylistSortOpen)}
                                                     className="bg-black/40 border border-white/5 rounded-full px-4 py-1.5 text-[10px] font-bold text-white/80 hover:bg-black/60 transition-all flex items-center gap-2 uppercase shadow-lg min-w-[110px]"
                                                 >
                                                     <ListFilter size={12} className="text-[#FFD1D1]" />
@@ -216,18 +196,18 @@ const UserProfile = () => {
                                                 </button>
                                                 <AnimatePresence>
                                                     {isPlaylistSortOpen && (
-                                                        <motion.div 
-                                                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} 
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }}
                                                             className="absolute top-full mt-2 left-0 z-[100] bg-[#1f1f1f] border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[140px]"
                                                         >
                                                             {[
-                                                                { val: 'newest', label: 'Newest First' }, 
-                                                                { val: 'oldest', label: 'Oldest First' }, 
+                                                                { val: 'newest', label: 'Newest First' },
+                                                                { val: 'oldest', label: 'Oldest First' },
                                                                 { val: 'a-z', label: 'Name (A-Z)' }
                                                             ].map((opt) => (
-                                                                <button 
-                                                                    key={opt.val} 
-                                                                    onClick={() => { setPlaylistSort(opt.val as any); setIsPlaylistSortOpen(false); }} 
+                                                                <button
+                                                                    key={opt.val}
+                                                                    onClick={() => { setPlaylistSort(opt.val as any); setIsPlaylistSortOpen(false); }}
                                                                     className={`w-full text-left px-4 py-2.5 text-[10px] font-bold uppercase hover:bg-[#FFD1D1] hover:text-black transition-colors ${playlistSort === opt.val ? 'bg-[#FFD1D1]/10 text-[#FFD1D1]' : 'text-white/60'}`}
                                                                 >
                                                                     {opt.label}
@@ -325,17 +305,17 @@ const UserProfile = () => {
                                         ) : <div className="text-white/10 text-xs font-bold uppercase tracking-widest">No ratings yet</div>}
                                     </div>
                                 </section>
-                                
+
                                 {/* Recent Comments Section with Filter */}
                                 <section>
                                     <div className="flex justify-between items-center mb-4 text-white">
                                         <div className="flex items-center gap-6">
                                             <h2 className="text-xl font-bold uppercase tracking-tight">Recent Comments</h2>
-                                            
+
                                             {/* Comment Filter Dropdown */}
                                             <div className="relative" ref={commentFilterRef}>
-                                                <button 
-                                                    onClick={() => setIsCommentFilterOpen(!isCommentFilterOpen)} 
+                                                <button
+                                                    onClick={() => setIsCommentFilterOpen(!isCommentFilterOpen)}
                                                     className="bg-black/40 border border-white/5 rounded-full px-4 py-1.5 text-[10px] font-bold text-white/80 hover:bg-black/60 transition-all flex items-center gap-2 uppercase shadow-lg min-w-[110px]"
                                                 >
                                                     <Calendar size={12} className="text-[#FFD1D1]" />
@@ -346,18 +326,18 @@ const UserProfile = () => {
                                                 </button>
                                                 <AnimatePresence>
                                                     {isCommentFilterOpen && (
-                                                        <motion.div 
-                                                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} 
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }}
                                                             className="absolute top-full mt-2 left-0 z-[100] bg-[#1f1f1f] border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[140px]"
                                                         >
                                                             {[
-                                                                { val: 'all', label: 'All Time' }, 
-                                                                { val: '7days', label: 'Last 7 Days' }, 
+                                                                { val: 'all', label: 'All Time' },
+                                                                { val: '7days', label: 'Last 7 Days' },
                                                                 { val: '30days', label: 'Last 30 Days' }
                                                             ].map((opt) => (
-                                                                <button 
-                                                                    key={opt.val} 
-                                                                    onClick={() => { setCommentFilter(opt.val as any); setIsCommentFilterOpen(false); }} 
+                                                                <button
+                                                                    key={opt.val}
+                                                                    onClick={() => { setCommentFilter(opt.val as any); setIsCommentFilterOpen(false); }}
                                                                     className={`w-full text-left px-4 py-2.5 text-[10px] font-bold uppercase hover:bg-[#FFD1D1] hover:text-black transition-colors ${commentFilter === opt.val ? 'bg-[#FFD1D1]/10 text-[#FFD1D1]' : 'text-white/60'}`}
                                                                 >
                                                                     {opt.label}

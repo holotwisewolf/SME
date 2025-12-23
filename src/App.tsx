@@ -18,6 +18,7 @@ import SignUpPage from "./features/auth/pages/SignUp";
 import TestingGround from "./features/dev/dev_pages/testing_ground";
 import DevRoute from "./features/dev/DevRoute";
 import SetUpUserProfile from "./features/user/user_pages/SetUpUserProfile";
+import UpdatePassword from "./features/auth/pages/UpdatePassword";
 
 import UserAccount from "./features/user/user_pages/UserAccount";
 import UserSettings from "./features/user/user_pages/UserSettings";
@@ -60,6 +61,9 @@ function App() {
               )}
               {location.pathname === "/settings" && (
                 <UserSettings key="settings" />
+              )}
+              {location.pathname === "/update-password" && (
+                <UpdatePassword key="update-password" />
               )}
             </AnimatePresence>
 
@@ -162,6 +166,7 @@ function App() {
                     <Route path="/setup-profile" element={<></>} />
                     <Route path="/account" element={<></>} />
                     <Route path="/settings" element={<></>} />
+                    <Route path="/update-password" element={<></>} />
 
                     {/* ADDED PROFILE ROUTES  */}
 
