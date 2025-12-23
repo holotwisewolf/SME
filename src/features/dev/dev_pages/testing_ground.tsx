@@ -33,64 +33,79 @@ const TestingGround: React.FC = () => {
                 <h1 className="text-4xl font-bold text-white mb-2">Dev Zone</h1>
                 <p className="text-gray-400">Independent environment for testing backend services.</p>
 
-                {/* --- Env Var Debugger --- */}
-                <div className="mt-4 p-4 bg-gray-900 rounded-lg border border-gray-800 inline-block text-left shadow-lg">
-                    <h3 className="text-gray-500 text-xs font-bold uppercase mb-2">Environment Check</h3>
-                    <div className="flex flex-col gap-2 text-sm font-mono">
-                        {/* URL Check */}
-                        <div className="flex flex-col gap-1">
-                            <div className="flex justify-between gap-8">
-                                <span className="text-gray-400">VITE_SUPABASE_URL:</span>
+                {/* --- Status Cards Row --- */}
+                <div className="mt-4 flex flex-wrap justify-center gap-4">
+                    {/* Environment Check Card */}
+                    <div className="p-4 bg-gray-900 rounded-lg border border-gray-800 text-left shadow-lg min-w-[200px]">
+                        <h3 className="text-gray-500 text-xs font-bold uppercase mb-2">Environment</h3>
+                        <div className="flex flex-col gap-2 text-sm font-mono">
+                            <div className="flex justify-between gap-4">
+                                <span className="text-gray-400">SUPABASE_URL:</span>
                                 <span className={import.meta.env.VITE_SUPABASE_URL ? "text-green-400" : "text-red-500"}>
-                                    {import.meta.env.VITE_SUPABASE_URL ? "Present" : "Missing"}
+                                    {import.meta.env.VITE_SUPABASE_URL ? "✓" : "✗"}
                                 </span>
                             </div>
-                        </div>
-
-                        {/* Key Check */}
-                        <div className="flex flex-col gap-1">
-                            <div className="flex justify-between gap-8">
-                                <span className="text-gray-400">VITE_SUPABASE_ANON_KEY:</span>
+                            <div className="flex justify-between gap-4">
+                                <span className="text-gray-400">ANON_KEY:</span>
                                 <span className={import.meta.env.VITE_SUPABASE_ANON_KEY ? "text-green-400" : "text-red-500"}>
-                                    {import.meta.env.VITE_SUPABASE_ANON_KEY ? "Present" : "Missing"}
+                                    {import.meta.env.VITE_SUPABASE_ANON_KEY ? "✓" : "✗"}
                                 </span>
                             </div>
                         </div>
                     </div>
+
+                    {/* Auth Status Card */}
+                    <div className="p-4 bg-gray-900 rounded-lg border border-gray-800 text-left shadow-lg min-w-[200px]">
+                        <h3 className="text-gray-500 text-xs font-bold uppercase mb-2">Auth Status</h3>
+                        <div className="flex flex-col gap-1 text-sm font-mono">
+                            <div className="flex justify-between gap-4">
+                                <span className="text-gray-400">Status:</span>
+                                <span className={session ? "text-green-400" : "text-yellow-500"}>
+                                    {session ? "Logged In" : "Anonymous"}
+                                </span>
+                            </div>
+                            {session && (
+                                <>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-gray-400">Role:</span>
+                                        <span className="text-blue-400">{session.user.app_metadata?.app_role || 'user'}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-gray-400">User:</span>
+                                        <span className="text-gray-300">{session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'N/A'}</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* User ID Card (only if logged in) */}
+                    {session && (
+                        <div className="p-4 bg-gray-900 rounded-lg border border-gray-800 text-left shadow-lg">
+                            <h3 className="text-gray-500 text-xs font-bold uppercase mb-2">User ID</h3>
+                            <code className="text-xs text-gray-400 font-mono break-all">{session.user.id}</code>
+                        </div>
+                    )}
                 </div>
 
-                {/* --- Auth Debugger --- */}
-                <div className="mt-4 ml-4 p-4 bg-gray-900 rounded-lg border border-gray-800 inline-block text-left align-top shadow-lg">
-                    <h3 className="text-gray-500 text-xs font-bold uppercase mb-2">Auth Status</h3>
-                    <div className="flex flex-col gap-1 text-sm font-mono">
-                        <div className="flex justify-between gap-8">
-                            <span className="text-gray-400">Status:</span>
-                            <span className={session ? "text-green-400" : "text-yellow-500"}>
-                                {session ? "Logged In" : "Logged Out (Anonymous)"}
-                            </span>
+                {/* Collapsible Metadata Section */}
+                {session && (
+                    <details className="mt-4 text-left max-w-2xl mx-auto">
+                        <summary className="cursor-pointer text-gray-500 text-xs font-bold uppercase hover:text-gray-400 transition-colors">
+                            View Full Metadata
+                        </summary>
+                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-3 bg-gray-900 rounded-lg border border-gray-800">
+                                <span className="text-gray-500 text-xs font-bold">App Metadata</span>
+                                <pre className="text-gray-300 text-xs mt-1 overflow-x-auto">{JSON.stringify(session.user.app_metadata, null, 2)}</pre>
+                            </div>
+                            <div className="p-3 bg-gray-900 rounded-lg border border-gray-800">
+                                <span className="text-gray-500 text-xs font-bold">User Metadata</span>
+                                <pre className="text-gray-300 text-xs mt-1 overflow-x-auto">{JSON.stringify(session.user.user_metadata, null, 2)}</pre>
+                            </div>
                         </div>
-                        {session && (
-                            <>
-                                <div className="flex flex-col gap-1 mt-1 pt-1 border-t border-gray-800">
-                                    <span className="text-gray-500 text-xs">User ID:</span>
-                                    <span className="text-gray-300 text-xs break-all">{session.user.id}</span>
-                                </div>
-                                <div className="flex flex-col gap-1 mt-1 pt-1 border-t border-gray-800">
-                                    <span className="text-gray-500 text-xs">App Metadata (Role):</span>
-                                    <pre className="text-gray-300 text-xs break-all whitespace-pre-wrap">
-                                        {JSON.stringify(session.user.app_metadata, null, 2)}
-                                    </pre>
-                                </div>
-                                <div className="flex flex-col gap-1 mt-1 pt-1 border-t border-gray-800">
-                                    <span className="text-gray-500 text-xs">User Metadata (Editable):</span>
-                                    <pre className="text-gray-300 text-xs break-all whitespace-pre-wrap">
-                                        {JSON.stringify(session.user.user_metadata, null, 2)}
-                                    </pre>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
+                    </details>
+                )}
             </div>
 
             {/* --- MAIN TESTING AREA --- */}

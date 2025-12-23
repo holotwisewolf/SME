@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TrendingUp, Clock, Activity, ExternalLink } from 'lucide-react';
 import type { DiscoveryFilters } from '../../types/discovery';
 import { useDiscoverySidebar } from '../../hooks/useDiscoverySidebar';
-import UserPreviewModal from '../../../user/components/UserPreviewModal'; 
+import UserPreviewModal from '../../../user/components/UserPreviewModal';
 
 interface DiscoverySidebarProps {
     filters?: DiscoveryFilters;
@@ -149,19 +149,19 @@ const DiscoverySidebar: React.FC<DiscoverySidebarProps> = ({ filters, onFiltersC
                     <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#D1D1D1]/5">
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
-                                <span className="text-xs text-[#D1D1D1]/60">Discovery Items</span>
+                                <span className="text-xs text-[#D1D1D1]/60">Shared Content</span>
                                 <span className="text-sm font-bold text-[#FFD1D1]">{stats.totalItems.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-xs text-[#D1D1D1]/60">Total Members</span>
+                                <span className="text-xs text-[#D1D1D1]/60">Community Members</span>
                                 <span className="text-sm font-bold text-[#FFD1D1]">{stats.totalMembers.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-xs text-[#D1D1D1]/60">Active Users This Month</span>
+                                <span className="text-xs text-[#D1D1D1]/60">Active This Month</span>
                                 <span className="text-sm font-bold text-[#FFD1D1]">{stats.currentActiveUsers.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-xs text-[#D1D1D1]/60">New This Week</span>
+                                <span className="text-xs text-[#D1D1D1]/60">Added This Week</span>
                                 <span className="text-sm font-bold text-[#FFD1D1]">{stats.thisWeek.toLocaleString()}</span>
                             </div>
                         </div>

@@ -195,17 +195,24 @@ const FeaturedBanner: React.FC<FeaturedBannerProps> = ({ topThree, onItemClick }
             </div>
 
             {/* Carousel Dots */}
-            <div className="flex justify-center gap-2 mt-3">
+            <div className="flex justify-center mt-3">
                 {topThree.map((_, index) => (
                     <button
                         key={index}
                         onClick={() => handleDotClick(index)}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex
-                            ? 'bg-[#FFD1D1] w-6'
-                            : 'bg-[#D1D1D1]/30 hover:bg-[#D1D1D1]/50'
-                            }`}
+                        className="relative w-8 h-8 flex items-center justify-center group"
                         aria-label={`Go to slide ${index + 1}`}
-                    />
+                    >
+                        {/* Hover background circle */}
+                        <span className="absolute inset-0 rounded-full bg-white/0 group-hover:bg-white/10 transition-all duration-200" />
+                        {/* Actual dot */}
+                        <span
+                            className={`relative z-10 rounded-full transition-all duration-300 ${index === currentIndex
+                                ? 'bg-[#FFD1D1] w-6 h-2'
+                                : 'bg-[#D1D1D1]/30 w-2 h-2 group-hover:bg-[#D1D1D1]/50'
+                                }`}
+                        />
+                    </button>
                 ))}
             </div>
         </div>
