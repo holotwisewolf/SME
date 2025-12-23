@@ -2,6 +2,7 @@ import React from 'react';
 import type { TrendingFilters as TrendingFiltersType, TimeRange } from '../types/trending';
 import { MoreOptionsIcon } from '../../../components/ui/MoreOptionsIcon';
 import { useTrendingFilters } from '../hooks/useTrendingFilters';
+import { StyledDropdown } from '../../../components/ui/StyledDropdown';
 
 interface TrendingFiltersProps {
     filters: TrendingFiltersType;
@@ -52,24 +53,19 @@ const TrendingFilters: React.FC<TrendingFiltersProps> = ({ filters, onFiltersCha
                 </div>
 
                 {/* Time Period */}
-                <div>
+                <div className="z-20"> {/* Added z-index to ensure dropdown floats above content below */}
                     <label className="block text-xs font-semibold text-[#D1D1D1]/80 mb-1.5">Time Period</label>
-                    <div className="relative">
-                        <select
-                            value={filters.timeRange}
-                            onChange={(e) => onFiltersChange({ ...filters, timeRange: e.target.value as TimeRange })}
-                            className="w-full bg-[#1a1a1a] border border-[#D1D1D1]/30 text-[#D1D1D1] rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-[#FFD1D1]/50 cursor-pointer appearance-none pr-8"
-                        >
-                            <option value="week" className="bg-[#1a1a1a] text-[#D1D1D1]">Past 7 Days</option>
-                            <option value="month" className="bg-[#1a1a1a] text-[#D1D1D1]">Past 30 Days</option>
-                            <option value="all-time" className="bg-[#1a1a1a] text-[#D1D1D1]">All Time</option>
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#D1D1D1]/50">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                    </div>
+                    <StyledDropdown
+                        className="w-full"
+                        dropdownWidth="w-full"
+                        value={filters.timeRange}
+                        onChange={(value) => onFiltersChange({ ...filters, timeRange: value as TimeRange })}
+                        options={[
+                            { value: 'week', label: 'Past 7 Days' },
+                            { value: 'month', label: 'Past 30 Days' },
+                            { value: 'all-time', label: 'All Time' }
+                        ]}
+                    />
                 </div>
 
                 {/* Filter by Tags */}

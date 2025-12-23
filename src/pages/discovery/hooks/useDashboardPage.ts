@@ -18,7 +18,7 @@ export const useDashboardPage = () => {
 
     const [filters, setFilters] = useState<TrendingFilters>({
         timeRange: 'week',
-        sortBy: 'top-rated',
+        sortBy: 'trending',
     });
 
     const [refreshKey, setRefreshKey] = useState(0);
