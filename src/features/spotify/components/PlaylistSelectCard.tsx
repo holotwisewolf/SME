@@ -56,6 +56,15 @@ export function PlaylistSelectCard({
 
         setLoading(true);
         try {
+            // Check if user is authenticated
+            const { supabase } = await import('../../../lib/supabaseClient');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showError('You must be logged in to create a playlist.');
+                setLoading(false);
+                return;
+            }
+
             const request: CreatePlaylistRequest = {
                 name: newPlaylistName,
                 is_public: true

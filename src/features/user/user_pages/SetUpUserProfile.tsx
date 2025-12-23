@@ -15,6 +15,7 @@ const SetUpUserProfile = () => {
         loading,
         initializing,
         isEditingUsername, setIsEditingUsername,
+        hasUsernameChanged,
         bioPlaceholder,
         handleAvatarUpload,
         handleUpdateUsername,
@@ -99,18 +100,20 @@ const SetUpUserProfile = () => {
                                     />
                                     <button
                                         onClick={() => {
-                                            if (isEditingUsername) {
+                                            if (isEditingUsername && hasUsernameChanged) {
                                                 handleUpdateUsername();
-                                            } else {
+                                            } else if (!isEditingUsername) {
                                                 setIsEditingUsername(true);
                                             }
                                         }}
                                         className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
                                     >
                                         {isEditingUsername ? (
-                                            <svg className="w-5 h-5 text-[#f8baba]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
+                                            hasUsernameChanged ? (
+                                                <svg className="w-5 h-5 text-[#f8baba]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            ) : null
                                         ) : (
                                             <EditIcon className="w-4 h-4" />
                                         )}

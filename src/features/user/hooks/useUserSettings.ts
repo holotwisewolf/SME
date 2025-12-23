@@ -3,10 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { AuthService } from "../../auth/services/auth_services";
 import { useLogin } from "../../auth/components/LoginProvider";
 import { useSuccess } from "../../../context/SuccessContext";
+import { useError } from "../../../context/ErrorContext";
+import { useConfirmation } from "../../../context/ConfirmationContext";
 
 export const useUserSettings = () => {
     const navigate = useNavigate();
     const { showSuccess } = useSuccess();
+    const { showError } = useError();
+    const { showConfirmation } = useConfirmation();
     const { profile, setProfile } = useLogin();
 
     const [userId, setUserId] = useState<string | null>(null);
@@ -19,6 +23,7 @@ export const useUserSettings = () => {
     const [newPassword, setNewPassword] = useState("");
 
     const [loading, setLoading] = useState(false);
+    const [deletingAccount, setDeletingAccount] = useState(false);
     const [initializing, setInitializing] = useState(true);
 
     const [initialState, setInitialState] = useState({
@@ -73,6 +78,41 @@ export const useUserSettings = () => {
         } catch (error: any) {
             console.error("Password update failed:", error);
             alert(error.message || "Failed to update password.");
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!userId) return;
+
+        const confirmed = await showConfirmation({
+            title: 'Delete Your Account',
+            message: 'Are you sure you want to delete your account? This will permanently remove all your data including playlists, ratings, comments, and favorites. This action cannot be undone.',
+            confirmText: 'Delete My Account',
+            variant: 'danger'
+        });
+
+        if (!confirmed) return;
+
+        setDeletingAccount(true);
+        try {
+            const { supabase } = await import('../../../lib/supabaseClient');
+            const { error } = await (supabase.rpc as any)('delete_user_completely', { target_user_id: userId });
+
+            if (error) {
+                console.error('Error deleting account:', error);
+                showError('Failed to delete account. Please try again.');
+                return;
+            }
+
+            // Sign out and redirect
+            await supabase.auth.signOut();
+            showSuccess('Your account has been deleted.');
+            navigate('/');
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            showError('Failed to delete account. Please try again.');
+        } finally {
+            setDeletingAccount(false);
         }
     };
 
@@ -157,11 +197,14 @@ export const useUserSettings = () => {
         oldPassword, setOldPassword,
         newPassword, setNewPassword,
         loading,
+        deletingAccount,
         initializing,
         initialState,
         hasChanges,
         handlePasswordUpdate,
+        handleDeleteAccount,
         handleSave,
         navigate,
     };
 };
+

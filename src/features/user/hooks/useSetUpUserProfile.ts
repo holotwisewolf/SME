@@ -14,6 +14,7 @@ export const useSetUpUserProfile = () => {
 
     const [userId, setUserId] = useState<string | null>(null);
     const [username, setUsername] = useState("");
+    const [initialUsername, setInitialUsername] = useState("");
     const [displayName, setDisplayName] = useState("");
     const [bio, setBio] = useState("");
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -21,6 +22,9 @@ export const useSetUpUserProfile = () => {
     const [initializing, setInitializing] = useState(true);
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [bioPlaceholder, setBioPlaceholder] = useState("Tell us about yourself...");
+
+    // Computed: username is valid and changed
+    const hasUsernameChanged = username.trim() !== "" && username !== initialUsername;
 
     // Check for OAuth errors in URL
     useEffect(() => {
@@ -59,7 +63,9 @@ export const useSetUpUserProfile = () => {
                 }
 
                 setUserId(session.user.id);
-                setUsername(session.user.user_metadata.username || "");
+                const usernameFromMeta = session.user.user_metadata.username || "";
+                setUsername(usernameFromMeta);
+                setInitialUsername(usernameFromMeta);
 
                 const profile = await AuthService.getProfile(session.user.id);
 
@@ -76,14 +82,18 @@ export const useSetUpUserProfile = () => {
 
                     if (!username && metadata) {
                         const spotifyUsername = metadata.preferred_username || metadata.user_name || metadata.name || "";
-                        setUsername(spotifyUsername.replace(/\s+/g, '').toLowerCase());
+                        const cleanUsername = spotifyUsername.replace(/\s+/g, '').toLowerCase();
+                        setUsername(cleanUsername);
+                        setInitialUsername(cleanUsername);
                     }
                 } else {
                     const metadata = session.user.user_metadata;
                     if (metadata) {
                         if (!username) {
                             const spotifyUsername = metadata.preferred_username || metadata.user_name || metadata.name || "";
-                            setUsername(spotifyUsername.replace(/\s+/g, '').toLowerCase());
+                            const cleanUsername = spotifyUsername.replace(/\s+/g, '').toLowerCase();
+                            setUsername(cleanUsername);
+                            setInitialUsername(cleanUsername);
                         }
                         if (!displayName) {
                             setDisplayName(metadata.full_name || metadata.name || metadata.display_name || "");
@@ -179,6 +189,7 @@ export const useSetUpUserProfile = () => {
         loading,
         initializing,
         isEditingUsername, setIsEditingUsername,
+        hasUsernameChanged,
         bioPlaceholder,
         handleAvatarUpload,
         handleUpdateUsername,

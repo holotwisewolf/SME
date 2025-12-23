@@ -1,5 +1,6 @@
 import React from 'react';
 import { MoreOptionsIcon } from '../../../../components/ui/MoreOptionsIcon';
+import { RobustTextArea } from '../../../../components/ui/RobustTextField';
 import type { Tables } from '../../../../types/supabase';
 import { usePlaylistReview } from '../../hooks/usePlaylistReview';
 
@@ -53,7 +54,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
             <div className="flex-1 flex flex-col min-h-[120px]">
                 <p className="text-gray-400 text-xs mb-2">Description</p>
                 <div className="bg-white/5 rounded-lg border border-white/5 flex-1 flex flex-col overflow-hidden">
-                    <textarea
+                    <RobustTextArea
                         value={reviewText}
                         onChange={(e) => setReviewText(e.target.value)}
                         onBlur={() => { if (reviewText !== playlist?.description) { handleDescriptionUpdate(); } }}
@@ -61,7 +62,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                         placeholder={onDescriptionChange
                             ? "Write your thoughts about this playlist..."
                             : (playlist.description ? "" : "The creator has not provided a description for this playlist.")}
-                        className={`w-full flex-1 bg-transparent text-white p-4 resize-none outline-none placeholder-gray-500 text-sm leading-relaxed ${!onDescriptionChange ? 'cursor-default select-none' : ''}`}
+                        className={`flex-1 p-4 placeholder-gray-500 text-sm leading-relaxed ${!onDescriptionChange ? 'cursor-default select-none' : ''}`}
                     />
                 </div>
             </div>

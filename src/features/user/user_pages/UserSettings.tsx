@@ -15,10 +15,12 @@ const UserSettings = () => {
         oldPassword, setOldPassword,
         newPassword, setNewPassword,
         loading,
+        deletingAccount,
         initializing,
         initialState,
         hasChanges,
         handlePasswordUpdate,
+        handleDeleteAccount,
         handleSave,
         navigate,
     } = useUserSettings();
@@ -187,6 +189,21 @@ const UserSettings = () => {
                                         )}
                                     </AnimatePresence>
                                 </div>
+                            </div>
+
+                            {/* Danger Zone */}
+                            <div className="bg-[#2a2a2a]/50 p-4 rounded-xl border border-red-500/20">
+                                <h3 className="text-red-400 font-medium mb-3">Danger Zone</h3>
+                                <p className="text-sm text-gray-500 mb-3">
+                                    Permanently delete your account and all associated data.
+                                </p>
+                                <button
+                                    onClick={handleDeleteAccount}
+                                    disabled={deletingAccount}
+                                    className="px-4 py-2 border border-solid border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {deletingAccount ? 'Deleting...' : 'Delete My Account'}
+                                </button>
                             </div>
 
                         </div>
