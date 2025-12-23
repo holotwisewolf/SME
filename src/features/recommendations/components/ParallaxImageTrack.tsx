@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { Play, Pause, ChevronRight, ChevronLeft, ChevronDown, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { RecommendedItem } from '../types/recommendation_types';
 import { useTrackPreview } from '../../spotify/hooks/useTrackPreview';
 import { useParallaxTrack } from '../hooks/useParallaxTrack';
@@ -82,22 +83,30 @@ const ParallaxImageTrack: React.FC<ParallaxImageTrackProps> = ({
                                 <span className="font-medium">{activeTab?.label}</span>
                                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
                             </button>
-                            {showDropdown && (
-                                <div className="absolute right-0 mt-2 w-48 bg-black/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 overflow-hidden z-50">
-                                    {tabs.map((tab) => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => handleTabChange(tab.id)}
-                                            className={`w-full px-4 py-3 text-left transition-all duration-200 ${activeTabId === tab.id
-                                                ? 'bg-white/20 text-white font-medium'
-                                                : 'text-gray-400 hover:text-white hover:bg-white/10'
-                                                }`}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                            <AnimatePresence>
+                                {showDropdown && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                        transition={{ duration: 0.2, ease: "easeOut" }}
+                                        className="absolute right-0 mt-2 w-48 bg-black/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 overflow-hidden z-50"
+                                    >
+                                        {tabs.map((tab) => (
+                                            <button
+                                                key={tab.id}
+                                                onClick={() => handleTabChange(tab.id)}
+                                                className={`w-full px-4 py-3 text-left transition-all duration-200 ${activeTabId === tab.id
+                                                    ? 'bg-white/20 text-white font-medium'
+                                                    : 'text-gray-400 hover:text-white hover:bg-white/10'
+                                                    }`}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     )}
                     {onRefresh && (
