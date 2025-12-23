@@ -10,6 +10,7 @@ export interface IAuthService {
     getProfile(userId: string): Promise<any>;
     updatePassword(password: string): Promise<void>;
     updateUsername(username: string, displayName?: string): Promise<any>;
+    updateAuthMetadata(metadata: any): Promise<any>;
     validateInviteCode(code: string): Promise<boolean>;
     getSession(): Promise<any>;
     checkAuthStatus(): Promise<boolean>;

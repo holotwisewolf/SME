@@ -249,6 +249,62 @@ export async function getMultipleAlbums(albumIds: string[]) {
 }
 
 /**
+ * Get multiple artists at once (batch request)
+ * Uses cache-first strategy to minimize API calls
+ */
+export async function getMultipleArtists(artistIds: string[]) {
+  if (!artistIds.length) return { artists: [] };
+
+  // Deduplicate IDs to prevent duplicate API calls
+  const uniqueIds = [...new Set(artistIds)];
+
+  console.log(`[Spotify Service] Batch fetching details for ${uniqueIds.length} artists...`);
+
+  // 1. Check cache first
+  const cachedMap = await getCachedItems(uniqueIds, 'artist');
+  const cachedArtists: any[] = [];
+  const uncachedIds: string[] = [];
+
+  for (const id of uniqueIds) {
+    if (cachedMap.has(id)) {
+      cachedArtists.push(cachedMap.get(id));
+    } else {
+      uncachedIds.push(id);
+    }
+  }
+
+  // 2. Fetch only uncached artists from Spotify API
+  let fetchedArtists: any[] = [];
+  if (uncachedIds.length > 0) {
+    // Spotify limit: 50 IDs per request for artists
+    const chunks = [];
+    for (let i = 0; i < uncachedIds.length; i += 50) {
+      chunks.push(uncachedIds.slice(i, i + 50));
+    }
+
+    const results = await Promise.all(chunks.map(async chunk => {
+      const ids = chunk.join(',');
+      return await spotifyFetch(`artists?ids=${ids}`);
+    }));
+
+    fetchedArtists = results.reduce((acc, curr) => {
+      return [...acc, ...(curr?.artists || [])];
+    }, []);
+
+    // 3. Cache the newly fetched artists
+    await cacheItems(fetchedArtists, 'artist');
+  }
+
+  // 4. Merge and return in original order (keeping duplicates from original input)
+  const allArtistsMap = new Map<string, any>();
+  cachedArtists.forEach(a => a && allArtistsMap.set(a.id, a));
+  fetchedArtists.forEach(a => a && allArtistsMap.set(a.id, a));
+
+  const orderedArtists = artistIds.map(id => allArtistsMap.get(id)).filter(Boolean);
+  return { artists: orderedArtists };
+}
+
+/**
  * Get a single album (alias for getAlbumDetails)
  */
 export async function getAlbum(albumId: string) {

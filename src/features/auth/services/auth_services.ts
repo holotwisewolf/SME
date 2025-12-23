@@ -171,7 +171,7 @@ export async function uploadAvatar(file: File, userId: string) {
   const { error: uploadError } = await supabase.storage
     .from('avatars')
     .upload(filePath, file, {
-        upsert: true // Overwrite if exists to save space
+      upsert: true // Overwrite if exists to save space
     });
 
   if (uploadError) throw uploadError;
@@ -190,7 +190,7 @@ export async function deleteAvatar(avatarUrl: string) {
     // URL format: https://{project}.supabase.co/storage/v1/object/public/avatars/{userId}/{filename}
     const url = new URL(avatarUrl);
     const pathParts = url.pathname.split('/');
-    
+
     // Find 'avatars' in the path and get everything after it
     const avatarsIndex = pathParts.indexOf('avatars');
     if (avatarsIndex === -1) {
@@ -198,7 +198,7 @@ export async function deleteAvatar(avatarUrl: string) {
       console.warn('Invalid avatar URL format, skipping deletion');
       return;
     }
-    
+
     const filePath = pathParts.slice(avatarsIndex + 1).join('/');
 
     const { error } = await supabase.storage
@@ -258,12 +258,26 @@ export async function updateUsername(username: string, displayName?: string) {
   // 2. Update Public Profiles table explicitly
   // (In case the database trigger only handles INSERTs, not UPDATEs)
   if (data.user) {
-      await updateProfile(data.user.id, {
-          username: username,
-          ...(displayName && { display_name: displayName })
-      });
+    await updateProfile(data.user.id, {
+      username: username,
+      ...(displayName && { display_name: displayName })
+    });
   }
 
+  return data;
+}
+
+/**
+ * Updates the user's Auth Metadata (stored in auth.users).
+ * This is CRITICAL for RLS policies that check auth.jwt() ->> 'app_role'.
+ * @param metadata - Object containing metadata fields to update (e.g. { app_role: 'dev' })
+ */
+export async function updateAuthMetadata(metadata: any) {
+  const { data, error } = await supabase.auth.updateUser({
+    data: metadata
+  });
+
+  if (error) throw error;
   return data;
 }
 
@@ -287,6 +301,7 @@ export const AuthService: IAuthService = {
   getProfile,
   updatePassword,
   updateUsername,
+  updateAuthMetadata,
   validateInviteCode,
   getSession,
   checkAuthStatus

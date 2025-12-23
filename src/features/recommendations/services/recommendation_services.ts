@@ -6,7 +6,8 @@ import {
     getMultipleAlbums,
     getArtistDetails,
     getArtistAlbums,
-    searchTracks
+    searchTracks,
+    getMultipleArtists
 } from '../../spotify/services/spotify_services';
 import { spotifyFetch } from '../../spotify/services/spotifyConnection';
 import type {
@@ -242,16 +243,17 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
     console.log('[For You Debug] Artist IDs extracted:', artistIds.size);
 
     // Fetch artist details to get genres
-    const artistIdArray = Array.from(artistIds).slice(0, 20);
-    for (const artistId of artistIdArray) {
-        try {
-            const artist = await getArtistDetails(artistId);
+    // Fetch artist details to get genres (BATCHED)
+    const artistIdArray = Array.from(artistIds).slice(0, 50); // Limit to 50 for batch size
+    try {
+        const { artists } = await getMultipleArtists(artistIdArray);
+        for (const artist of artists) {
             for (const genre of artist?.genres || []) {
                 genreWeights.set(genre, (genreWeights.get(genre) || 0) + 1);
             }
-        } catch (e) {
-            // Skip if artist fetch fails
         }
+    } catch (e) {
+        console.warn('Error batch fetching artist details for preferences:', e);
     }
 
     // Get high-rated items (above user's average)
@@ -374,6 +376,15 @@ export async function buildCandidatePool(
 
     console.log('[For You Debug] Building candidate pool for', topArtists.length, 'artists');
 
+    // Pre-fetch artist details to minimize API calls
+    let artistDetailsMap = new Map<string, any>();
+    try {
+        const { artists } = await getMultipleArtists(topArtists);
+        artists.forEach(a => artistDetailsMap.set(a.id, a));
+    } catch (e) {
+        console.warn('Error batch fetching artist details:', e);
+    }
+
     for (const artistId of topArtists) {
         // Get related artists
         const relatedArtists = await getRelatedArtists(artistId);
@@ -406,7 +417,7 @@ export async function buildCandidatePool(
         // Increase limit when related artists fails (the API returns 404 for some regions)
         const trackLimit = relatedArtists.length === 0 ? 10 : 5;
         const artistTopTracks = await getArtistTopTracks(artistId);
-        const artistDetails = await getArtistDetails(artistId);
+        const artistDetails = artistDetailsMap.get(artistId);
 
         for (const track of artistTopTracks.slice(0, trackLimit)) {
             if (seenIds.has(track.id) || existingFavoriteIds.has(track.id)) continue;
@@ -804,10 +815,19 @@ async function buildAlbumCandidatePool(
 
     console.log('[For You Albums Debug] Building album pool for', topArtists.length, 'artists');
 
+    // Pre-fetch artist details
+    let artistDetailsMap = new Map<string, any>();
+    try {
+        const { artists } = await getMultipleArtists(topArtists);
+        artists.forEach(a => artistDetailsMap.set(a.id, a));
+    } catch (e) {
+        console.warn('Error batch fetching album artist details:', e);
+    }
+
     for (const artistId of topArtists) {
         // Get albums from this artist
         const artistAlbums = await getArtistAlbums(artistId, 10);
-        const artistDetails = await getArtistDetails(artistId);
+        const artistDetails = artistDetailsMap.get(artistId);
 
         for (const album of artistAlbums) {
             if (seenIds.has(album.id) || existingFavoriteIds.has(album.id)) continue;

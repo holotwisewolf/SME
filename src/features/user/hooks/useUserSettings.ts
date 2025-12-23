@@ -112,6 +112,11 @@ export const useUserSettings = () => {
                 updated_at: new Date().toISOString(),
             });
 
+            // Sync role to Auth User Metadata (CRITICAL for RLS)
+            await AuthService.updateAuthMetadata({
+                app_role: devStatus ? 'dev' : 'user'
+            });
+
             setInitialState({
                 isPublicRating,
                 isDeveloper: devStatus,

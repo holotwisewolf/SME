@@ -325,13 +325,9 @@ export const useExpandedPlaylist = ({
 
         try {
             const connected = await isSpotifyConnected();
-            if (!connected) {
-                showError('Please sign in with Spotify to export playlists');
-                return;
-            }
+            const tokenValid = connected ? await checkSpotifyTokenValid() : false;
 
-            const tokenValid = await checkSpotifyTokenValid();
-            if (!tokenValid) {
+            if (!connected || !tokenValid) {
                 setShowSpotifyReconnect(true);
                 return;
             }

@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 
 // 👇 1. UPDATE THIS PATH to where you saved your "PlaylistTest.tsx"
-import PlaylistTest from '../components/PlaylistTest'; 
+import PlaylistTest from '../components/PlaylistTest';
 
 // 👇 2. UPDATE THIS PATH to where you saved your "CommentDebugger.tsx"
-import CommentDebugger from '../components/comment_debugger'; 
+import CommentDebugger from '../components/comment_debugger';
+import CommentManager from '../components/CommentManager';
 
 const TestingGround: React.FC = () => {
     const [session, setSession] = useState<any>(null);
@@ -67,10 +68,24 @@ const TestingGround: React.FC = () => {
                             </span>
                         </div>
                         {session && (
-                            <div className="flex flex-col gap-1 mt-1 pt-1 border-t border-gray-800">
-                                <span className="text-gray-500 text-xs">User ID:</span>
-                                <span className="text-gray-300 text-xs break-all">{session.user.id}</span>
-                            </div>
+                            <>
+                                <div className="flex flex-col gap-1 mt-1 pt-1 border-t border-gray-800">
+                                    <span className="text-gray-500 text-xs">User ID:</span>
+                                    <span className="text-gray-300 text-xs break-all">{session.user.id}</span>
+                                </div>
+                                <div className="flex flex-col gap-1 mt-1 pt-1 border-t border-gray-800">
+                                    <span className="text-gray-500 text-xs">App Metadata (Role):</span>
+                                    <pre className="text-gray-300 text-xs break-all whitespace-pre-wrap">
+                                        {JSON.stringify(session.user.app_metadata, null, 2)}
+                                    </pre>
+                                </div>
+                                <div className="flex flex-col gap-1 mt-1 pt-1 border-t border-gray-800">
+                                    <span className="text-gray-500 text-xs">User Metadata (Editable):</span>
+                                    <pre className="text-gray-300 text-xs break-all whitespace-pre-wrap">
+                                        {JSON.stringify(session.user.user_metadata, null, 2)}
+                                    </pre>
+                                </div>
+                            </>
                         )}
                     </div>
                 </div>
@@ -78,17 +93,17 @@ const TestingGround: React.FC = () => {
 
             {/* --- MAIN TESTING AREA --- */}
             <div className="mt-8 w-full max-w-4xl space-y-12 pb-20">
-                
+
                 {/* 1. PLAYLIST TEST (Fixing the 400 Error) */}
                 <div className="border border-gray-800 p-6 rounded-xl bg-[#1a1a1a]">
                     <div className="flex items-center gap-3 mb-4 border-b border-gray-700 pb-2">
-                         <div className="bg-green-900 text-green-300 text-xs font-bold px-2 py-1 rounded">PRIORITY</div>
-                         <h2 className="text-xl font-bold text-[#FFD1D1]">1. Playlist & Favourites Test</h2>
+                        <div className="bg-green-900 text-green-300 text-xs font-bold px-2 py-1 rounded">PRIORITY</div>
+                        <h2 className="text-xl font-bold text-[#FFD1D1]">1. Playlist & Favourites Test</h2>
                     </div>
                     <p className="text-gray-400 text-sm mb-6">
                         Use the <strong>"Force String ID"</strong> checkbox here to verify the fix for the 400 Bad Request error.
                     </p>
-                    
+
                     {/* Render your component here */}
                     <PlaylistTest />
                 </div>
@@ -96,14 +111,17 @@ const TestingGround: React.FC = () => {
                 {/* 2. COMMENTS DEBUGGER */}
                 <div className="border border-gray-800 p-6 rounded-xl bg-[#1a1a1a]">
                     <div className="flex items-center gap-3 mb-4 border-b border-gray-700 pb-2">
-                         <h2 className="text-xl font-bold text-blue-400">2. Comment Services</h2>
+                        <h2 className="text-xl font-bold text-blue-400">2. Comment Services</h2>
                     </div>
                     <p className="text-gray-400 text-sm mb-6">
                         Testing CRUD operations and real-time listeners.
                     </p>
-                    
+
                     {/* Render your component here */}
                     <CommentDebugger />
+                    <div className="mt-8 border-t border-gray-700 pt-6">
+                        <CommentManager />
+                    </div>
                 </div>
 
             </div>
