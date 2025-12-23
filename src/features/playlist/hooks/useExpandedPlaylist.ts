@@ -38,6 +38,7 @@ interface UseExpandedPlaylistProps {
     currentColor?: string | null;
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
     onUpdate?: () => void;
+    initialTab?: ActiveTab;
 }
 
 export const useExpandedPlaylist = ({
@@ -49,7 +50,8 @@ export const useExpandedPlaylist = ({
     onColorChange,
     currentColor,
     onPlaylistUpdate,
-    onUpdate
+    onUpdate,
+    initialTab = 'tracks'
 }: UseExpandedPlaylistProps) => {
     // --- Context Hooks ---
     const { showError } = useError();
@@ -57,7 +59,7 @@ export const useExpandedPlaylist = ({
     const { showConfirmation } = useConfirmation();
 
     // --- State Management ---
-    const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
+    const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab);
     const [imgError, setImgError] = useState(false);
     const [imageUrl, setImageUrl] = useState<string | null>((playlist as any).playlistimg_url || null);
     const [loading, setLoading] = useState(true);

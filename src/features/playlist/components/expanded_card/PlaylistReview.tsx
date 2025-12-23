@@ -14,10 +14,11 @@ interface PlaylistReviewProps {
     userName?: string;
     onTagsUpdate?: (newTags: string[]) => void;
     onRatingUpdate?: () => void;
+    initialIsTagMenuOpen?: boolean;
 }
 
 export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
-    playlist, userRating, tags, setTags, onDescriptionChange, isEditingEnabled = true, userName = 'You', onTagsUpdate, onRatingUpdate
+    playlist, userRating, tags, setTags, onDescriptionChange, isEditingEnabled = true, userName = 'You', onTagsUpdate, onRatingUpdate, initialIsTagMenuOpen
 }) => {
     const {
         availableTags,
@@ -36,7 +37,8 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
         setTags,
         onDescriptionChange,
         onTagsUpdate,
-        onRatingUpdate
+        onRatingUpdate,
+        initialIsTagMenuOpen
     });
 
     return (
@@ -79,6 +81,7 @@ export const PlaylistReview: React.FC<PlaylistReviewProps> = ({
                                 <div className="px-3 py-2 border-b border-white/5">
                                     <input
                                         type="text"
+                                        autoFocus
                                         value={customTagInput}
                                         onChange={(e) => setCustomTagInput(e.target.value)}
                                         onKeyDown={handleAddCustomTag}

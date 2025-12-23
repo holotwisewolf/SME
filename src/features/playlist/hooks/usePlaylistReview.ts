@@ -15,6 +15,7 @@ export interface UsePlaylistReviewProps {
     onDescriptionChange?: (newDescription: string) => void;
     onTagsUpdate?: (newTags: string[]) => void;
     onRatingUpdate?: () => void;
+    initialIsTagMenuOpen?: boolean;
 }
 
 export const usePlaylistReview = ({
@@ -24,12 +25,13 @@ export const usePlaylistReview = ({
     setTags,
     onDescriptionChange,
     onTagsUpdate,
-    onRatingUpdate
+    onRatingUpdate,
+    initialIsTagMenuOpen = false
 }: UsePlaylistReviewProps) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-    const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
+    const [isTagMenuOpen, setIsTagMenuOpen] = useState(initialIsTagMenuOpen);
     const [customTagInput, setCustomTagInput] = useState('');
     const [reviewText, setReviewText] = useState(playlist.description || '');
 

@@ -19,15 +19,16 @@ interface ExpandedPlaylistCardProps {
     onTitleChange?: (newTitle: string) => void;
     currentTitle?: string;
     onDeletePlaylist?: () => void;
-    onColorChange?: (newColor: string) => void;
-    currentColor?: string | null;
     onPlaylistUpdate?: (id: string, updates: Partial<EnhancedPlaylist>) => void;
     onUpdate?: () => void;
+    initialTab?: any; // ActiveTab type
+    initialIsTagMenuOpen?: boolean;
+    onColorChange?: (newColor: string) => void;
 }
 
 export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props) => {
+
     const {
-        // State
         activeTab, setActiveTab,
         imgError, setImgError,
         playlistImgUrl,
@@ -171,6 +172,7 @@ export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props)
                                 } : undefined}
                                 onTagsUpdate={handleTagsSync}
                                 onRatingUpdate={handleRatingUpdate}
+                                initialIsTagMenuOpen={props.initialIsTagMenuOpen}
                             />
                         )}
 

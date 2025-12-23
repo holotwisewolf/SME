@@ -22,8 +22,10 @@ interface DashboardViewProps {
     loading: boolean;
     topThree: DiscoveryItem[];
     remaining: DiscoveryItem[];
-    onItemClick: (item: DiscoveryItem) => void;
+    onItemClick: (item: DiscoveryItem, tab?: string, autoFocusTag?: boolean) => void;
     refreshKey?: number;
+    favoriteIds: Set<string>;
+    onToggleFavorite: (item: { id: string, type: 'track' | 'album' | 'playlist' }) => Promise<void>;
 }
 
 const DashboardView: React.FC<DashboardViewProps> = ({
@@ -37,6 +39,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     remaining,
     onItemClick,
     refreshKey = 0,
+    favoriteIds,
+    onToggleFavorite,
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const allDiscoveryRef = useRef<HTMLHeadingElement>(null);
@@ -103,6 +107,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             isHoveringScrollIndicator={isHovering}
                             onScrollIndicatorHoverChange={setIsHovering}
                             onScrollIndicatorClick={scrollToRankings}
+                            favoriteIds={favoriteIds}
+                            onToggleFavorite={onToggleFavorite}
                         />
                     )}
                 </div>

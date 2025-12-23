@@ -13,6 +13,7 @@ export interface UseAlbumReviewProps {
     setTags: (tags: string[]) => void;
     onRatingUpdate: () => void;
     onUpdate?: () => void;
+    initialIsTagMenuOpen?: boolean;
 }
 
 export const useAlbumReview = ({
@@ -21,13 +22,14 @@ export const useAlbumReview = ({
     tags,
     setTags,
     onRatingUpdate,
-    onUpdate
+    onUpdate,
+    initialIsTagMenuOpen = false
 }: UseAlbumReviewProps) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
 
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-    const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
+    const [isTagMenuOpen, setIsTagMenuOpen] = useState(initialIsTagMenuOpen);
     const [newTag, setNewTag] = useState('');
 
     useEffect(() => {

@@ -11,6 +11,7 @@ interface AlbumReviewProps {
     onRatingUpdate: () => void;
     onUpdate?: () => void;
     userName?: string;
+    initialIsTagMenuOpen?: boolean;
 }
 
 export const AlbumReview: React.FC<AlbumReviewProps> = ({
@@ -21,7 +22,8 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
     setTags,
     onRatingUpdate,
     onUpdate,
-    userName = 'You'
+    userName = 'You',
+    initialIsTagMenuOpen
 }) => {
     const {
         availableTags,
@@ -37,7 +39,8 @@ export const AlbumReview: React.FC<AlbumReviewProps> = ({
         tags,
         setTags,
         onRatingUpdate,
-        onUpdate
+        onUpdate,
+        initialIsTagMenuOpen
     });
 
     return (

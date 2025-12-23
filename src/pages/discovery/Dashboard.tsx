@@ -23,7 +23,11 @@ const Dashboard: React.FC = () => {
         selectedTrack,
         selectedAlbum,
         handleItemClick,
-        clearSelection
+        clearSelection,
+        initialTab,
+        initialIsTagMenuOpen,
+        favoriteIds,
+        handleToggleFavorite
     } = useDashboardPage();
 
     return (
@@ -46,6 +50,8 @@ const Dashboard: React.FC = () => {
                 remaining={remaining}
                 onItemClick={handleItemClick}
                 refreshKey={refreshKey}
+                favoriteIds={favoriteIds}
+                onToggleFavorite={handleToggleFavorite}
             />
 
             {/* Modals */}
@@ -54,6 +60,8 @@ const Dashboard: React.FC = () => {
                 selectedTrack={selectedTrack}
                 selectedAlbum={selectedAlbum}
                 onClose={clearSelection}
+                initialTab={initialTab}
+                initialIsTagMenuOpen={initialIsTagMenuOpen}
             />
         </div>
     );

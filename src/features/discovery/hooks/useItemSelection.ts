@@ -10,7 +10,9 @@ interface UseItemSelectionReturn {
     selectedPlaylist: any | null;
     selectedTrack: SpotifyTrack | null;
     selectedAlbum: string | null;
-    handleItemClick: (item: DiscoveryItem) => Promise<void>;
+    initialTab?: string;
+    initialIsTagMenuOpen?: boolean;
+    handleItemClick: (item: DiscoveryItem, tab?: string, autoFocusTag?: boolean) => Promise<void>;
     clearSelection: () => void;
 }
 
@@ -18,8 +20,13 @@ export function useItemSelection(): UseItemSelectionReturn {
     const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
     const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
     const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
+    const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
+    const [initialIsTagMenuOpen, setInitialIsTagMenuOpen] = useState<boolean | undefined>(undefined);
 
-    const handleItemClick = async (item: DiscoveryItem) => {
+    const handleItemClick = async (item: DiscoveryItem, tab?: string, autoFocusTag?: boolean) => {
+        setInitialTab(tab);
+        setInitialIsTagMenuOpen(autoFocusTag);
+
         if (item.type === 'playlist') {
             try {
                 // Fetch full playlist data
@@ -67,12 +74,16 @@ export function useItemSelection(): UseItemSelectionReturn {
         setSelectedPlaylist(null);
         setSelectedTrack(null);
         setSelectedAlbum(null);
+        setInitialTab(undefined);
+        setInitialIsTagMenuOpen(undefined);
     };
 
     return {
         selectedPlaylist,
         selectedTrack,
         selectedAlbum,
+        initialTab,
+        initialIsTagMenuOpen,
         handleItemClick,
         clearSelection,
     };

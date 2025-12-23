@@ -15,17 +15,27 @@ interface UseTrackReviewProps {
     onRemove?: () => void;
     onFavoriteChange?: (isFavorite: boolean) => void;
     onUpdate?: () => void;
+    initialTab?: 'review' | 'community' | 'settings';
+    initialIsTagMenuOpen?: boolean;
 }
 
-export const useTrackReview = ({ track, onClose, onRemove, onFavoriteChange, onUpdate }: UseTrackReviewProps) => {
+export const useTrackReview = ({
+    track,
+    onClose,
+    onRemove,
+    onFavoriteChange,
+    onUpdate,
+    initialTab = 'review',
+    initialIsTagMenuOpen = false
+}: UseTrackReviewProps) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
 
     // UI State
-    const [activeTab, setActiveTab] = useState<'review' | 'community' | 'settings'>('review');
+    const [activeTab, setActiveTab] = useState<'review' | 'community' | 'settings'>(initialTab);
     const [imgError, setImgError] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
+    const [isTagMenuOpen, setIsTagMenuOpen] = useState(initialIsTagMenuOpen);
     const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
     // Data State

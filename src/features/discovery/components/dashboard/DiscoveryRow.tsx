@@ -9,10 +9,41 @@ interface DiscoveryRowProps {
     item: DiscoveryItem;
     rank: number;
     onClick?: () => void;
+    onFavoriteClick?: () => void;
+    onCommentClick?: () => void;
+    onTagClick?: () => void;
+    isFavorite?: boolean;
 }
 
-const DiscoveryRow: React.FC<DiscoveryRowProps> = ({ item, rank, onClick }) => {
+const DiscoveryRow: React.FC<DiscoveryRowProps> = ({ item, rank, onClick, onFavoriteClick, onCommentClick, onTagClick, isFavorite }) => {
     const [imgError, setImgError] = React.useState(false);
+
+    const handleFavoriteClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onFavoriteClick) {
+            onFavoriteClick();
+        } else if (onClick) {
+            onClick(); // fallback to opening the modal
+        }
+    };
+
+    const handleCommentClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onCommentClick) {
+            onCommentClick();
+        } else if (onClick) {
+            onClick(); // fallback to opening the modal
+        }
+    };
+
+    const handleTagClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onTagClick) {
+            onTagClick();
+        } else if (onClick) {
+            onClick();
+        }
+    };
 
     return (
         <motion.div
@@ -59,7 +90,7 @@ const DiscoveryRow: React.FC<DiscoveryRowProps> = ({ item, rank, onClick }) => {
                 </div>
 
                 {/* Stats */}
-                <div className="flex items-center gap-4 text-xs text-[#D1D1D1]/60 flex-shrink-0">
+                <div className="flex items-center gap-4 px-1 text-xs text-[#D1D1D1]/60 flex-shrink-0">
                     {/* Rating */}
                     <div className="flex items-center gap-1">
                         <Star className="w-3.5 h-3.5 fill-[#FFD1D1] text-[#FFD1D1]" />
@@ -67,23 +98,35 @@ const DiscoveryRow: React.FC<DiscoveryRowProps> = ({ item, rank, onClick }) => {
                         <span className="text-[#D1D1D1]/50">({item.ratingCount})</span>
                     </div>
 
-                    {/* Comments */}
-                    <div className="flex items-center gap-1">
+                    {/* Comments - Clickable */}
+                    <button
+                        onClick={handleCommentClick}
+                        className="flex items-center gap-1 px-1 py-1 rounded-md hover:bg-[#FFD1D1]/10 transition-colors"
+                        title="View comments"
+                    >
                         <MessageCircle className="w-3.5 h-3.5 text-[#FFD1D1]" />
                         <span>{item.commentCount || 0}</span>
-                    </div>
+                    </button>
 
-                    {/* Favorites */}
-                    <div className="flex items-center gap-1">
-                        <Heart className="w-3.5 h-3.5 text-[#FFD1D1]" />
+                    {/* Favorites - Clickable */}
+                    <button
+                        onClick={handleFavoriteClick}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-[#FFD1D1]/10 transition-colors"
+                        title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    >
+                        <Heart className={`w-3.5 h-3.5 text-[#FFD1D1] ${isFavorite ? 'fill-[#FFD1D1]' : ''}`} />
                         <span>{item.favoriteCount || 0}</span>
-                    </div>
+                    </button>
 
                     {/* Tags */}
-                    <div className="flex items-center gap-1">
+                    <button
+                        onClick={handleTagClick}
+                        className="flex items-center gap-1 px-1 py-1 rounded-md hover:bg-[#FFD1D1]/10 transition-colors"
+                        title="Add tag"
+                    >
                         <Tag className="w-3.5 h-3.5 text-[#FFD1D1]" />
                         <span>{item.tagCount || 0}</span>
-                    </div>
+                    </button>
                 </div>
             </div>
         </motion.div>

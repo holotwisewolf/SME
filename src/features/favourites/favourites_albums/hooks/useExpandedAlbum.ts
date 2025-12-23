@@ -14,15 +14,16 @@ interface UseExpandedAlbumProps {
     onClose?: () => void;
     onRemove?: () => void;
     onUpdate?: () => void;
+    initialTab?: ActiveTab;
 }
 
 
-export const useExpandedAlbum = ({ albumId, onClose, onRemove, onUpdate }: UseExpandedAlbumProps) => {
+export const useExpandedAlbum = ({ albumId, onClose, onRemove, onUpdate, initialTab = 'tracks' }: UseExpandedAlbumProps) => {
     const { showError } = useError();
     const { showSuccess } = useSuccess();
 
     // --- State ---
-    const [activeTab, setActiveTab] = useState<ActiveTab>('tracks');
+    const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab);
     const [loading, setLoading] = useState(true);
 
     // Data

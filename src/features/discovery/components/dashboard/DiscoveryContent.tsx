@@ -13,7 +13,7 @@ interface DiscoveryContentProps {
     activeTab: TabType;
     topThree: DiscoveryItem[];
     remaining: DiscoveryItem[];
-    onItemClick: (item: DiscoveryItem) => void;
+    onItemClick: (item: DiscoveryItem, tab?: string, autoFocusTag?: boolean) => void;
     scrollContainerRef: RefObject<HTMLDivElement | null>;
     allDiscoveryRef: RefObject<HTMLHeadingElement | null>;
     onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
@@ -21,6 +21,8 @@ interface DiscoveryContentProps {
     isHoveringScrollIndicator: boolean;
     onScrollIndicatorHoverChange: (hovering: boolean) => void;
     onScrollIndicatorClick: () => void;
+    favoriteIds: Set<string>;
+    onToggleFavorite: (item: { id: string, type: 'track' | 'album' | 'playlist' }) => Promise<void>;
 }
 
 const DiscoveryContent: React.FC<DiscoveryContentProps> = ({
@@ -35,6 +37,8 @@ const DiscoveryContent: React.FC<DiscoveryContentProps> = ({
     isHoveringScrollIndicator,
     onScrollIndicatorHoverChange,
     onScrollIndicatorClick,
+    favoriteIds,
+    onToggleFavorite,
 }) => {
     return (
         <div className="flex-1 relative flex flex-col min-h-0">
@@ -91,6 +95,11 @@ const DiscoveryContent: React.FC<DiscoveryContentProps> = ({
                                     item={item}
                                     rank={index + 4}
                                     onClick={() => onItemClick(item)}
+                                    // [NEW] Action Handlers
+                                    onFavoriteClick={() => onToggleFavorite({ id: item.id, type: item.type })}
+                                    onCommentClick={() => onItemClick(item, 'community')}
+                                    onTagClick={() => onItemClick(item, 'review', true)}
+                                    isFavorite={favoriteIds.has(item.id)}
                                 />
                             ))}
                         </div>

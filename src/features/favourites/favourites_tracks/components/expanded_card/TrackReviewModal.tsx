@@ -16,6 +16,8 @@ interface TrackReviewModalProps {
     onRemove?: () => void;
     onFavoriteChange?: (isFavorite: boolean) => void;
     onUpdate?: () => void;
+    initialTab?: 'review' | 'community' | 'settings';
+    initialIsTagMenuOpen?: boolean;
 }
 
 export const TrackReviewModal: React.FC<TrackReviewModalProps> = (props) => {

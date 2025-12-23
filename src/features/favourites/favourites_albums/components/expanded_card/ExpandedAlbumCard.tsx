@@ -15,11 +15,14 @@ interface ExpandedAlbumCardProps {
     onClose?: () => void;
     onRemove?: () => void;
     onUpdate?: () => void;
+    initialTab?: any; // ActiveTab type
+    initialIsTagMenuOpen?: boolean;
 }
 
 export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = (props) => {
+    // ...
+
     const {
-        // State
         activeTab, setActiveTab,
         loading,
         album,
@@ -141,6 +144,7 @@ export const ExpandedAlbumCard: React.FC<ExpandedAlbumCardProps> = (props) => {
                                 onRatingUpdate={handleRatingUpdate}
                                 onUpdate={props.onUpdate}
                                 userName={userName}
+                                initialIsTagMenuOpen={props.initialIsTagMenuOpen}
                             />
                         )}
 

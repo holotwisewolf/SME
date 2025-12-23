@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useLogin } from '../../../features/auth/components/LoginProvider';
 import folderIcon from '../../../assets/folder_icon.png';
-import musicIcon from '../../../assets/music_icon.png';
 import infoIcon from '../../../assets/info_icon.png';
 import SettingsIcon from '../../ui/SettingsIcon';
 import FavouritesIcon from '../../shared/FavouritesIcon';
-import { LayoutDashboard, Activity, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Activity, Sparkles, ListMusic, Music, Disc } from 'lucide-react';
 import type { MenuItem } from '../SidebarSubItem';
 
 export const useAppSidebar = () => {
@@ -26,9 +25,9 @@ export const useAppSidebar = () => {
             icon: folderIcon,
             label: 'Library',
             subItems: [
-                { path: '/library/playlists', icon: folderIcon, label: 'Playlists' },
-                { path: '/library/tracks', icon: musicIcon, label: 'Tracks' },
-                { path: '/library/albums', icon: musicIcon, label: 'Albums' }
+                { path: '/library/playlists', icon: ListMusic, label: 'Playlists' },
+                { path: '/library/tracks', icon: Music, label: 'Tracks' },
+                { path: '/library/albums', icon: Disc, label: 'Albums' }
             ]
         },
         {

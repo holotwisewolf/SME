@@ -11,6 +11,8 @@ interface ItemModalsProps {
     selectedTrack: SpotifyTrack | null;
     selectedAlbum: string | null;
     onClose: () => void;
+    initialTab?: any;
+    initialIsTagMenuOpen?: boolean;
 }
 
 const ItemModals: React.FC<ItemModalsProps> = ({
@@ -18,6 +20,8 @@ const ItemModals: React.FC<ItemModalsProps> = ({
     selectedTrack,
     selectedAlbum,
     onClose,
+    initialTab,
+    initialIsTagMenuOpen
 }) => {
     return (
         <>
@@ -26,6 +30,8 @@ const ItemModals: React.FC<ItemModalsProps> = ({
                 <ExpandedPlaylistCard
                     playlist={selectedPlaylist}
                     onClose={onClose}
+                    initialTab={initialTab}
+                    initialIsTagMenuOpen={initialIsTagMenuOpen}
                 />
             )}
 
@@ -34,6 +40,8 @@ const ItemModals: React.FC<ItemModalsProps> = ({
                 <TrackReviewModal
                     track={selectedTrack}
                     onClose={onClose}
+                    initialTab={initialTab}
+                    initialIsTagMenuOpen={initialIsTagMenuOpen}
                 />
             )}
 
@@ -42,6 +50,8 @@ const ItemModals: React.FC<ItemModalsProps> = ({
                 <ExpandedAlbumCard
                     albumId={selectedAlbum}
                     onClose={onClose}
+                    initialTab={initialTab}
+                    initialIsTagMenuOpen={initialIsTagMenuOpen}
                 />
             )}
         </>
