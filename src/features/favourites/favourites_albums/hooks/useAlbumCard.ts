@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../services/favourites_services';
 import { getAlbum, getAlbumTracks } from '../../../spotify/services/spotify_services';
+import { useError } from '../../../../context/ErrorContext';
 
 export interface UseAlbumCardProps {
     albumId: string;
@@ -9,6 +10,7 @@ export interface UseAlbumCardProps {
 }
 
 export const useAlbumCard = ({ albumId, onRemove, initialData }: UseAlbumCardProps) => {
+    const { showError } = useError();
     const [isFavourite, setIsFavourite] = useState(true);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isInlineExpanded, setIsInlineExpanded] = useState(false);
@@ -57,7 +59,7 @@ export const useAlbumCard = ({ albumId, onRemove, initialData }: UseAlbumCardPro
         } catch (error) {
             console.error('Error toggling favourite:', error);
             setIsFavourite(!willBeFavourite);
-            alert('Failed to update favorite status.');
+            showError('Failed to update favorite status.');
         }
     };
 

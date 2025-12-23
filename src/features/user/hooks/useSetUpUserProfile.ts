@@ -124,13 +124,13 @@ export const useSetUpUserProfile = () => {
             setAvatarUrl(url);
         } catch (error) {
             console.error("Avatar upload failed:", error);
-            alert("Failed to upload avatar.");
+            showError("Failed to upload avatar.");
         }
     };
 
     const handleUpdateUsername = async () => {
         if (!username.trim()) {
-            alert("Username cannot be empty");
+            showError("Username cannot be empty");
             return;
         }
         try {
@@ -138,7 +138,7 @@ export const useSetUpUserProfile = () => {
             setIsEditingUsername(false);
         } catch (error: any) {
             console.error("Failed to update username:", error);
-            alert(error.message || "Failed to update username");
+            showError(error.message || "Failed to update username");
         }
     };
 
@@ -174,7 +174,7 @@ export const useSetUpUserProfile = () => {
             navigate("/library/playlists");
         } catch (error: any) {
             console.error("Setup failed:", error);
-            alert(error.message || "Failed to save profile.");
+            showError(error.message || "Failed to save profile.");
             setProfile(backupProfile);
         } finally {
             setLoading(false);

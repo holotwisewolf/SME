@@ -122,7 +122,7 @@ export const useUserAccount = () => {
 
     const handleUpdateUsername = async () => {
         if (!username.trim()) {
-            alert("Username cannot be empty");
+            showError("Username cannot be empty");
             return;
         }
         try {
@@ -130,7 +130,7 @@ export const useUserAccount = () => {
             setIsEditingUsername(false);
         } catch (error: any) {
             console.error("Failed to update username:", error);
-            alert(error.message || "Failed to update username");
+            showError(error.message || "Failed to update username");
         }
     };
 
@@ -167,7 +167,7 @@ export const useUserAccount = () => {
             navigate(-1);
         } catch (error: any) {
             console.error("Update failed:", error);
-            alert(error.message || "Failed to update profile.");
+            showError(error.message || "Failed to update profile.");
             setProfile(backupProfile);
         } finally {
             setLoading(false);

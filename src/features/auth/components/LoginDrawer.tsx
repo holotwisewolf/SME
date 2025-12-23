@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useLogin } from "./LoginProvider";
 import { useError } from "../../../context/ErrorContext";
+import { useSuccess } from "../../../context/SuccessContext";
 import TextInput from "../../../components/ui/TextInput";
 import PasswordInput from "../../../components/ui/PasswordInput";
 import InputGroup from "../../../components/ui/InputGroup";
@@ -12,6 +13,7 @@ import { signInWithSpotify } from "../../spotify/services/spotify_auth";
 const LoginDrawer = () => {
     const { isOpen, closeLogin } = useLogin();
     const { showError } = useError();
+    const { showSuccess } = useSuccess();
     const [canClose, setCanClose] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -51,7 +53,7 @@ const LoginDrawer = () => {
         }
         try {
             await AuthService.resetPassword(email);
-            alert("Password reset email sent! Please check your inbox.");
+            showSuccess("Password reset email sent! Please check your inbox.");
         } catch (error: any) {
             console.error("Reset password failed:", error);
             showError(error.message || "Failed to send reset email.");

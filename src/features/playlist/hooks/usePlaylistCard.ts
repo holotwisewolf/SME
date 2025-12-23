@@ -5,6 +5,7 @@ import type { Tables } from '../../../types/supabase';
 import type { EnhancedPlaylist } from '../services/playlist_services';
 import { addToFavourites, removeFromFavourites, checkIsFavourite } from '../../favourites/services/favourites_services';
 import { getPlaylistPreviewTracks } from '../services/playlist_services';
+import { useError } from '../../../context/ErrorContext';
 
 export interface UsePlaylistCardProps {
     playlist: Tables<'playlists'>;
@@ -19,6 +20,7 @@ export const usePlaylistCard = ({
     onToggleFavorite,
     lastUpdated
 }: UsePlaylistCardProps) => {
+    const { showError } = useError();
     const [isFavourite, setIsFavourite] = useState(initialIsLiked || false);
     const [showAddTrackModal, setShowAddTrackModal] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -92,7 +94,7 @@ export const usePlaylistCard = ({
         } catch (error) {
             console.error('Error toggling favourite:', error);
             setIsFavourite(!willBeFavourite);
-            alert('Failed to update favorite status.');
+            showError('Failed to update favorite status.');
             if (onToggleFavorite) onToggleFavorite(playlist.id, !willBeFavourite);
         }
     };

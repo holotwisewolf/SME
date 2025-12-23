@@ -377,6 +377,8 @@ export const useExpandedPlaylist = ({
         try {
             const newPlaylist = await copyPlaylist(playlist.id);
             showSuccess(`Playlist copied as "${newPlaylist.title}"`);
+            // Trigger silent reload to show the new playlist
+            window.dispatchEvent(new Event('playlist-updated'));
         } catch (error) {
             console.error('Error copying playlist:', error);
             showError('Failed to copy playlist');

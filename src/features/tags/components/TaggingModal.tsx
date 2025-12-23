@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 // Import service functions for database operations
 import { getAllTags, createTag, assignTagToItem, removeTagFromItem, getItemTags } from '../services/tag_services';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import { useError } from '../../../context/ErrorContext';
 
 // Manually define the Tag interface to ensure type safety locally
 interface Tag {
@@ -21,6 +22,7 @@ interface TaggingModalProps {
 }
 
 const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemName, isOpen, onClose }) => {
+  const { showError } = useError();
   // State for all available tags in the system
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   // State for tags currently assigned to this specific item
@@ -75,7 +77,7 @@ const TaggingModal: React.FC<TaggingModalProps> = ({ spotifyId, itemType, itemNa
         setNewTagName(''); // Clear input
       }
     } catch (error) {
-      alert("Tag creation failed.");
+      showError("Tag creation failed.");
     }
   };
 

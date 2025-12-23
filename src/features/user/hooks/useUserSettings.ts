@@ -66,7 +66,7 @@ export const useUserSettings = () => {
 
     const handlePasswordUpdate = async () => {
         if (!newPassword) {
-            alert("Please enter a new password.");
+            showError("Please enter a new password.");
             return;
         }
         try {
@@ -77,7 +77,7 @@ export const useUserSettings = () => {
             setNewPassword("");
         } catch (error: any) {
             console.error("Password update failed:", error);
-            alert(error.message || "Failed to update password.");
+            showError(error.message || "Failed to update password.");
         }
     };
 
@@ -132,13 +132,13 @@ export const useUserSettings = () => {
 
                 if (error) {
                     console.error('RPC error:', error);
-                    alert("Failed to verify code.");
+                    showError("Failed to verify code.");
                     setLoading(false);
                     return;
                 }
 
                 if (!data?.success) {
-                    alert("Invalid invite code.");
+                    showError("Invalid invite code.");
                     setLoading(false);
                     return;
                 }
@@ -147,7 +147,7 @@ export const useUserSettings = () => {
                 await supabase.auth.refreshSession();
                 devStatus = true;
             } else if (isDeveloper && !initialState.isDeveloper && !inviteCode) {
-                alert("Please enter an invite code.");
+                showError("Please enter an invite code.");
                 setLoading(false);
                 return;
             }
@@ -182,7 +182,7 @@ export const useUserSettings = () => {
             navigate(-1);
         } catch (error: any) {
             console.error("Settings save failed:", error);
-            alert(error.message || "Failed to save settings.");
+            showError(error.message || "Failed to save settings.");
             setProfile(backupProfile);
         } finally {
             setLoading(false);
