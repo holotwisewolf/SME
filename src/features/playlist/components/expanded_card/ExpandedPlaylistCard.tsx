@@ -24,6 +24,7 @@ interface ExpandedPlaylistCardProps {
     initialTab?: any; // ActiveTab type
     initialIsTagMenuOpen?: boolean;
     onColorChange?: (newColor: string) => void;
+    currentColor?: string | null;
 }
 
 export const ExpandedPlaylistCard: React.FC<ExpandedPlaylistCardProps> = (props) => {
